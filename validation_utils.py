@@ -1,6 +1,5 @@
 import re
 from pybrcode.pix import generate_simple_pix
-import dns.resolver
 
 class ValidationUtils:
     @staticmethod
