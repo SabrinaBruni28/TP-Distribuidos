@@ -1,4 +1,4 @@
-import re
+import re, json
 from pybrcode.pix import generate_simple_pix
 
 class ValidationUtils:
@@ -128,6 +128,22 @@ class ValidationUtils:
             return str1.lower() == str2.lower()
         return str1 == str2
 
+    @staticmethod
+    def objeto_para_json(objeto):
+        """
+        Converte uma instância de classe para uma string JSON.
+        """
+        return json.dumps(objeto.__dict__, indent=4, ensure_ascii=False)
+
+    @staticmethod
+    def json_para_objeto(json_texto, classe):
+        """
+        Converte um JSON (em string) para uma instância da classe fornecida.
+        A classe deve aceitar os atributos como argumentos no construtor.
+        """
+        dados = json.loads(json_texto)
+        return classe(**dados)
+
 if __name__ == "__main__":
     # Testando a validação de CPF
     cpf = ""
@@ -140,7 +156,7 @@ if __name__ == "__main__":
     print(f"Email {email} é válido? {ValidationUtils.check_email(email)}")
 
     # Testando a geração de código Pix
-    dados = ValidationUtils.gerar_qrcode_pix(
+    """dados = ValidationUtils.gerar_qrcode_pix(
         nome="",
         chave="",
         cidade="Florestal",
@@ -153,9 +169,30 @@ if __name__ == "__main__":
     )
 
     print("Payload Pix:")
-    print(dados["payload"])
+    print(dados["payload"])"""
 
     # Testando comparação de strings
     str1 = "Hello"
     str2 = "hello"
     print(f"As strings '{str1}' e '{str2}' são iguais? {ValidationUtils.strings_equal(str1, str2, case_sensitive=False)}")
+
+    class Pessoa:
+        def __init__(self, nome, idade, profissao):
+            self.nome = nome
+            self.idade = idade
+            self.profissao = profissao
+
+    p = Pessoa("João", 30, "Engenheiro")
+    json_texto = ValidationUtils.objeto_para_json(p)
+    print(json_texto)
+
+    json_texto = '''
+    {
+        "nome": "Maria",
+        "idade": 25,
+        "profissao": "Professora"
+    }
+    '''
+
+    p = ValidationUtils.json_para_objeto(json_texto, Pessoa)
+    print(p.nome, p.idade, p.profissao)
