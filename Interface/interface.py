@@ -1,10 +1,12 @@
 import sys
-from PyQt6.QtWidgets import (
-   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QSizePolicy,
-   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton
-)
+
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QSize
+
+from PyQt6.QtWidgets import (
+   QApplication, QMainWindow, QWidget, QLabel, QLineEdit,
+   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton
+)
 
 class Produto:
     def __init__(self, nome, descricao, preco, imagem_path):
