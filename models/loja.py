@@ -1,12 +1,21 @@
+from models.produto import Produto
+from models.anuncio import Anuncio
+from models.pedido import Pedido
 
 class Loja:
-    def __init__(self, id: int,  nome: str, imagem: str):
-        self.id = id
+    def __init__(self, nome: str, imagem: str):
+        self.id = 0
         self.nome = nome
         self.imagem = imagem
 
         self.produtos = []
-        self.anuncios = []
+            
+        self.anuncios = [
+            Anuncio(Produto("Produto 1", "Descrição do Produto 1", ["imagens/tablet.png"], self), 10.0, 5, "chave_pix_1"), 
+            Anuncio(Produto("Produto 2", "Descrição do Produto 2", ["imagens/notebook.png"], self), 20.0, 3, "chave_pix_2"),
+            Anuncio(Produto("Produto 3", "Descrição do Produto 3", ["imagens/fone.png"], self), 30.0, 2, "chave_pix_3"),
+            Anuncio(Produto("Produto 4", "Descrição do Produto 4", ["imagens/smartphone.png"], self), 40.0, 1, "chave_pix_4"),
+        ]*5
         self.pedidos_confirmados = []
         self.pedidos_em_andamento = []
 
@@ -63,5 +72,23 @@ class Loja:
                 return True
         return False
     
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "nome": self.nome,
+            "imagem": self.imagem,
+            #"produtos": [produto.nome for produto in self.produtos],
+            #"anuncios": [anuncio.produto.nome for anuncio in self.anuncios],
+            #"pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados],
+            #"pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento]
+        }  
     
+    def from_dict(self, data):
+        self.id = data.get("id", 0)
+        self.nome = data["nome"]
+        self.imagem = data["imagem"]
+        self.produtos = [Produto.from_dict(produto) for produto in data["produtos"]] if "produtos" in data else []
+        self.anuncios = [Anuncio.from_dict(anuncio) for anuncio in data["anuncios"]] if "anuncios" in data else []
+        self.pedidos_confirmados = [Pedido.from_dict(pedido) for pedido in data["pedidos_confirmados"]] if "pedidos_confirmados" in data else []
+        self.pedidos_em_andamento = [Pedido.from_dict(pedido) for pedido in data["pedidos_em_andamento"]] if "pedidos_em_andamento" in data else []
     

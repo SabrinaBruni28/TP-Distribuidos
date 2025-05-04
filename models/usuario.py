@@ -1,16 +1,10 @@
+from models.endereco import Endereco
+from models.pedido import Pedido
+from models.loja import Loja
 
 class Usuario:
     def __init__(self):
         return
-    
-    def visualizar_produto(self):
-        pass
-
-    def visualizar_loja(self):
-        pass
-
-    def pesquisar_produto(self, texto: str):
-        pass
 
 class Usuario_Identificado(Usuario):
     def __init__(self, nome, cpf, email, senha):
@@ -68,3 +62,26 @@ class Usuario_Identificado(Usuario):
             self.lojas.remove(loja)
             return True
         return False
+    
+    def to_dict(self):
+        return {
+            "id_usuario": self.id_usuario,
+            "nome": self.nome,
+            "cpf": self.cpf,
+            "email": self.email,
+            "senha": self.senha,
+            "lojas": [loja.to_dict() for loja in self.lojas],
+            "enderecos": [endereco.to_dict() for endereco in self.enderecos],
+            "pedidos": [pedido.to_dict() for pedido in self.pedidos]
+        }  
+    
+    def from_dict(self, data):
+        self.id_usuario = data.get("id_usuario", 0)
+        self.nome = data["nome"]
+        self.cpf = data["cpf"]
+        self.email = data["email"]
+        self.senha = data["senha"]
+        self.lojas = [Loja.from_dict(loja) for loja in data["lojas"]] if "lojas" in data else []
+        self.enderecos = [Endereco.from_dict(endereco) for endereco in data["enderecos"]] if "enderecos" in data else []
+        self.pedidos = [Pedido.from_dict(pedido) for pedido in data["pedidos"]] if "pedidos" in data else []
+    

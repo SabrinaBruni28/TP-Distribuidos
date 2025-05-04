@@ -1,23 +1,58 @@
-import smtplib
 from email.mime.text import MIMEText
+import threading
+import smtplib
+import random
 
-def enviar_email_mailtrap():
-    smtp_server = "sandbox.smtp.mailtrap.io"
-    smtp_port = 587
-    login = "441dc67f5a72c9"
-    senha = "1ad21d439d5114"
+class ThreadEmail(threading.Thread):
+    def __init__(self, tipo, email_destinatario):
+        threading.Thread.__init__(self)
+        self.email_destinatario = email_destinatario
+        self.codigo = None
+        
+        if tipo == "confirmacao cadastro":
+            self.assunto = "Confirmação de Cadastro"
+            self.codigo = random.randint(100000, 999999)
+            self.mensagem = f"Seu código de confirmação é: {self.codigo}"
+        
+        elif tipo == "confirmacao pedido":
+            self.assunto = "Confirmação de Pedido"
+            self.mensagem = f"Seu pedido foi confirmado com sucesso."
 
-    remetente = "testecaldeirao@gmail.com"
-    destinatario = "sabrinabrunisouza416@gmail.com"
+        elif tipo == "cancelamento pedido":
+            self.assunto = "Cancelamento de Pedido"
+            self.mensagem = f"Seu pedido foi recusado pelo vendedor."
 
-    mensagem = MIMEText("Olá, isso é um teste do Mailtrap.")
-    mensagem["Subject"] = "Teste"
-    mensagem["From"] = remetente
-    mensagem["To"] = destinatario
+        elif tipo == "pedido realizado":
+            self.assunto = "Pedido Realizado"
+            self.mensagem = f"Foi realizado um pedido em sua loja."
+    
+    def run(self):
+        try:
+            self.enviar_email_gmail(self.email_destinatario, self.assunto, self.mensagem)
+        except Exception as e:
+            print(f"Erro ao enviar email: {e}")
 
-    with smtplib.SMTP(smtp_server, smtp_port) as server:
-        server.starttls()
-        server.login(login, senha)
-        server.send_message(mensagem)
+    def enviar_email_gmail(self, email_destinatario, assunto, mensagem):
+        smtp_server = "smtp.gmail.com"
+        smtp_port = 587
+        email_remetente = "testecaldeirao@gmail.com"
+        senha_app = "olyq xgjv eykm hndj".replace(" ", "")  # Remover espaços
 
-enviar_email_mailtrap()
+        email_destinatario = email_destinatario
+
+        msg = MIMEText(mensagem)
+        msg["Subject"] = assunto
+        msg["From"] = email_remetente
+        msg["To"] = email_destinatario
+
+        with smtplib.SMTP(smtp_server, smtp_port) as server:
+            server.starttls()
+            server.login(email_remetente, senha_app)
+            server.send_message(msg)
+
+
+email = ThreadEmail("confirmacao cadastro", "luiz.gontijo@ufv.br")
+email.start()
+codigo = email.codigo
+
+print(codigo)
