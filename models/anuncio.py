@@ -1,13 +1,16 @@
 from models.produto import Produto
 
 class Anuncio:
-    def __init__(self, produto: Produto, preco, quantidade_disponivel, chave_pix):
-        self.id = 0
+    def __init__(self, id = 0, produto: Produto = None, preco = 0, quantidade_disponivel = 0, chave_pix = "", pausado = False):
+        self.id = id 
         self.produto = produto
         self.preco = preco
         self.quantidade_disponivel = quantidade_disponivel
         self.chave_pix = chave_pix
-        self.pausado = False
+        self.pausado = pausado
+        
+        if self.quantidade_disponivel <= 0:
+            self.pausar()
 
     def subtrair_quantidade(self, quantidade):
         if self.pausado:
@@ -29,17 +32,32 @@ class Anuncio:
     def to_dict(self):
         return {
             "id": self.id,
-            "produto": self.produto.to_dict(),
+            "produto": self.produto.to_dict() if self.produto else None,
             "preco": self.preco,
             "quantidade_disponivel": self.quantidade_disponivel,
             "chave_pix": self.chave_pix,
             "pausado": self.pausado
         }
     
-    def from_dict(self, data):
-        self.id = data.get("id", 0)
-        self.produto = Produto.from_dict(data["produto"]) if "produto" in data else []
-        self.preco = data["preco"]
-        self.quantidade_disponivel = data["quantidade_disponivel"]
-        self.chave_pix = data["chave_pix"]
-        self.pausado = data.get("pausado", False)
+    def to_dict_personalisado(self):
+        return {
+            "produto": "{" + f"id: {self.produto.id if self.produto else None}" +"}",
+            "preco": self.preco,
+            "quantidade_disponivel": self.quantidade_disponivel,
+            "chave_pix": self.chave_pix,
+            "pausado": self.pausado
+        }
+    
+    @classmethod
+    def from_dict(cls, data):
+        id = data.get("id", 0)
+        produto = Produto.from_dict(data["produto"]) if "produto" in data else None
+        preco = data.get("preco", 0)
+        quantidade_disponivel = data.get("quantidade_disponivel", 0)
+        chave_pix = data.get("chave_pix", "")
+        pausado = data.get("pausado", False)
+        
+        return cls(id, produto, preco, quantidade_disponivel, chave_pix, pausado)
+    
+    def __str__(self):
+        return f"Anuncio(id={self.id}, produto={self.produto.__str__()}, preco={self.preco}, quantidade_disponivel={self.quantidade_disponivel}, chave_pix={self.chave_pix}, pausado={self.pausado})"

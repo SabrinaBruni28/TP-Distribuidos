@@ -1,4 +1,4 @@
-import sys
+import sys, os, shutil
 from models.loja import Loja
 from models.anuncio import Anuncio
 from models.produto import Produto
@@ -10,9 +10,37 @@ from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QSize
 
 from PyQt6.QtWidgets import (
-   QApplication, QMainWindow, QWidget, QLabel, QLineEdit,
+   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QFileDialog,QFormLayout, QSpacerItem, QSizePolicy,
    QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton
-)
+)   
+
+class Formulario(QWidget):
+    def __init__(self, campos=[], largura=300, altura=30):
+        super().__init__()
+
+        layout_principal = QVBoxLayout()
+        layout_principal.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        form_layout = QFormLayout()
+        form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form_layout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter)  # Centraliza o formulário
+
+        self.inputs = {}
+
+        for nome in campos:
+            entrada = QLineEdit()
+            entrada.setPlaceholderText(f"Digite seu {nome.lower()}")
+            entrada.setFixedSize(largura, altura)
+            entrada.setStyleSheet("font-size: 25px;")
+
+            label = QLabel(f"{nome}:")
+            label.setStyleSheet("font-size: 25px;")
+
+            form_layout.addRow(label, entrada)
+            self.inputs[nome] = entrada
+
+        layout_principal.addLayout(form_layout)
+        self.setLayout(layout_principal)
 
 class CarrosselImagem(QWidget):
     def __init__(self, lista_caminhos_imagem, largura=200, altura=200):
@@ -94,6 +122,24 @@ class MarketplaceUI(QMainWindow):
 
         self.stack.addWidget(self.tela_inicial)
 
+    def abrir_dialogo_arquivo(self):
+        caminho_arquivo, _ = QFileDialog.getOpenFileName(
+            self,
+            "Escolher arquivo",
+            "",
+            "Todos os arquivos (*.*);;Imagens (*.png *.jpg *.jpeg);;Textos (*.txt)"
+        )
+        if caminho_arquivo:
+            # Caminho de destino onde o arquivo será salvo (pode mudar para o que quiser)
+            nome_arquivo = os.path.basename(caminho_arquivo)
+            destino = os.path.join("uploads", nome_arquivo)
+
+            # Cria a pasta "uploads" se ela não existir
+            os.makedirs("uploads", exist_ok=True)
+
+            # Copia o arquivo para a pasta destino
+            shutil.copy(caminho_arquivo, destino)
+
     def criar_menu_lateral(self):
         # Crie o menu lateral e esconda no início
         menu_lateral = QFrame()
@@ -124,6 +170,7 @@ class MarketplaceUI(QMainWindow):
                 background-color: #000000;
             }
         """)
+        botao_perfil.clicked.connect(self.abrir_tela_perfil)
 
         botao_lojas = QPushButton("Minhas lojas")
         botao_lojas.setFixedSize(250, 100)  # Tamanho fixo do botão
@@ -234,6 +281,25 @@ class MarketplaceUI(QMainWindow):
         """)
         btn_pesquisa.clicked.connect(self.mostrar_barra_pesquisa)
 
+        botao_selecionar_arquivo = QPushButton("Selecionar Arquivo")
+        botao_selecionar_arquivo.clicked.connect(self.abrir_dialogo_arquivo)
+        btn_pesquisa.setFixedSize(100, 50)
+        btn_pesquisa.setStyleSheet("""
+            QPushButton {
+                border: 2px;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 40px;
+            }
+            QPushButton:hover {
+                background-color: #D3D3D3;
+            }
+            QPushButton:pressed {
+                background-color: #000000;
+            }
+        """)
+
+        barra_superior.addWidget(botao_selecionar_arquivo, alignment=Qt.AlignmentFlag.AlignLeft)
         barra_superior.addWidget(botao_menu)
         barra_superior.addWidget(QLabel("<h2>Produtos disponíveis:</h2>"), alignment=Qt.AlignmentFlag.AlignLeft)
         barra_superior.addWidget(self.botao_reset)
@@ -245,32 +311,32 @@ class MarketplaceUI(QMainWindow):
     def criar_lista_anuncios(self):
         return [
             Anuncio(
-                Produto(
-                    "Notebook", 
-                    "Notebook potente com 16GB RAM",
-                    ["imagens/notebook.png", "imagens/smartphone.png", "imagens/notebook.png"],
-                    Loja(
-                        "Ferramentas", 
-                        "imagens/tablet.png"
+                produto=Produto(
+                    nome="Notebook", 
+                    descricao="Notebook potente com 16GB RAM",
+                    imagens=["imagens/notebook.png", "imagens/smartphone.png", "imagens/notebook.png"],
+                    loja=Loja(
+                        nome="Ferramentas", 
+                        imagem="imagens/tablet.png"
                     )
                 ),
-                10.90,
-                10,
-                "13668995630"
+                preco=10.90,
+                quantidade_disponivel=10,
+                chave_pix="13668995630"
             ),
             Anuncio(
-                Produto(
-                    "Tablet", 
-                    "Notebook potente com 16GB RAM",
-                    ["imagens/tablet.png"],
-                    Loja(
-                        "Ferramentas", 
-                        "imagens/tablet.png"
+                produto=Produto(
+                    nome="Tablet", 
+                    descricao="Notebook potente com 16GB RAM",
+                    imagens=["imagens/tablet.png"],
+                    loja=Loja(
+                        nome="Ferramentas", 
+                        imagem="imagens/tablet.png"
                     )
                 ),
-                100.90,
-                20,
-                "13668995630"
+                preco=100.90,
+                quantidade_disponivel=20,
+                chave_pix="13668995630"
             ),
         ] * 20
 
@@ -455,7 +521,7 @@ class MarketplaceUI(QMainWindow):
             }
         """)
         
-        comprar.clicked.connect(lambda: self.comprar(anuncio, quantidade))
+        comprar.clicked.connect(self.abrir_tela_login)
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal_2)
@@ -554,12 +620,351 @@ class MarketplaceUI(QMainWindow):
         for i, anuncio in enumerate(lista):
             bloco = self.criar_bloco_anuncio(anuncio, largura_bloco, altura_bloco)
             self.grid.addWidget(bloco, i // 5, i % 5)
+    
+    def criar_tela_comprar(self, anuncio: Anuncio):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        voltar = QPushButton("Voltar")
+        voltar.setFixedSize(100, 30)
+        voltar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        voltar.clicked.connect(self.voltar_para_lista)
+        layout_horizontal.addWidget(voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addLayout(layout_horizontal)
+
+        return tela
 
     def comprar(self, anuncio: Anuncio, quantidade_label: QLabel):
         anuncio.subtrair_quantidade(1)
         quantidade_label.setText(f"<span style='font-size: 20px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
-        
 
+    def abrir_tela_cadastro(self):
+        tela_cadastro = self.criar_tela_cadastro()
+        self.stack.addWidget(tela_cadastro)
+        self.stack.setCurrentWidget(tela_cadastro)
+
+    def criar_tela_cadastro(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = QPushButton("Voltar")
+        botao_voltar.setFixedSize(110, 30)
+        botao_voltar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_voltar.clicked.connect(self.voltar_para_lista)
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addSpacing(50)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Cadastramento</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        botao_cadastrar = QPushButton("Cadastrar")
+        botao_cadastrar.setFixedSize(200, 50)
+        botao_cadastrar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 30px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        #botao_cadastrar.clicked.connect(lambda: self.cadastrar_usuario(formulario))
+        layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        botao_login = QPushButton("Login")
+        botao_login.setFixedSize(110, 30)
+        botao_login.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_login.clicked.connect(self.abrir_tela_login)
+        layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignRight)
+
+        return tela
+    
+    def abrir_tela_login(self):
+        tela_login = self.criar_tela_login()
+        self.stack.addWidget(tela_login)
+        self.stack.setCurrentWidget(tela_login)
+
+    def criar_tela_login(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = QPushButton("Voltar")
+        botao_voltar.setFixedSize(110, 30)
+        botao_voltar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_voltar.clicked.connect(self.voltar_para_lista)
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addSpacing(50)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Login</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = Formulario(campos=["Email", "Senha"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        botao_login = QPushButton("Entrar")
+        botao_login.setFixedSize(200, 50)
+        botao_login.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 30px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        
+        #botao_login.clicked.connect(lambda: self.login_usuario(formulario))
+        layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        botao_cadastrar = QPushButton("Cadastrar")
+        botao_cadastrar.setFixedSize(110, 30)
+        botao_cadastrar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_cadastrar.clicked.connect(self.abrir_tela_cadastro)
+        layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        return tela
+    
+    def abrir_tela_perfil(self):
+        tela_perfil = self.criar_tela_perfil()
+        self.stack.addWidget(tela_perfil)
+        self.stack.setCurrentWidget(tela_perfil)
+
+    def criar_tela_perfil(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+        layout_horizontal = QHBoxLayout(tela)
+
+        botao_voltar = QPushButton("Voltar")
+        botao_voltar.setFixedSize(110, 30)
+        botao_voltar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_voltar.clicked.connect(self.voltar_para_lista)
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = QPushButton("Editar")
+        botao_editar.setFixedSize(110, 30)
+        botao_editar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        #botao_editar.clicked.connect(self.abrir_tela_cadastro)
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        layout_vertical.addStretch()
+        formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        # Título com espaço à esquerda
+        titulo_layout = QHBoxLayout()
+        titulo_layout.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))  # 40px à esquerda
+
+        layout_vertical.addStretch()
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Perfil</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        titulo_layout.addWidget(titulo)
+        layout_vertical.addLayout(titulo_layout)
+        layout_vertical.addSpacing(50)
+
+        return tela
+    
+    def abrir_tela_lojas(self):
+        tela_lojas = self.criar_tela_lojas()
+        self.stack.addWidget(tela_lojas)
+        self.stack.setCurrentWidget(tela_lojas)
+
+    def criar_tela_lojas(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+        layout_horizontal = QHBoxLayout(tela)
+
+        botao_voltar = QPushButton("Voltar")
+        botao_voltar.setFixedSize(110, 30)
+        botao_voltar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_voltar.clicked.connect(self.voltar_para_lista)
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = QPushButton("Editar")
+        botao_editar.setFixedSize(110, 30)
+        botao_editar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        #botao_editar.clicked.connect(self.abrir_tela_cadastro)
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        layout_vertical.addStretch()
+        formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        # Título com espaço à esquerda
+        titulo_layout = QHBoxLayout()
+        titulo_layout.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))  # 40px à esquerda
+
+        layout_vertical.addStretch()
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Perfil</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        titulo_layout.addWidget(titulo)
+        layout_vertical.addLayout(titulo_layout)
+        layout_vertical.addSpacing(50)
+
+        return tela
+        
 if __name__ == "__main__":
    app = QApplication(sys.argv)
    window = MarketplaceUI()

@@ -7,16 +7,16 @@ class Usuario:
         return
 
 class Usuario_Identificado(Usuario):
-    def __init__(self, nome, cpf, email, senha):
-        self.id_usuario = 0
+    def __init__(self, id = 0, nome = "", cpf = "", email = "", senha = "", lojas = [], enderecos = [], pedidos = []):
+        self.id_usuario = id
         self.nome = nome
         self.cpf = cpf
         self.email = email
         self.senha = senha
 
-        self.lojas = []
-        self.enderecos = []
-        self.pedidos = []
+        self.lojas = lojas
+        self.enderecos = enderecos
+        self.pedidos = pedidos
 
     def criar_loja(self, loja):
         self.lojas.append(loja)
@@ -70,18 +70,31 @@ class Usuario_Identificado(Usuario):
             "cpf": self.cpf,
             "email": self.email,
             "senha": self.senha,
-            "lojas": [loja.to_dict() for loja in self.lojas],
-            "enderecos": [endereco.to_dict() for endereco in self.enderecos],
-            "pedidos": [pedido.to_dict() for pedido in self.pedidos]
-        }  
+            "lojas": [loja.to_dict() for loja in self.lojas] if self.lojas else [],
+            "enderecos": [endereco.to_dict() for endereco in self.enderecos] if self.enderecos else [],
+            "pedidos": [pedido.to_dict() for pedido in self.pedidos] if self.pedidos else []
+        } 
+
+    def to_dict_personalisado(self):
+        return {
+            "nome": self.nome,
+            "cpf": self.cpf,
+            "email": self.email,
+            "senha": self.senha,
+        } 
     
-    def from_dict(self, data):
-        self.id_usuario = data.get("id_usuario", 0)
-        self.nome = data["nome"]
-        self.cpf = data["cpf"]
-        self.email = data["email"]
-        self.senha = data["senha"]
-        self.lojas = [Loja.from_dict(loja) for loja in data["lojas"]] if "lojas" in data else []
-        self.enderecos = [Endereco.from_dict(endereco) for endereco in data["enderecos"]] if "enderecos" in data else []
-        self.pedidos = [Pedido.from_dict(pedido) for pedido in data["pedidos"]] if "pedidos" in data else []
+    @classmethod
+    def from_dict(cls, data):
+        id_usuario = data.get("id_usuario", 0)
+        nome = data.get("nome", "")
+        cpf = data.get("cpf", "")
+        email = data.get("email", "")
+        senha = data.get("senha", "")
+        lojas = [Loja.from_dict(loja) for loja in data["lojas"]] if "lojas" in data else []
+        enderecos = [Endereco.from_dict(endereco) for endereco in data["enderecos"]] if "enderecos" in data else []
+        pedidos = [Pedido.from_dict(pedido) for pedido in data["pedidos"]] if "pedidos" in data else []
+
+        return cls(id_usuario, nome, cpf, email, senha, lojas, enderecos, pedidos)
     
+    def __str__(self):
+        return f"Usuario(id_usuario={self.id_usuario}, nome={self.nome}, cpf={self.cpf}, email={self.email}, senha={self.senha})"

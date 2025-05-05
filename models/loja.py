@@ -3,21 +3,16 @@ from models.anuncio import Anuncio
 from models.pedido import Pedido
 
 class Loja:
-    def __init__(self, nome: str, imagem: str):
-        self.id = 0
+    def __init__(self, id = 0, nome = "", imagem = "", produtos: Produto = [], anuncios = [], pedidos_confirmados = [], pedidos_em_andamento = []):
+        self.id = id
         self.nome = nome
         self.imagem = imagem
 
-        self.produtos = []
+        self.produtos = produtos
             
-        self.anuncios = [
-            Anuncio(Produto("Produto 1", "Descrição do Produto 1", ["imagens/tablet.png"], self), 10.0, 5, "chave_pix_1"), 
-            Anuncio(Produto("Produto 2", "Descrição do Produto 2", ["imagens/notebook.png"], self), 20.0, 3, "chave_pix_2"),
-            Anuncio(Produto("Produto 3", "Descrição do Produto 3", ["imagens/fone.png"], self), 30.0, 2, "chave_pix_3"),
-            Anuncio(Produto("Produto 4", "Descrição do Produto 4", ["imagens/smartphone.png"], self), 40.0, 1, "chave_pix_4"),
-        ]*5
-        self.pedidos_confirmados = []
-        self.pedidos_em_andamento = []
+        self.anuncios = anuncios
+        self.pedidos_confirmados = pedidos_confirmados
+        self.pedidos_em_andamento = pedidos_em_andamento
 
     def criar_produto(self, produto):
         self.produtos.append(produto)
@@ -77,18 +72,29 @@ class Loja:
             "id": self.id,
             "nome": self.nome,
             "imagem": self.imagem,
-            #"produtos": [produto.nome for produto in self.produtos],
-            #"anuncios": [anuncio.produto.nome for anuncio in self.anuncios],
-            #"pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados],
-            #"pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento]
+            "produtos": [produto.nome for produto in self.produtos] if self.produtos else [],
+            "anuncios": [anuncio.produto.nome for anuncio in self.anuncios] if self.anuncios else [],
+            "pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados] if self.pedidos_confirmados else [],
+            "pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento] if self.pedidos_em_andamento else [],
         }  
     
-    def from_dict(self, data):
-        self.id = data.get("id", 0)
-        self.nome = data["nome"]
-        self.imagem = data["imagem"]
-        self.produtos = [Produto.from_dict(produto) for produto in data["produtos"]] if "produtos" in data else []
-        self.anuncios = [Anuncio.from_dict(anuncio) for anuncio in data["anuncios"]] if "anuncios" in data else []
-        self.pedidos_confirmados = [Pedido.from_dict(pedido) for pedido in data["pedidos_confirmados"]] if "pedidos_confirmados" in data else []
-        self.pedidos_em_andamento = [Pedido.from_dict(pedido) for pedido in data["pedidos_em_andamento"]] if "pedidos_em_andamento" in data else []
+    def to_dict_personalisado(self):
+        return {
+            "nome": self.nome,
+            "imagem": self.imagem if self.imagem else "",
+        } 
     
+    @classmethod
+    def from_dict(cls, data):
+        id = data.get("id", 0)
+        nome = data.get("nome", "")
+        imagem = data.get("imagem", "")
+        produtos = [Produto.from_dict(produto) for produto in data["produtos"]] if "produtos" in data else []
+        anuncios = [Anuncio.from_dict(anuncio) for anuncio in data["anuncios"]] if "anuncios" in data else []
+        pedidos_confirmados = [Pedido.from_dict(pedido) for pedido in data["pedidos_confirmados"]] if "pedidos_confirmados" in data else []
+        pedidos_em_andamento = [Pedido.from_dict(pedido) for pedido in data["pedidos_em_andamento"]] if "pedidos_em_andamento" in data else []
+
+        return cls(id, nome, imagem, produtos, anuncios, pedidos_confirmados, pedidos_em_andamento)
+    
+    def __str__(self):
+        return f"Loja(id={self.id}, nome={self.nome}, imagem={self.imagem})"

@@ -1,6 +1,7 @@
 
 class Endereco:
-    def __init__(self, rua, numero, complemento, bairro, cidade, estado):
+    def __init__(self, id = 0, rua = "", numero = "", complemento = "", bairro = "", cidade = "", estado = ""):
+        self.id = id
         self.rua = rua
         self.numero = numero
         self.complemento = complemento
@@ -10,6 +11,7 @@ class Endereco:
 
     def to_dict(self):
         return {
+            "id": self.id,
             "rua": self.rua,
             "numero": self.numero,
             "complemento": self.complemento,
@@ -18,12 +20,28 @@ class Endereco:
             "estado": self.estado
         }
     
-    def from_dict(self, data):
-        self.rua = data["rua"]
-        self.numero = data["numero"]
-        self.complemento = data["complemento"]
-        self.bairro = data["bairro"]
-        self.cidade = data["cidade"]
-        self.estado = data["estado"]
+    def to_dict_personalisado(self):
+        return {
+            "rua": self.rua,
+            "numero": self.numero,
+            "complemento": self.complemento,
+            "bairro": self.bairro,
+            "cidade": self.cidade,
+            "estado": self.estado
+        }
+    
+    @classmethod
+    def from_dict(cls, data):
+        rua = data.get("rua", "")
+        numero = data.get("numero", 0)
+        complemento = data.get("complemento", "")
+        bairro = data.get("bairro", "")
+        cidade = data.get("cidade", "")
+        estado = data.get("estado", "")
+
+        return cls(rua, numero, complemento, bairro, cidade, estado)
+
+    def __str__(self):
+        return f"Endereco(rua={self.rua}, numero={self.numero}, complemento={self.complemento}, bairro={self.bairro}, cidade={self.cidade}, estado={self.estado})"
 
 
