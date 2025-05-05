@@ -1,4 +1,5 @@
-import inspect
+import re
+from pybrcode.pix import generate_simple_pix
 
 class ValidationUtils:
     @staticmethod

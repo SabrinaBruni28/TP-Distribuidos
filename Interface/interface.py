@@ -1,4 +1,7 @@
 import sys, os, shutil
+# Adiciona o diretório raiz ao sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from models.loja import Loja
 from models.anuncio import Anuncio
 from models.produto import Produto
