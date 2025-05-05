@@ -122,6 +122,29 @@ class MarketplaceUI(QMainWindow):
 
         self.stack.addWidget(self.tela_inicial)
 
+    def botao_voltar(self):
+        voltar = QPushButton("Voltar")
+        voltar.setFixedSize(100, 30)
+        voltar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        voltar.clicked.connect(self.voltar_para_lista)
+
+        return voltar
+    
     def abrir_dialogo_arquivo(self):
         caminho_arquivo, _ = QFileDialog.getOpenFileName(
             self,
@@ -153,7 +176,7 @@ class MarketplaceUI(QMainWindow):
         menu_layout.setContentsMargins(0, 0, 0, 0)  # Remove as margens
 
         # Exemplo de adição de botões à barra lateral
-        botao_perfil = QPushButton("Perfil")
+        botao_perfil = QPushButton("Meu Perfil")
         botao_perfil.setFixedSize(250, 100)  # Tamanho fixo do botão
         botao_perfil.setStyleSheet("""
             QPushButton {
@@ -189,6 +212,7 @@ class MarketplaceUI(QMainWindow):
                 background-color: #000000;
             }
         """)
+        botao_lojas.clicked.connect(self.abrir_tela_minhas_lojas)
 
         botao_pedidos = QPushButton("Meus Pedidos")
         botao_pedidos.setFixedSize(250, 100)  # Tamanho fixo do botão
@@ -207,6 +231,7 @@ class MarketplaceUI(QMainWindow):
                 background-color: #000000;
             }
         """)
+        botao_pedidos.clicked.connect(self.abrir_tela_meus_pedidos)
 
         # Adicionando os botões ao layout da barra lateral
         menu_layout.addWidget(botao_perfil, alignment=Qt.AlignmentFlag.AlignHCenter)  # Alinhando ao centro
@@ -437,26 +462,7 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        voltar = QPushButton("Voltar")
-        voltar.setFixedSize(100, 30)
-        voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        voltar.clicked.connect(self.voltar_para_lista)
-        layout_horizontal.addWidget(voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         loja = QPushButton("Loja")
         loja.setFixedSize(100, 30)
@@ -534,26 +540,7 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        voltar = QPushButton("Voltar")
-        voltar.setFixedSize(100, 30)
-        voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        voltar.clicked.connect(self.voltar_para_lista)
-        layout_horizontal.addWidget(voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addLayout(layout_horizontal)
 
@@ -627,26 +614,7 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        voltar = QPushButton("Voltar")
-        voltar.setFixedSize(100, 30)
-        voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        voltar.clicked.connect(self.voltar_para_lista)
-        layout_horizontal.addWidget(voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addLayout(layout_horizontal)
 
@@ -665,26 +633,7 @@ class MarketplaceUI(QMainWindow):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
-        botao_voltar = QPushButton("Voltar")
-        botao_voltar.setFixedSize(110, 30)
-        botao_voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_voltar.clicked.connect(self.voltar_para_lista)
-        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addSpacing(50)
 
@@ -749,26 +698,7 @@ class MarketplaceUI(QMainWindow):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
-        botao_voltar = QPushButton("Voltar")
-        botao_voltar.setFixedSize(110, 30)
-        botao_voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_voltar.clicked.connect(self.voltar_para_lista)
-        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addSpacing(50)
 
@@ -833,28 +763,9 @@ class MarketplaceUI(QMainWindow):
     def criar_tela_perfil(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
-        layout_horizontal = QHBoxLayout(tela)
+        layout_horizontal = QHBoxLayout()
 
-        botao_voltar = QPushButton("Voltar")
-        botao_voltar.setFixedSize(110, 30)
-        botao_voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_voltar.clicked.connect(self.voltar_para_lista)
-        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_editar = QPushButton("Editar")
         botao_editar.setFixedSize(110, 30)
@@ -878,90 +789,104 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
-        layout_vertical.addStretch()
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meu Perfil</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(80)
+
         formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
         layout_vertical.addWidget(formulario)
-
-        # Título com espaço à esquerda
-        titulo_layout = QHBoxLayout()
-        titulo_layout.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))  # 40px à esquerda
-
         layout_vertical.addStretch()
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Perfil</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        titulo_layout.addWidget(titulo)
-        layout_vertical.addLayout(titulo_layout)
-        layout_vertical.addSpacing(50)
 
         return tela
     
-    def abrir_tela_lojas(self):
-        tela_lojas = self.criar_tela_lojas()
+    def abrir_tela_minhas_lojas(self):
+        tela_lojas = self.criar_tela_minhas_lojas()
         self.stack.addWidget(tela_lojas)
         self.stack.setCurrentWidget(tela_lojas)
 
-    def criar_tela_lojas(self):
+    def criar_tela_minhas_lojas(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
-        layout_horizontal = QHBoxLayout(tela)
 
-        botao_voltar = QPushButton("Voltar")
-        botao_voltar.setFixedSize(110, 30)
-        botao_voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
+        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Minhas Lojas</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(80)
+
+        # Bloco retangular
+        bloco = QFrame()
+        bloco.setFrameShape(QFrame.Shape.StyledPanel)
+        bloco.setStyleSheet("""
+            QFrame {
+                border: 2px solid #444;
                 border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
+                padding: 10px;
+                background-color: #000000;
             }
         """)
-        botao_voltar.clicked.connect(self.voltar_para_lista)
-        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = QPushButton("Editar")
-        botao_editar.setFixedSize(110, 30)
-        botao_editar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
+        bloco_layout = QVBoxLayout(bloco)
+
+        # Conteúdo do bloco
+        titulo = QLabel("Nome: João Silva")
+        email = QLabel("Email: joao@example.com")
+        pontuacao = QLabel("Pontuação: 850")
+
+        for widget in [titulo, email, pontuacao]:
+            widget.setStyleSheet("font-size: 16px;")
+            bloco_layout.addWidget(widget)
+
+        # Adiciona o bloco ao layout principal
+        layout_vertical.addWidget(bloco)
+        layout_vertical.addStretch()
+
+        return tela
+    
+    def abrir_tela_meus_pedidos(self):
+        tela_pedidos = self.criar_tela_meus_pedidos()
+        self.stack.addWidget(tela_pedidos)
+        self.stack.setCurrentWidget(tela_pedidos)
+
+    def criar_tela_meus_pedidos(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+        
+        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Pedidos</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(80)
+
+        # Bloco retangular
+        bloco = QFrame()
+        bloco.setFrameShape(QFrame.Shape.StyledPanel)
+        bloco.setStyleSheet("""
+            QFrame {
+                border: 2px solid #444;
                 border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
+                padding: 10px;
+                background-color: #000000;
             }
         """)
-        #botao_editar.clicked.connect(self.abrir_tela_cadastro)
-        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
-        layout_vertical.addLayout(layout_horizontal)
 
+        bloco_layout = QVBoxLayout(bloco)
+
+        # Conteúdo do bloco
+        titulo = QLabel("Nome: João Silva")
+        email = QLabel("Email: joao@example.com")
+        pontuacao = QLabel("Pontuação: 850")
+
+        for widget in [titulo, email, pontuacao]:
+            widget.setStyleSheet("font-size: 16px;")
+            bloco_layout.addWidget(widget)
+
+        # Adiciona o bloco ao layout principal
+        layout_vertical.addWidget(bloco)
         layout_vertical.addStretch()
-        formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
-        layout_vertical.addWidget(formulario)
-
-        # Título com espaço à esquerda
-        titulo_layout = QHBoxLayout()
-        titulo_layout.addSpacerItem(QSpacerItem(40, 0, QSizePolicy.Policy.Fixed, QSizePolicy.Policy.Minimum))  # 40px à esquerda
-
-        layout_vertical.addStretch()
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Perfil</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignLeft)
-        titulo_layout.addWidget(titulo)
-        layout_vertical.addLayout(titulo_layout)
-        layout_vertical.addSpacing(50)
 
         return tela
         
