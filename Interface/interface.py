@@ -29,6 +29,7 @@ class Formulario(QWidget):
         form_layout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter)  # Centraliza o formulário
 
         self.inputs = {}
+        self.erros = {}
 
         for nome in campos:
             entrada = QLineEdit()
@@ -39,11 +40,112 @@ class Formulario(QWidget):
             label = QLabel(f"{nome}:")
             label.setStyleSheet("font-size: 25px;")
 
-            form_layout.addRow(label, entrada)
+            erro_label = QLabel("")
+            erro_label.setStyleSheet("color: red; font-size: 18px;")
+            erro_label.setVisible(False)
+
+            self.inputs[nome] = entrada
+            self.erros[nome] = erro_label
+
+            campo_layout = QVBoxLayout()
+            campo_layout.addWidget(entrada)
+            campo_layout.addWidget(erro_label)
+
+            form_layout.addRow(label, campo_layout)
             self.inputs[nome] = entrada
 
         layout_principal.addLayout(form_layout)
         self.setLayout(layout_principal)
+
+    def preencher_campos(self, valores: dict):
+        """
+        Preenche os campos do formulário com os valores fornecidos.
+        Exemplo: {"Nome": "Ana", "Email": "ana@email.com"}
+        """
+        for chave, valor in valores.items():
+            if chave in self.inputs:
+                self.inputs[chave].setText(str(valor))
+
+    def validar_tipos(self, campos_tipos: dict):
+        """
+        Valida os campos do formulário com base no tipo esperado.
+        
+        :param campos_tipos: dicionário no formato {"Nome": str, "Idade": int, ...}
+        :return: dicionário de erros (vazio se não houver erro)
+        """
+        has_error = False
+
+        for nome, tipo_esperado in campos_tipos.items():
+            texto = self.inputs[nome].text().strip()
+
+            if tipo_esperado == str:
+                if not texto:
+                    erro = "Este campo não pode estar vazio."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                else:
+                    self.erros[nome].setText(str(""))
+
+            elif tipo_esperado == int:
+                if not texto.isdigit():
+                    erro = "Digite um número inteiro válido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                else:
+                    self.erros[nome].setText(str(""))
+                
+            elif tipo_esperado == float:
+                try:
+                    float(texto)
+                except ValueError:
+                    erro ="Digite um número decimal válido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                self.erros[nome].setText(str(""))
+
+            elif tipo_esperado == bool:
+                if texto.lower() not in ["true", "false"]:
+                    erro = "Digite 'true' ou 'false'."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                self.erros[nome].setText(str(""))
+
+            if nome.lower() == "email":
+                if not vu.check_email(texto):
+                    erro = "Email inválido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                else:
+                    self.erros[nome].setText(str(""))
+
+            elif nome.lower() == "cpf":
+                if not vu.check_cpf(texto):
+                    erro = "CPF inválido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                else:
+                    self.erros[nome].setText(str(""))
+
+        return has_error
+    
+    def exibir_erros(self):
+        """
+        Exibe os erros do dicionário de erros.
+        """
+        for nome, erro in self.erros.items():
+            texto = erro.text()
+            if texto:
+                erro.setText(texto)
+                erro.setVisible(True)
+            else:
+                erro.setText("")
+                erro.setVisible(False)
 
 class CarrosselImagem(QWidget):
     def __init__(self, lista_caminhos_imagem, largura=200, altura=200):
@@ -646,6 +748,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addSpacing(50)
 
         formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
+        formulario.validar_tipos({"Nome": str, "CPF": str, "Email": str, "Senha": str})
         layout_vertical.addWidget(formulario)
 
         botao_cadastrar = QPushButton("Cadastrar")
@@ -666,7 +769,7 @@ class MarketplaceUI(QMainWindow):
                 background-color: #003f7f;
             }
         """)
-        #botao_cadastrar.clicked.connect(lambda: self.cadastrar_usuario(formulario))
+        botao_cadastrar.clicked.connect(lambda: formulario.exibir_erros())
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
 
         botao_login = QPushButton("Login")
@@ -788,7 +891,6 @@ class MarketplaceUI(QMainWindow):
                 background-color: #003f7f;
             }
         """)
-        #botao_editar.clicked.connect(self.abrir_tela_cadastro)
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -798,6 +900,9 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addSpacing(80)
 
         formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
+        formulario.preencher_campos({"Nome": "João Silva", "CPF": "123.456.789-10", "Email": "joaosilva@gmail.com"})
+        formulario.validar_tipos({"Nome": int, "CPF": str, "Email": str})
+        botao_editar.clicked.connect(lambda: formulario.exibir_erros())
         layout_vertical.addWidget(formulario)
         layout_vertical.addStretch()
 
