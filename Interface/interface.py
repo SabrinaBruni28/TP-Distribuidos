@@ -8,14 +8,72 @@ from models.produto import Produto
 from models.usuario import Usuario_Identificado
 from models.validation_utils import ValidationUtils as vu
 from models.cliente import UnixSocketClient
+from models.endereco import Endereco
 
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QSize
 
 from PyQt6.QtWidgets import (
    QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QFileDialog,QFormLayout, QSpacerItem, QSizePolicy,
-   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton
-)   
+   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton, QComboBox
+) 
+
+class FormularioOpcoes(QWidget):
+    def __init__(self, campos, largura=300, altura=40):
+        super().__init__()
+
+        layout_principal = QVBoxLayout()
+        layout_principal.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        form_layout = QFormLayout()
+        form_layout.setLabelAlignment(Qt.AlignmentFlag.AlignRight)
+        form_layout.setFormAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        self.inputs = {}
+        self.botoes_adicionar = {}
+
+        for nome in campos:
+            # Label
+            label = QLabel(f"{nome}:")
+            label.setStyleSheet("font-size: 25px;")
+
+            # ComboBox
+            combo = QComboBox()
+            combo.setFixedSize(largura, altura)
+            combo.setStyleSheet("font-size: 18px;")
+
+            # Botão
+            botao_adicionar = QPushButton("Adicionar")
+            botao_adicionar.setFixedSize(100, 40)
+            botao_adicionar.hide()
+            botao_adicionar.setStyleSheet("font-size: 18px;")
+
+            # Layout para Combo + Botão
+            layout_combo = QHBoxLayout()
+            layout_combo.addWidget(combo)
+            layout_combo.addWidget(botao_adicionar)
+
+            # Container vertical para alinhar corretamente
+            campo_layout = QVBoxLayout()
+            campo_layout.addLayout(layout_combo)
+
+            form_layout.addRow(label, campo_layout)
+
+            # Armazenar para uso posterior
+            self.inputs[nome] = combo
+            self.botoes_adicionar[nome] = botao_adicionar
+
+        layout_principal.addLayout(form_layout)
+        self.setLayout(layout_principal)
+
+    def ativar_botao_adicionar(self, campo, acao):
+        botao = self.botoes_adicionar[campo]
+        botao.clicked.connect(lambda: acao)
+        botao.show()
+
+    def adicionar_opcao(self, campo, opcao="Nova opção"):
+        combo = self.inputs[campo]
+        combo.addItem(opcao)
 
 class Formulario(QWidget):
     def __init__(self, campos=[], largura=300, altura=30):
@@ -71,7 +129,7 @@ class Formulario(QWidget):
         Valida os campos do formulário com base no tipo esperado.
         
         :param campos_tipos: dicionário no formato {"Nome": str, "Idade": int, ...}
-        :return: dicionário de erros (vazio se não houver erro)
+        :return: se houve erro (True) ou não (False)
         """
         has_error = False
 
@@ -88,7 +146,9 @@ class Formulario(QWidget):
                     self.erros[nome].setText(str(""))
 
             elif tipo_esperado == int:
-                if not texto.isdigit():
+                try:
+                    int(texto)
+                except ValueError:
                     erro = "Digite um número inteiro válido."
                     self.erros[nome].setText(str(erro))
                     has_error = True
@@ -141,10 +201,8 @@ class Formulario(QWidget):
         for nome, erro in self.erros.items():
             texto = erro.text()
             if texto:
-                erro.setText(texto)
                 erro.setVisible(True)
             else:
-                erro.setText("")
                 erro.setVisible(False)
 
 class CarrosselImagem(QWidget):
@@ -632,7 +690,7 @@ class MarketplaceUI(QMainWindow):
             }
         """)
         
-        comprar.clicked.connect(self.abrir_tela_login)
+        comprar.clicked.connect(lambda: self.abrir_tela_comprar(anuncio))
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal_2)
@@ -713,6 +771,11 @@ class MarketplaceUI(QMainWindow):
             bloco = self.criar_bloco_anuncio(anuncio, largura_bloco, altura_bloco)
             self.grid.addWidget(bloco, i // 5, i % 5)
     
+    def abrir_tela_comprar(self, anuncio: Anuncio):
+        tela_comprar = self.criar_tela_comprar(anuncio)
+        self.stack.addWidget(tela_comprar)
+        self.stack.setCurrentWidget(tela_comprar)
+
     def criar_tela_comprar(self, anuncio: Anuncio):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
@@ -723,12 +786,53 @@ class MarketplaceUI(QMainWindow):
 
         layout_vertical.addLayout(layout_horizontal)
 
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Comprar</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = FormularioOpcoes(campos=["Quantidade", "Endereço"],largura=600, altura=50)
+        end = Endereco(rua="Aristides Teixeira Duarte", numero=234, bairro="California", cidade="Florestal", estado="MG", complemento="Apartamento 205")
+        formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
+        end = Endereco(rua="São José", numero=92, bairro="Saõ Jośe do Triunfo", cidade="Viçosa", estado="MG", complemento="Casa")
+        formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
+        formulario.ativar_botao_adicionar(campo="Endereço", acao=formulario.adicionar_opcao(campo="Endereço"))
+        for i in range(anuncio.quantidade_disponivel):
+            formulario.adicionar_opcao(campo="Quantidade", opcao=str(i+1))
+
+        #layout_vertical.addWidget(formulario1, alignment=Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(formulario, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        botao_confirmar = QPushButton("Confirmar")
+        botao_confirmar.setFixedSize(200, 50)
+        botao_confirmar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 30px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_confirmar.clicked.connect(lambda: self.comprar(anuncio, formulario1, formulario2))
+        layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
+
         return tela
 
-    def comprar(self, anuncio: Anuncio, quantidade_label: QLabel):
-        anuncio.subtrair_quantidade(1)
-        quantidade_label.setText(f"<span style='font-size: 20px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
-
+    def comprar(self, anuncio: Anuncio, formulario: Formulario, formularioOp: FormularioOpcoes):
+        erro = formulario.validar_tipos({"Quantidade": int})
+        if erro:
+            formulario.exibir_erros()
+        else:
+            anuncio.subtrair_quantidade(1)
+        
     def abrir_tela_cadastro(self):
         tela_cadastro = self.criar_tela_cadastro()
         self.stack.addWidget(tela_cadastro)
@@ -869,8 +973,9 @@ class MarketplaceUI(QMainWindow):
     def criar_tela_perfil(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
-        layout_horizontal = QHBoxLayout()
 
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
         layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_editar = QPushButton("Editar")
@@ -894,20 +999,40 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
         titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meu Perfil</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(80)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
 
-        formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
-        formulario.preencher_campos({"Nome": "João Silva", "CPF": "123.456.789-10", "Email": "joaosilva@gmail.com"})
-        formulario.validar_tipos({"Nome": int, "CPF": str, "Email": str})
+        formulario = Formulario(
+            campos=["Nome", "CPF", "Email", "Senha"] + [f"Endereço{i+1}" for i in range(10)],
+            largura=600,
+            altura=50
+        )
+        formulario.preencher_campos({
+            **{"Nome": "João Silva", "CPF": "123.456.789-10", "Email": "joaosilva@gmail.com"},
+            **{f"Endereço{i+1}": f"endereço{i+1}" for i in range(10)}
+        })
+        formulario.validar_tipos({
+            **{"Nome": str, "CPF": str, "Email": str},
+            **{f"Endereço{i+1}": str for i in range(10)}
+        })
         botao_editar.clicked.connect(lambda: formulario.exibir_erros())
-        layout_vertical.addWidget(formulario)
-        layout_vertical.addStretch()
+        layout_conteudo.addWidget(formulario)
+
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
 
         return tela
-    
+
     def abrir_tela_minhas_lojas(self):
         tela_lojas = self.criar_tela_minhas_lojas()
         self.stack.addWidget(tela_lojas)
