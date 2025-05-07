@@ -821,17 +821,13 @@ class MarketplaceUI(QMainWindow):
                 background-color: #003f7f;
             }
         """)
-        botao_confirmar.clicked.connect(lambda: self.comprar(anuncio, formulario1, formulario2))
+        botao_confirmar.clicked.connect(lambda: self.comprar(anuncio, formulario))
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
 
         return tela
 
-    def comprar(self, anuncio: Anuncio, formulario: Formulario, formularioOp: FormularioOpcoes):
-        erro = formulario.validar_tipos({"Quantidade": int})
-        if erro:
-            formulario.exibir_erros()
-        else:
-            anuncio.subtrair_quantidade(1)
+    def comprar(self, anuncio: Anuncio, formularioOp: FormularioOpcoes):
+        anuncio.subtrair_quantidade(1)
         
     def abrir_tela_cadastro(self):
         tela_cadastro = self.criar_tela_cadastro()
@@ -1006,26 +1002,112 @@ class MarketplaceUI(QMainWindow):
 
         titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meu Perfil</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
         formulario = Formulario(
-            campos=["Nome", "CPF", "Email", "Senha"] + [f"Endereço{i+1}" for i in range(10)],
+            campos=["Nome", "CPF", "Email", "Senha"],
             largura=600,
             altura=50
         )
-        formulario.preencher_campos({
-            **{"Nome": "João Silva", "CPF": "123.456.789-10", "Email": "joaosilva@gmail.com"},
-            **{f"Endereço{i+1}": f"endereço{i+1}" for i in range(10)}
-        })
-        formulario.validar_tipos({
-            **{"Nome": str, "CPF": str, "Email": str},
-            **{f"Endereço{i+1}": str for i in range(10)}
-        })
+        formulario.preencher_campos(
+            {"Nome": "João Silva", "CPF": "123.456.789-10", "Email": "joaosilva@gmail.com"}
+        )
+        formulario.validar_tipos(
+            {"Nome": str, "CPF": str, "Email": str}
+        )
         botao_editar.clicked.connect(lambda: formulario.exibir_erros())
         layout_conteudo.addWidget(formulario)
 
+        botao_endereco = QPushButton("Meus Endereços")
+        botao_endereco.setFixedSize(180, 50)
+        botao_endereco.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        botao_endereco.clicked.connect(self.abrir_tela_enderecos)
+        layout_conteudo.addStretch()
+        layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
+
         # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+    
+    def abrir_tela_enderecos(self):
+        tela_enderecos = self.criar_tela_enderecos()
+        self.stack.addWidget(tela_enderecos)
+        self.stack.setCurrentWidget(tela_enderecos)
+
+    def criar_tela_enderecos(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = QPushButton("Editar")
+        botao_editar.setFixedSize(110, 30)
+        botao_editar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus enderecos</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=[f"Endereço{i+1}" for i in range(10)],
+            largura=600,
+            altura=50
+        )
+        formulario.preencher_campos(
+            {f"Endereço{i+1}": f"endereço{i+1}" for i in range(10)}
+        )
+        formulario.validar_tipos(
+            {f"Endereço{i+1}": str for i in range(10)}
+        )
+        botao_editar.clicked.connect(lambda: formulario.exibir_erros())
+        layout_conteudo.addWidget(formulario)
+
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(conteudo_scroll)
@@ -1046,34 +1128,79 @@ class MarketplaceUI(QMainWindow):
 
         titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Minhas Lojas</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addSpacing(40)
         layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(80)
+        layout_vertical.addSpacing(40)
 
-        # Bloco retangular
-        bloco = QFrame()
-        bloco.setFrameShape(QFrame.Shape.StyledPanel)
-        bloco.setStyleSheet("""
-            QFrame {
-                border: 2px solid #444;
-                border-radius: 10px;
-                padding: 10px;
-                background-color: #000000;
-            }
-        """)
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
 
-        bloco_layout = QVBoxLayout(bloco)
+        conteudo_scroll = QWidget()
+        layout_loja = QVBoxLayout(conteudo_scroll)
+        layout_loja.setSpacing(15)
 
-        # Conteúdo do bloco
-        titulo = QLabel("Nome: João Silva")
-        email = QLabel("Email: joao@example.com")
-        pontuacao = QLabel("Pontuação: 850")
+        loja = [
+            {"nome": "João Silva"},
+            {"nome": "Maria Lima"},
+            {"nome": "Carlos Souza"},
+        ]
 
-        for widget in [titulo, email, pontuacao]:
-            widget.setStyleSheet("font-size: 16px;")
-            bloco_layout.addWidget(widget)
+        for pedido in loja:
+            bloco_botao = QPushButton()
+            bloco_botao.setStyleSheet("""
+                QPushButton {
+                    border: 2px solid #444;
+                    border-radius: 10px;
+                    padding: 15px;
+                    background-color: #222;
+                    text-align: left;
+                }
+                QPushButton:hover {
+                    background-color: #333;
+                }
+            """)
+            bloco_botao.setFixedHeight(100)  # Ajuste conforme quiser
+            bloco_botao.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        # Adiciona o bloco ao layout principal
-        layout_vertical.addWidget(bloco)
+            conteudo = QWidget()
+            conteudo_layout = QHBoxLayout(conteudo)  # HBox: imagem à esquerda, texto à direita
+            conteudo_layout.setContentsMargins(10, 10, 10, 10)
+
+            # Imagem (exemplo com caminho fixo)
+            imagem_label = QLabel()
+            imagem_label.setPixmap(QPixmap("imagens/notebook.png").scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio))
+            imagem_label.setFixedSize(64, 64)
+
+            # Textos
+            textos = QWidget()
+            textos_layout = QVBoxLayout(textos)
+            textos_layout.setContentsMargins(10, 0, 0, 0)  # Espaço entre imagem e texto
+
+            nome = QLabel(f"Nome: {pedido['nome']}")
+            nome.setStyleSheet("font-size: 16px; color: white;")
+
+            textos_layout.addWidget(nome)
+
+            # Montagem
+            conteudo_layout.addWidget(imagem_label)
+            conteudo_layout.addWidget(textos)
+            bloco_botao.setLayout(conteudo_layout)
+
+
+            for widget in [nome]:
+                widget.setStyleSheet("font-size: 16px; color: white;")
+
+            conteudo_layout.addWidget(nome)
+
+            bloco_botao.setLayout(conteudo_layout)
+            bloco_botao.clicked.connect(lambda _, p=pedido: print(f"Pedido clicado: {p['nome']}"))
+
+            layout_loja.addWidget(bloco_botao)
+
+        layout_loja.addStretch()
+        scroll_area.setWidget(conteudo_scroll)
+
+        layout_vertical.addWidget(scroll_area)
         layout_vertical.addStretch()
 
         return tela
@@ -1086,43 +1213,73 @@ class MarketplaceUI(QMainWindow):
     def criar_tela_meus_pedidos(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
-        
+
         layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Pedidos</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addSpacing(40)
         layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(80)
+        layout_vertical.addSpacing(40)
 
-        # Bloco retangular
-        bloco = QFrame()
-        bloco.setFrameShape(QFrame.Shape.StyledPanel)
-        bloco.setStyleSheet("""
-            QFrame {
-                border: 2px solid #444;
-                border-radius: 10px;
-                padding: 10px;
-                background-color: #000000;
-            }
-        """)
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
 
-        bloco_layout = QVBoxLayout(bloco)
+        conteudo_scroll = QWidget()
+        layout_pedidos = QVBoxLayout(conteudo_scroll)
+        layout_pedidos.setSpacing(15)
 
-        # Conteúdo do bloco
-        titulo = QLabel("Nome: João Silva")
-        email = QLabel("Email: joao@example.com")
-        pontuacao = QLabel("Pontuação: 850")
+        pedidos = [
+            {"nome": "João Silva", "email": "joao@example.com", "pontuacao": 850},
+            {"nome": "Maria Lima", "email": "maria@example.com", "pontuacao": 910},
+            {"nome": "Carlos Souza", "email": "carlos@example.com", "pontuacao": 720},
+        ]
 
-        for widget in [titulo, email, pontuacao]:
-            widget.setStyleSheet("font-size: 16px;")
-            bloco_layout.addWidget(widget)
+        for pedido in pedidos:
+            bloco_botao = QPushButton()
+            bloco_botao.setStyleSheet("""
+                QPushButton {
+                    border: 2px solid #444;
+                    border-radius: 10px;
+                    padding: 15px;
+                    background-color: #222;
+                    text-align: left;
+                }
+                QPushButton:hover {
+                    background-color: #333;
+                }
+            """)
+            bloco_botao.setFixedHeight(100)  # Ajuste conforme quiser
+            bloco_botao.setCursor(Qt.CursorShape.PointingHandCursor)
 
-        # Adiciona o bloco ao layout principal
-        layout_vertical.addWidget(bloco)
+            conteudo = QWidget()
+            conteudo_layout = QVBoxLayout(conteudo)
+            conteudo_layout.setContentsMargins(10, 10, 10, 10)
+
+            nome = QLabel(f"Nome: {pedido['nome']}")
+            email = QLabel(f"Email: {pedido['email']}")
+            pontuacao = QLabel(f"Pontuação: {pedido['pontuacao']}")
+
+            for widget in [nome, email, pontuacao]:
+                widget.setStyleSheet("font-size: 16px; color: white;")
+
+            conteudo_layout.addWidget(nome)
+            conteudo_layout.addWidget(email)
+            conteudo_layout.addWidget(pontuacao)
+
+            bloco_botao.setLayout(conteudo_layout)
+            bloco_botao.clicked.connect(lambda _, p=pedido: print(f"Pedido clicado: {p['nome']}"))
+
+            layout_pedidos.addWidget(bloco_botao)
+
+        layout_pedidos.addStretch()
+        scroll_area.setWidget(conteudo_scroll)
+
+        layout_vertical.addWidget(scroll_area)
         layout_vertical.addStretch()
 
         return tela
-        
+
 if __name__ == "__main__":
    app = QApplication(sys.argv)
    window = MarketplaceUI()
