@@ -1038,7 +1038,7 @@ class MarketplaceUI(QMainWindow):
                 background-color: #003f7f;
             }
         """)
-        botao_endereco.clicked.connect(self.abrir_tela_enderecos)
+        botao_endereco.clicked.connect(self.abrir_tela_meus_enderecos)
         layout_conteudo.addStretch()
         layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1050,15 +1050,111 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def abrir_tela_enderecos(self):
-        tela_enderecos = self.criar_tela_enderecos()
-        self.stack.addWidget(tela_enderecos)
-        self.stack.setCurrentWidget(tela_enderecos)
+    def abrir_tela_meus_enderecos(self):
+        tela_meus_enderecos = self.criar_tela_meus_enderecos()
+        self.stack.addWidget(tela_meus_enderecos)
+        self.stack.setCurrentWidget(tela_meus_enderecos)
 
-    def criar_tela_enderecos(self):
+    def criar_tela_meus_enderecos(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus enderecos</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        layout_horizontal2 = QHBoxLayout()
+
+        formulario = Formulario(
+            campos=[f"Endereço{i+1}" for i in range(10)],
+            largura=600,
+            altura=50
+        )
+        formulario.preencher_campos(
+            {f"Endereço{i+1}": f"endereço{i+1}" for i in range(10)}
+        )
+        formulario.validar_tipos(
+            {f"Endereço{i+1}": str for i in range(10)}
+        )
+        layout_horizontal2.addWidget(formulario)
+
+        layout_vertical2 = QVBoxLayout()
+       
+        botao_editar = []
+        for i in range(10):
+            botao_editar.append(QPushButton("Editar"))
+            botao_editar[i].setFixedSize(110, 30)
+            botao_editar[i].setStyleSheet("""
+                QPushButton {
+                    background-color: #0078d7;
+                    color: white;
+                    border: 2px solid #005fa3;
+                    border-radius: 10px;
+                    font-weight: bold;
+                    font-size: 20px;
+                }
+                QPushButton:hover {
+                    background-color: #005fa3;
+                }
+                QPushButton:pressed {
+                    background-color: #003f7f;
+                }
+            """)
+            botao_editar[i].clicked.connect(lambda: self.abrir_tela_endereco(f"{i}"))
+            layout_vertical2.addWidget(botao_editar[i])
+
+        layout_horizontal2.addLayout(layout_vertical2)
+        layout_conteudo.addLayout(layout_horizontal2)
+
+        botao_adicionar = QPushButton("Adicionar")
+        botao_adicionar.setFixedSize(110, 30)
+        botao_adicionar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 20px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        #botao_adicionar.clicked.connect(lambda: formulario.exibir_erros())
+        layout_conteudo.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignLeft)
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+    
+    def abrir_tela_endereco(self, endereco):
+        tela_endereco = self.criar_tela_endereco(endereco)
+        self.stack.addWidget(tela_endereco)
+        self.stack.setCurrentWidget(tela_endereco)
+
+    def criar_tela_endereco(self, endereco):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
         layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1088,26 +1184,27 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus enderecos</span>")
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Endereço {endereco}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
         formulario = Formulario(
-            campos=[f"Endereço{i+1}" for i in range(10)],
+            campos=["Rua", "N°", "Bairro", "Cidade", "Estado", "Complemento"],
             largura=600,
             altura=50
         )
         formulario.preencher_campos(
-            {f"Endereço{i+1}": f"endereço{i+1}" for i in range(10)}
+            {"Rua": "", "N°": "", "Bairro": "", "Cidade": "", "Estado": "", "Complemento": ""}
         )
         formulario.validar_tipos(
-            {f"Endereço{i+1}": str for i in range(10)}
+            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
         botao_editar.clicked.connect(lambda: formulario.exibir_erros())
         layout_conteudo.addWidget(formulario)
-
+        
+        # Scroll area com o título e formulário
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(conteudo_scroll)
@@ -1202,6 +1299,50 @@ class MarketplaceUI(QMainWindow):
 
         layout_vertical.addWidget(scroll_area)
         layout_vertical.addStretch()
+
+        return tela
+    
+    def abrir_tela_produto(self, produto):
+        tela_produto = self.criar_tela_novo_produto(produto)
+        self.stack.addWidget(tela_produto)
+        self.stack.setCurrentWidget(tela_produto)
+
+    def criar_tela_novo_produto(self, produto):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Produto</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Nome", "Descrição", "Imagens"],
+            largura=600,
+            altura=50
+        )
+    
+        formulario.validar_tipos(
+            {"Nome": str, "Descrição": str, "Imagens": str}
+        )
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
 
         return tela
     

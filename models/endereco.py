@@ -1,6 +1,6 @@
 
 class Endereco:
-    def __init__(self, id = 0, rua = "", numero = "", complemento = "", bairro = "", cidade = "", estado = ""):
+    def __init__(self, id = 0, rua = "", numero = 0, complemento = "", bairro = "", cidade = "", estado = ""):
         self.id = id
         self.rua = rua
         self.numero = numero
