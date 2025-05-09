@@ -5,18 +5,33 @@ import random
 cliente_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 # Conecta ao servidor
-cliente_socket.connect(('192.168.1.18', 5000))
+cliente_socket.connect(('127.0.0.1', 5000))
+cliente_socket.send("visualizar | todos_anuncios".encode("utf-8")[:2048])
 
-while True:
-    numero = random.randint(1, 2)
-    # Envia dados
-    if (numero == 1):
-        mensagem = "cadastrar"
-        cliente_socket.sendall(mensagem.encode())
-    else:
-        mensagem = "login"
-        cliente_socket.sendall(mensagem.encode())
+resposta = cliente_socket.recv(2048)
+resposta = resposta.decode("utf-8")
 
-    # Recebe resposta
-    resposta = cliente_socket.recv(1024).decode()
-    print("Resposta do servidor:", resposta)
+print(f"Recebido: {resposta}")
+try:
+    while True:
+        # Pega a mensagem de entrada do usuário e envia ao servidor
+        msg = input("Mensagem: ")
+        cliente_socket.send(msg.encode("utf-8")[:2048])
+
+        # Recebe a mensagem do servidor
+        resposta = cliente_socket.recv(2048)
+        resposta = resposta.decode("utf-8")
+
+        # Se o servidor envia "closed" na carga, sai do loop
+        # e fecha o socket client
+        if resposta == "closed":
+            break
+
+        print(f"Recebido: {resposta}")
+except Exception as e:
+    print(f"Erro: {e}")
+
+finally:
+    # Fecha o socket client (a conexão com o servidor)
+    cliente_socket.close()
+    print("Conexão com o servidor fechada.")
