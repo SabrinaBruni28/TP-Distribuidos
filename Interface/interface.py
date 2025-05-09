@@ -279,9 +279,9 @@ class MarketplaceUI(QMainWindow):
         self.barra_superior = self.criar_barra_superior()
 
         self.anuncios = self.criar_lista_anuncios()
-        self.tela_lista = self.criar_tela_lista_anuncios(self.anuncios)
+        self.tela_lista = self.tela_lista_anuncios(self.anuncios)
 
-        self.tela_inicial = self.criar_tela_inicial()
+        self.tela_inicial = self.tela_inicial()
 
         self.stack.addWidget(self.tela_inicial)
 
@@ -574,7 +574,7 @@ class MarketplaceUI(QMainWindow):
             ),
         ] * 20
 
-    def criar_tela_inicial(self):
+    def tela_inicial(self):
         tela = QWidget()
 
         # Layout horizontal principal (menu + conteúdo)
@@ -595,7 +595,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
 
-    def criar_tela_lista_anuncios(self, anuncios):
+    def tela_lista_anuncios(self, anuncios):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -656,16 +656,16 @@ class MarketplaceUI(QMainWindow):
         return bloco
 
     def abrir_tela_detalhes_anuncio(self, anuncio):
-        tela_detalhes = self.criar_tela_detalhes_anuncio(anuncio)
+        tela_detalhes = self.tela_detalhes_anuncio(anuncio)
         self.stack.addWidget(tela_detalhes)
         self.stack.setCurrentWidget(tela_detalhes)
     
     def abrir_tela_detalhes_loja(self, loja):
-        tela_detalhes = self.criar_tela_detalhes_loja(loja)
+        tela_detalhes = self.tela_detalhes_loja(loja)
         self.stack.addWidget(tela_detalhes)
         self.stack.setCurrentWidget(tela_detalhes)
 
-    def criar_tela_detalhes_anuncio(self, anuncio: Anuncio):
+    def tela_detalhes_anuncio(self, anuncio: Anuncio):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -743,7 +743,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
 
-    def criar_tela_detalhes_loja(self, loja: Loja):
+    def tela_detalhes_loja(self, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -763,7 +763,7 @@ class MarketplaceUI(QMainWindow):
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(titulo)
 
-        anuncios = self.criar_tela_lista_anuncios(loja.anuncios)
+        anuncios = self.tela_lista_anuncios(loja.anuncios)
         self.atualizar_lista_anuncios(loja.anuncios)
         layout_vertical.addWidget(anuncios)
 
@@ -818,11 +818,11 @@ class MarketplaceUI(QMainWindow):
             self.grid.addWidget(bloco, i // 5, i % 5)
     
     def abrir_tela_comprar(self, anuncio: Anuncio):
-        tela_comprar = self.criar_tela_comprar(anuncio)
+        tela_comprar = self.tela_comprar(anuncio)
         self.stack.addWidget(tela_comprar)
         self.stack.setCurrentWidget(tela_comprar)
 
-    def criar_tela_comprar(self, anuncio: Anuncio):
+    def tela_comprar(self, anuncio: Anuncio):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -876,11 +876,11 @@ class MarketplaceUI(QMainWindow):
         anuncio.subtrair_quantidade(1)
         
     def abrir_tela_cadastro(self):
-        tela_cadastro = self.criar_tela_cadastro()
+        tela_cadastro = self.tela_cadastro()
         self.stack.addWidget(tela_cadastro)
         self.stack.setCurrentWidget(tela_cadastro)
 
-    def criar_tela_cadastro(self):
+    def tela_cadastro(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -942,11 +942,11 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def abrir_tela_login(self):
-        tela_login = self.criar_tela_login()
+        tela_login = self.tela_login()
         self.stack.addWidget(tela_login)
         self.stack.setCurrentWidget(tela_login)
 
-    def criar_tela_login(self):
+    def tela_login(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1008,11 +1008,11 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def abrir_tela_perfil(self):
-        tela_perfil = self.criar_tela_perfil()
+        tela_perfil = self.tela_perfil()
         self.stack.addWidget(tela_perfil)
         self.stack.setCurrentWidget(tela_perfil)
 
-    def criar_tela_perfil(self):
+    def tela_perfil(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1080,11 +1080,11 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def abrir_tela_meus_enderecos(self):
-        tela_meus_enderecos = self.criar_tela_meus_enderecos()
+        tela_meus_enderecos = self.tela_meus_enderecos()
         self.stack.addWidget(tela_meus_enderecos)
         self.stack.setCurrentWidget(tela_meus_enderecos)
 
-    def criar_tela_meus_enderecos(self):
+    def tela_meus_enderecos(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1159,11 +1159,11 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def abrir_tela_endereco(self, endereco):
-        tela_endereco = self.criar_tela_endereco(endereco)
+        tela_endereco = self.tela_endereco(endereco)
         self.stack.addWidget(tela_endereco)
         self.stack.setCurrentWidget(tela_endereco)
 
-    def criar_tela_endereco(self, endereco):
+    def tela_endereco(self, endereco):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1209,11 +1209,11 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def abrir_tela_minhas_lojas(self):
-        tela_lojas = self.criar_tela_minhas_lojas()
+        tela_lojas = self.tela_minhas_lojas()
         self.stack.addWidget(tela_lojas)
         self.stack.setCurrentWidget(tela_lojas)
 
-    def criar_tela_minhas_lojas(self):
+    def tela_minhas_lojas(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1298,12 +1298,12 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def abrir_tela_nova_loja(self, loja):
-        tela_loja = self.criar_tela_nova_loja(loja)
+    def abrir_tela_criar_loja(self, loja):
+        tela_loja = self.tela_criar_loja(loja)
         self.stack.addWidget(tela_loja)
         self.stack.setCurrentWidget(tela_loja)
 
-    def criar_tela_nova_loja(self, loja):
+    def tela_criar_loja(self, loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1346,12 +1346,12 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def abrir_tela_novo_produto(self, produto):
-        tela_produto = self.criar_tela_novo_produto(produto)
+    def abrir_tela_criar_produto(self, produto):
+        tela_produto = self.tela_criar_produto(produto)
         self.stack.addWidget(tela_produto)
         self.stack.setCurrentWidget(tela_produto)
 
-    def criar_tela_novo_produto(self, produto):
+    def tela_criar_produto(self, produto):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1395,11 +1395,11 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def abrir_tela_meus_pedidos(self):
-        tela_pedidos = self.criar_tela_meus_pedidos()
+        tela_pedidos = self.tela_meus_pedidos()
         self.stack.addWidget(tela_pedidos)
         self.stack.setCurrentWidget(tela_pedidos)
 
-    def criar_tela_meus_pedidos(self):
+    def tela_meus_pedidos(self):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
