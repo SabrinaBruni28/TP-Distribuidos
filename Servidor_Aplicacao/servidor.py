@@ -1,6 +1,5 @@
 import socket
 import threading
-import json
 import server_operation as op
 from queue import Queue, Empty
 
@@ -20,7 +19,6 @@ class Visualizar():
         self.getOperacao()
 
     def getOperacao(self):
-        print(f"Olha o tamanho do bixo: {self.mensagemCliente.tamanho} cm")
         if self.mensagemCliente.tamanho < 3:
             self.todosAnuncios()
 
@@ -28,12 +26,12 @@ class Visualizar():
             self.decisor()
 
     def decisor(self):
-        operacao = self.mensagemCliente[1]
+        operacao = self.mensagemCliente.camposMensagem[1]
 
         match operacao:
             case "anuncio":
                 self.anuncio()
-            
+
             case "loja":
                 self.loja()
 
@@ -48,50 +46,54 @@ class Visualizar():
 
             case "meus_pedidos":
                 self.meusPedidos()
-    
+
     def todosAnuncios(self):
-        print("0_o quer ver tudo?")
         mensagemServidor = op.codifica("retornar | anuncios")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
     def anuncio(self):
-        print("Só a cbça?")
-        idAnuncio = self.mensagemCliente[2]
-        mensagemServidor = op.codifica("retornar | anuncio | " + {idAnuncio})
+        idAnuncio = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = op.codifica("retornar | anuncio | " + str(idAnuncio))
 
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
     def loja(self):
-        idLoja = self.mensagemCliente[2]
-        mensagemServidor = op.codifica("retornar | loja | " + {idLoja})
+        idLoja = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = op.codifica("retornar | loja | " + str(idLoja))
 
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
     def minhaLoja(self):
-        idLoja = self.mensagemCliente[2]
-        mensagemServidor = op.codifica("retornar | minha_loja | " + {idLoja})
+        idLoja = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = op.codifica("retornar | minha_loja | " + str(idLoja))
 
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
     def minhasListaLojas(self):
-        idUsuario = self.mensagemCliente[2]
-        mensagemServidor = op.codifica("retornar | minhas_lojas | " + {idUsuario})
+        idUsuario = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = op.codifica("retornar | minhas_lojas | " + str(idUsuario))
 
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
     def pedidos(self):
-        idLoja = self.mensagemCliente[2]
-        mensagemServidor = op.codifica("retornar | pedido | " + {idLoja})
+        idLoja = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = op.codifica("retornar | pedido | " + str(idLoja))
 
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
     def meusPedidos(self):
-        idUsuario = self.mensagemCliente[2]
-        mensagemServidor = op.codifica("retornar | meus_pedidos | " + {idUsuario})
+        idUsuario = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = op.codifica("retornar | meus_pedidos | " + str(idUsuario))
 
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente(mensagemServidor, self.conexao))
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
 
 
 class Editar():
@@ -114,7 +116,7 @@ class Mensagem():
 
     def divideString(self):
         return [ws.strip() for ws in self.stringMensagem.split('|')]
-    
+
 
 
 class FilaDeMensagens(threading.Thread):
@@ -130,7 +132,7 @@ class FilaDeMensagens(threading.Thread):
             return self._fila.get()
         except Empty:
             return None
-        
+
     def enviaAoBanco(self, mensagem):
         try:
             with socket.create_connection(('localhost', 6000)) as servidorBD:
@@ -138,11 +140,10 @@ class FilaDeMensagens(threading.Thread):
                 resposta = servidorBD.recv(4096)
 
                 return op.carrega(resposta)
-            
+
         except Exception as e:
-            print(f"[Fila de Mensagens] Erro ao enviar para o Banco de Dados: {e}")
-            return {"Erro na fila": str(e)}
-        
+            return (f"[Fila de Mensagens] Erro ao enviar para o Banco de Dados: {e}")
+
     def vazia(self):
         return self._fila.empty()
     
@@ -151,12 +152,16 @@ class FilaDeMensagens(threading.Thread):
     
     def run(self):
         while True:
-            mensagem, callback = self.desenfileira()
+            try:
+                mensagem, callback, connect = self.desenfileira()
+            except ValueError:
+                print("[Fila de mensagens] Erro: tupla mal formada na fila.")
+                continue
 
             if mensagem and callback:
                 print("[Fila de Mensagem] Processando uma requisição da fila...")
                 resposta = self.enviaAoBanco(mensagem)
-                callback(resposta, self.conexao)
+                callback(resposta, connect)
 
             else:
                 print("[Fila de mensagens] Erro ao obter callback.")
@@ -185,9 +190,6 @@ class ClientHandler(threading.Thread):
                     break
 
                 print(f"[{self.enderecoCliente}] Comando: {mensagemCliente.stringMensagem}")
-                print(mensagemCliente.camposMensagem)
-
-                print(mensagemCliente.camposMensagem[0])
 
                 # Comando de encerramento explícito
                 if mensagemCliente.camposMensagem[0] == "fim":
@@ -198,6 +200,7 @@ class ClientHandler(threading.Thread):
                 # Dispara thread para processar cada comando SEM quebrar o loop
                 self.decisor(mensagemCliente)
                 self.socketCliente.send("Mensagem recebida.".encode("utf-8")[:2048])
+                del mensagemCliente
 
         except Exception as e:
             print(f"Erro com {self.enderecoCliente} - {e}")
@@ -217,7 +220,6 @@ class ClientHandler(threading.Thread):
                 Cadastramento()
 
             case "visualizar":
-                print("Quer ver é?")
                 Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).run()
 
             case "editar":

@@ -16,9 +16,7 @@ def decodifica(socket_cliente, tamanho_entrada=2048):
     return mensagemCliente.decode("utf-8").lower()
 
 def respostaAoCliente(resposta, socket_cliente):
-        print(f"[Servidor] Resposta da fila: {resposta}")
         try:
             socket_cliente.send(carrega(resposta))
-
         except:
             print("[Servidor] Erro ao enviar resposta ao cliente")
