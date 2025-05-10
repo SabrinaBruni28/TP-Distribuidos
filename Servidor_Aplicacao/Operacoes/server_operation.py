@@ -17,6 +17,6 @@ def decodifica(socket_cliente, tamanho_entrada=2048):
 
 def respostaAoCliente(resposta, socket_cliente):
         try:
-            socket_cliente.send(carrega(resposta))
+            socket_cliente.sendall(carrega(resposta))
         except:
             print("[Servidor] Erro ao enviar resposta ao cliente")
