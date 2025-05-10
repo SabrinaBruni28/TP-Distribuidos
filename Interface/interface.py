@@ -134,6 +134,30 @@ class MarketplaceUI(QMainWindow):
 
         return voltar
     
+    def botao(self, nome, fonte, acao = None):
+        botao = QPushButton(nome)
+        botao.setFixedSize(110, 30)
+        botao.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        if acao:
+            botao.clicked.connect(acao)
+
+        return botao
+    
     def botao_confirmar(self, acao = None):
         botao_confirmar = QPushButton("Confirmar")
         botao_confirmar.setFixedSize(110, 30)
@@ -702,22 +726,52 @@ class MarketplaceUI(QMainWindow):
         scroll.setWidget(conteudo)
         return scroll
     
-    def tela_lista_produtos(self, produtos):
+    def tela_lista_produtos(self, produtos, adicionar=False):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
         conteudo = QWidget()
         vbox = QVBoxLayout(conteudo)
 
-        self.grid = QGridLayout()
-        vbox.addLayout(self.grid)  # adiciona o grid ao layout vertical
-        vbox.addStretch()  # empurra tudo para cima
+        grid = QGridLayout()
+        vbox.addLayout(grid)
+        vbox.addStretch()
 
         largura_bloco = 250
         altura_bloco = 300
+
+        index = 0
+
+        botao_adicionar = QPushButton("+")
+        botao_adicionar.setFixedSize(largura_bloco, altura_bloco)
+        botao_adicionar.setStyleSheet("""
+            QPushButton {
+                background-color: #e0f7fa;
+                border: 2px dashed #0078d7;
+                border-radius: 15px;
+                font-size: 80px;
+                font-weight: bold;
+                color: #0078d7;
+            }
+            QPushButton:hover {
+                background-color: #b2ebf2;
+            }
+            QPushButton:pressed {
+                background-color: #80deea;
+            }
+        """)
+        botao_adicionar.clicked.connect(lambda: self.abrir_tela(self.tela_criar_produto()))
+
+        # Adiciona o botão + primeiro, se existir
+        if adicionar:
+            grid.addWidget(botao_adicionar, 0, 0)
+            index = 1
+
         for i, produto in enumerate(produtos):
+            linha = (i + index) // 5
+            coluna = (i + index) % 5
             bloco = self.criar_bloco_produto(produto, largura_bloco, altura_bloco)
-            self.grid.addWidget(bloco, i // 5, i % 5)
+            grid.addWidget(bloco, linha, coluna)
 
         scroll.setWidget(conteudo)
         return scroll
@@ -1629,7 +1683,7 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
         lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
-        lista_produtos = self.tela_lista_produtos(loja.produtos)
+        lista_produtos = self.tela_lista_produtos(loja.produtos, adicionar=True)
         lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados)
         lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, confirmar=True)
 
@@ -1759,8 +1813,8 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addLayout(layout_horizontal)
 
-        botao_criar = self.botao_editar()
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_editar = self.botao_editar()
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
@@ -1793,8 +1847,15 @@ class MarketplaceUI(QMainWindow):
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
 
+        layout_horizontal_2 = QHBoxLayout()
+
         botao_excluir = self.botao_excluir()
-        layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_criar = self.botao(nome="Criar Anúncio",fonte=15, acao=lambda: self.abrir_tela(self.tela_criar_anuncio(produto)))
+        layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addLayout(layout_horizontal_2)
 
         return tela
     
@@ -1909,10 +1970,9 @@ class MarketplaceUI(QMainWindow):
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
         layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
-        layout_vertical.addLayout(layout_horizontal)
 
-        botao_criar = self.botao_editar()
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_confirmar = self.botao_confirmar()
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
@@ -1948,9 +2008,6 @@ class MarketplaceUI(QMainWindow):
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
-
-        botao_excluir = self.botao_excluir()
-        layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
         return tela
 
