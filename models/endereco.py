@@ -32,6 +32,7 @@ class Endereco:
     
     @classmethod
     def from_dict(cls, data):
+        id = data.get("id", 0)
         rua = data.get("rua", "")
         numero = data.get("numero", 0)
         complemento = data.get("complemento", "")
@@ -39,7 +40,8 @@ class Endereco:
         cidade = data.get("cidade", "")
         estado = data.get("estado", "")
 
-        return cls(rua, numero, complemento, bairro, cidade, estado)
+        return cls(id, rua, numero, complemento, bairro, cidade, estado)
+
 
     def __str__(self):
         return f"{self.rua}, {self.numero}, {self.bairro}, {self.cidade} - {self.estado}, {self.complemento}"
