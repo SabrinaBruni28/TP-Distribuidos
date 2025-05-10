@@ -1,8 +1,11 @@
 import socket
 import threading
+import logging
 from Operacoes import server_operation as op
 from queue import Queue, Empty
 from Operacoes import Login, Cadastramento, Visualizar, Editar, Criar, Apagar, Pedido
+
+logging.basicConfig(level=logging.INFO, format='%(message)s')
 
 class Mensagem():
     def __init__(self, mensagem):
@@ -43,10 +46,10 @@ class FilaDeMensagens(threading.Thread):
     def conectaBanco(self):
         try:
             self.socketBD = socket.create_connection(('localhost', 6000))
-            print("[Fila de Mensagens] Conectado ao Banco de Dados.")
+            logging.info("[Fila de Mensagens] Conectado ao Banco de Dados.")
         
         except Exception as e:
-            print(f"[Fila de Mensagens] Erro ao conectar ao Banco de Dados: {e}")
+            logging.info(f"[Fila de Mensagens] Erro ao conectar ao Banco de Dados: {e}")
             self.socketBD = None
     
 
@@ -56,7 +59,7 @@ class FilaDeMensagens(threading.Thread):
                 self.conectaBanco()
 
             if self.socketBD:
-                self.socketBD.sendall(op.codifica(mensagem))
+                self.socketBD.sendall(mensagem)
                 resposta = self.socketBD.recv(2048)
                 return op.carrega(resposta)
             
@@ -64,7 +67,7 @@ class FilaDeMensagens(threading.Thread):
                 return "[Erro] Conexão com Banco de Dados não estabelecida"
 
         except Exception as e:
-            print(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return f"[Erro] Falha ao enviar ao banco: {e}"
         
@@ -74,16 +77,16 @@ class FilaDeMensagens(threading.Thread):
             try:
                 mensagem, callback, connect = self.desenfileira()
             except ValueError:
-                print("[Fila de mensagens] Erro: tupla mal formada na fila.")
+                logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
                 continue
 
             if mensagem and callback:
-                print("[Fila de Mensagem] Processando uma requisição da fila...")
+                logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
                 resposta = self.enviaAoBanco(mensagem)
                 callback(resposta, connect)
 
             else:
-                print("[Fila de mensagens] Erro ao obter callback.")
+                logging.info("[Fila de mensagens] Erro ao obter callback.")
 
 
 class ClientHandler(threading.Thread):
@@ -96,7 +99,7 @@ class ClientHandler(threading.Thread):
         self.lock = threading.Lock()
 
     def run(self):
-        print(f"Cliente conectado: {self.enderecoCliente}")
+        logging.info(f"Cliente conectado: {self.enderecoCliente}")
 
         try:
             while self.ativo:
@@ -108,7 +111,7 @@ class ClientHandler(threading.Thread):
                 if not mensagemCliente:
                     break
 
-                print(f"[{self.enderecoCliente}] Comando: {mensagemCliente.stringMensagem}")
+                logging.info(f"[{self.enderecoCliente}] Comando: {mensagemCliente.stringMensagem}")
 
                 # Comando de encerramento explícito
                 if mensagemCliente.camposMensagem[0] == "fim":
@@ -122,7 +125,7 @@ class ClientHandler(threading.Thread):
                 del mensagemCliente
 
         except Exception as e:
-            print(f"Erro com {self.enderecoCliente} - {e}")
+            logging.info(f"Erro com {self.enderecoCliente} - {e}")
 
         finally:
             return
@@ -154,7 +157,7 @@ class ClientHandler(threading.Thread):
                 Pedido()
 
             case _:
-                print("Comando inválido")
+                logging.info("Comando inválido")
                 return
 
 
@@ -165,7 +168,7 @@ def rodarServidor(endereco_ip, porta, fila):
 
         # Listen para conexões
         servidor.listen()
-        print(f"Ouvindo em {endereco_ip}:{porta}")
+        logging.info(f"Ouvindo em {endereco_ip}:{porta}")
 
         while True:
             # Aceita a conexão
@@ -179,4 +182,4 @@ def rodarServidor(endereco_ip, porta, fila):
 filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
-rodarServidor('127.0.0.1', 5000, filaDeMensagem)
+rodarServidor('', 5000, filaDeMensagem)

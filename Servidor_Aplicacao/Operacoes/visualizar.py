@@ -48,7 +48,7 @@ class Visualizar():
 
     def anuncio(self):
         idAnuncio = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | anuncio | " + str(idAnuncio))
+        mensagemServidor = op.codifica("retornar | anuncio |" + str(idAnuncio))
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
