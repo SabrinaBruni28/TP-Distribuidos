@@ -1901,6 +1901,58 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(scroll_area)
 
         return tela
+    
+    def tela_criar_anuncio(self, produto):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addLayout(layout_horizontal)
+
+        botao_criar = self.botao_editar()
+        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Anúncio</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Preço", "Quantidade Disponível", "Chave Pix", "Pausado"],
+            largura=600,
+            altura=50
+        )
+    
+        formulario.validar_tipos(
+           {
+                "Preço": float, 
+                "Quantidade Disponível": int, 
+                "Chave Pix": str, 
+                "Pausado": bool
+            }
+        )
+    
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        botao_excluir = self.botao_excluir()
+        layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        return tela
 
     def tela_meus_pedidos(self):
         tela = QWidget()
