@@ -82,11 +82,13 @@ class ValidationUtils:
             mult_transaction=pagamento_multiplo
         )
 
-        if salvar_svg:
-            pix.imageToPath(destDir="../", filename=nome_arquivo, svg=True)
-
-        if salvar_png:
-            pix.imageToPath(destDir="../", filename=nome_arquivo, svg=False)
+        try:
+            if salvar_svg:
+                pix.imageToPath(destDir=".", filename=nome_arquivo, svg=True)
+            if salvar_png:
+                pix.imageToPath(destDir=".", filename=nome_arquivo, svg=False)
+        except Exception as e:
+            print("Erro ao salvar imagem:", e)
 
         return {
             "payload": str(pix),

@@ -100,6 +100,17 @@ class MarketplaceUI(QMainWindow):
 
         self.stack.addWidget(self.tela_inicial)
 
+    def copiar_texto(self, label):
+            clipboard = QApplication.clipboard()
+            texto_sem_html = label.text()  # Isso ainda está com HTML
+            # Se quiser extrair só o texto puro:
+            from PyQt6.QtGui import QTextDocument
+            doc = QTextDocument()
+            doc.setHtml(texto_sem_html)
+            texto_puro = doc.toPlainText()
+
+            clipboard.setText(texto_puro)
+
     def botao_voltar(self):
         voltar = QPushButton("Voltar")
         voltar.setFixedSize(110, 30)
@@ -288,7 +299,7 @@ class MarketplaceUI(QMainWindow):
     
     def comprar(self, anuncio: Anuncio, formularioOp: FormularioOpcoes):
         anuncio.subtrair_quantidade(1)
-        self.abrir_tela(self.tela_pagamento())
+        self.abrir_tela(self.tela_pagamento(anuncio))
 
     def criar_menu_lateral(self):
         # Crie o menu lateral e esconda no início
@@ -592,7 +603,7 @@ class MarketplaceUI(QMainWindow):
         bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_produto(produto))
         return bloco
     
-    def criar_bloco_pedido(self, pedido: Pedido, largura, altura):
+    def criar_bloco_pedido(self, pedido: Pedido, largura, altura, confirmar):
         bloco = QFrame()
         bloco.setFixedSize(QSize(largura, altura))
         bloco.setFrameShape(QFrame.Shape.StyledPanel)
@@ -613,23 +624,62 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
+        data_label = QLabel(f"<b>{pedido.data.strftime('%d/%m/%Y - %H:%M')}</b>")
+        data_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(data_label)
+        layout.addSpacing(5)
+
         nome_label = QLabel(f"<b>{pedido.produto.nome}</b>")
         nome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(nome_label)
-
         layout.addSpacing(5)
 
         qnt_label = QLabel(f"<b>{pedido.quantidade}</b>")
         qnt_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(qnt_label)
-
         layout.addSpacing(5)
 
-        data_label = QLabel(f"<b>{pedido.data}</b>")
-        data_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(data_label)
+        preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {pedido.quantidade * pedido.preco}</span>")
+        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(preco_label)
+        layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_produto(pedido))
+        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_detalhes_pedido(pedido, confirmar))
+        return bloco
+    
+    def criar_bloco_loja(self, loja: Loja, largura, altura):
+        bloco = QFrame()
+        bloco.setFixedSize(QSize(largura, altura))
+        bloco.setFrameShape(QFrame.Shape.StyledPanel)
+        bloco.setStyleSheet("""
+            QFrame {
+                border: 1px;
+                border-radius: 8px;
+                background-color: #fff;
+                color: #000;
+                font-size: 20px;
+            }
+            QFrame:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+
+        layout = QVBoxLayout(bloco)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        imagem_label = QLabel()
+        pixmap = QPixmap(loja.imagem).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        imagem_label.setPixmap(pixmap)
+        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(imagem_label)
+
+        nome_label = QLabel(f"<b>{loja.nome}</b>")
+        nome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(nome_label)
+        layout.addSpacing(5)
+
+        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_minha_loja(loja))
         return bloco
     
     def tela_lista_anuncios(self, anuncios, editar = False):
@@ -672,7 +722,7 @@ class MarketplaceUI(QMainWindow):
         scroll.setWidget(conteudo)
         return scroll
     
-    def tela_lista_pedidos(self, pedidos):
+    def tela_lista_pedidos(self, pedidos, confirmar = False):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -684,9 +734,29 @@ class MarketplaceUI(QMainWindow):
         vbox.addStretch()  # empurra tudo para cima
 
         largura_bloco = 250
-        altura_bloco = 300
+        altura_bloco = 220
         for i, pedido in enumerate(pedidos):
-            bloco = self.criar_bloco_pedido(pedido, largura_bloco, altura_bloco)
+            bloco = self.criar_bloco_pedido(pedido, largura_bloco, altura_bloco, confirmar)
+            self.grid.addWidget(bloco, i // 5, i % 5)
+
+        scroll.setWidget(conteudo)
+        return scroll
+    
+    def tela_lista_lojas(self, lojas):
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        conteudo = QWidget()
+        vbox = QVBoxLayout(conteudo)
+
+        self.grid = QGridLayout()
+        vbox.addLayout(self.grid)  # adiciona o grid ao layout vertical
+        vbox.addStretch()  # empurra tudo para cima
+
+        largura_bloco = 250
+        altura_bloco = 220
+        for i, loja in enumerate(lojas):
+            bloco = self.criar_bloco_loja(loja, largura_bloco, altura_bloco)
             self.grid.addWidget(bloco, i // 5, i % 5)
 
         scroll.setWidget(conteudo)
@@ -816,6 +886,108 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(anuncios)
 
         return tela
+    
+    def tela_detalhes_pedido(self, pedido: Pedido, confirmar = False):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+
+        loja = QPushButton(f"Loja")
+        loja.setFixedSize(100, 30)
+        loja.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        loja.clicked.connect(lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja)))
+        layout_horizontal.addWidget(loja, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{pedido.produto.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+
+        carrossel = CarrosselImagem(pedido.produto.imagens, largura=300, altura=300)
+        layout_vertical.addWidget(carrossel, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        descricao = QLabel(f"<span style='font-size: 30px'>{pedido.produto.descricao}</span>")
+        descricao.setWordWrap(True)
+        descricao.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(descricao)
+
+        preco_total = QLabel(f"<span style='font-size: 35px; color: green'>R${pedido.preco * pedido.quantidade}</span>")
+        preco_total.setWordWrap(True)
+        preco_total.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(preco_total)
+
+        layout_horizontal_2 = QHBoxLayout()
+        quantidade = QLabel(f"<span style='font-size: 30px'>Quantidade: {pedido.quantidade}</span>")
+        quantidade.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_2.addWidget(quantidade)
+
+        preco = QLabel(f"<span style='font-size: 30px; color: green'>R$ {pedido.preco:.2f}</span>")
+        preco.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_2.addWidget(preco)
+        layout_vertical.addLayout(layout_horizontal_2)
+
+        layout_horizontal_3 = QHBoxLayout()
+
+        endereco = QLabel(f"<span style='font-size: 25px;n'>Endereço: {pedido.endereco.__str__()}</span>")
+        endereco.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_3.addWidget(endereco)
+
+        data = QLabel(f"<span style='font-size: 25px;'>Data: {pedido.data.strftime('%d/%m/%Y - %H:%M')}</span>")
+        data.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_3.addWidget(data)
+
+        layout_vertical.addLayout(layout_horizontal_3)
+
+        layout_horizontal_4 = QHBoxLayout()
+
+        botao_cancelar = QPushButton(f"Cancelar")
+        botao_cancelar.setFixedSize(100, 30)
+        botao_cancelar.setStyleSheet("""
+            QPushButton {
+                background-color: #0078d7;
+                color: white;
+                border: 2px solid #005fa3;
+                border-radius: 10px;
+                font-weight: bold;
+                font-size: 15px;
+            }
+            QPushButton:hover {
+                background-color: #005fa3;
+            }
+            QPushButton:pressed {
+                background-color: #003f7f;
+            }
+        """)
+        #botao_cancelar.clicked.connect(lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja)))
+
+        botao_confirmar = self.botao_confirmar()
+
+        if confirmar:
+            layout_horizontal_4.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
+            layout_horizontal_4.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addSpacing(10)
+        layout_vertical.addLayout(layout_horizontal_4)
+
+        return tela
 
     def tela_comprar(self, anuncio: Anuncio):
         tela = QWidget()
@@ -867,20 +1039,52 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_pagamento(self):
+    def tela_pagamento(self, anuncio: Anuncio):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
-
         layout_horizontal = QHBoxLayout()
 
         layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addLayout(layout_horizontal)
+        layout_vertical.addSpacing(10)
 
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Pagamento</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(50)
+        layout_vertical.addSpacing(20)
+
+        dados = vu.gerar_qrcode_pix(
+            nome="Leticia",
+            chave="136.689.956-30",
+            cidade="São Paulo",
+            valor=12.50,
+            descricao="Pagamento do almoço",
+            pagamento_multiplo=False,
+            nome_arquivo="qrcode",
+            salvar_png = True,
+            salvar_svg = False
+        )
+
+        imagem_label = QLabel()
+        pixmap = QPixmap("qrcode").scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+        imagem_label.setPixmap(pixmap)
+        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addSpacing(10)
+
+        string = QLabel(f"<span style='font-size: 12px; font-weight: 950'>{dados['payload']}</span>")
+        string.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        string.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        string.setWordWrap(True)
+        string.setMaximumWidth(500)
+        layout_vertical.addWidget(string, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        botao_copiar = QPushButton("Copiar texto")
+        botao_copiar.clicked.connect(lambda: self.copiar_texto(string))
+        layout_vertical.addWidget(botao_copiar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        layout_vertical.addSpacing(10)
 
         botao_confirmar = QPushButton("Confirmar")
         botao_confirmar.setFixedSize(200, 50)
@@ -1311,62 +1515,8 @@ class MarketplaceUI(QMainWindow):
         # Lista de lojas
         lojas = [loja1, loja2, loja3]
 
-        for loja in lojas:
-            bloco_botao = QPushButton()
-            bloco_botao.setStyleSheet("""
-                QPushButton {
-                    border: 2px solid #444;
-                    border-radius: 10px;
-                    padding: 15px;
-                    background-color: #222;
-                    text-align: left;
-                }
-                QPushButton:hover {
-                    background-color: #333;
-                }
-            """)
-            bloco_botao.setFixedHeight(100)  # Ajuste conforme quiser
-            bloco_botao.setCursor(Qt.CursorShape.PointingHandCursor)
-
-            conteudo = QWidget()
-            conteudo_layout = QHBoxLayout(conteudo)  # HBox: imagem à esquerda, texto à direita
-            conteudo_layout.setContentsMargins(10, 10, 10, 10)
-
-            # Imagem (exemplo com caminho fixo)
-            imagem_label = QLabel()
-            imagem_label.setPixmap(QPixmap(loja.imagem).scaled(64, 64, Qt.AspectRatioMode.KeepAspectRatio))
-            imagem_label.setFixedSize(64, 64)
-
-            # Textos
-            textos = QWidget()
-            textos_layout = QVBoxLayout(textos)
-            textos_layout.setContentsMargins(10, 0, 0, 0)  # Espaço entre imagem e texto
-
-            nome = QLabel(f"Nome: {loja.nome}")
-            nome.setStyleSheet("font-size: 16px; color: white;")
-
-            textos_layout.addWidget(nome)
-
-            # Montagem
-            conteudo_layout.addWidget(imagem_label)
-            conteudo_layout.addWidget(textos)
-            bloco_botao.setLayout(conteudo_layout)
-
-
-            for widget in [nome]:
-                widget.setStyleSheet("font-size: 16px; color: white;")
-
-            conteudo_layout.addWidget(nome)
-
-            bloco_botao.setLayout(conteudo_layout)
-            bloco_botao.clicked.connect(lambda _, l=loja: self.abrir_tela(self.tela_minha_loja(l)))
-
-            layout_loja.addWidget(bloco_botao)
-
-        layout_loja.addStretch()
-        scroll_area.setWidget(conteudo_scroll)
-
-        layout_vertical.addWidget(scroll_area)
+        blocos = self.tela_lista_lojas(lojas)
+        layout_vertical.addWidget(blocos)
         layout_vertical.addStretch()
 
         return tela
@@ -1481,7 +1631,7 @@ class MarketplaceUI(QMainWindow):
         lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
         lista_produtos = self.tela_lista_produtos(loja.produtos)
         lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados)
-        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento)
+        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, confirmar=True)
 
         # Container para trocar os conteúdos
         container_listas = QStackedWidget()
@@ -1764,61 +1914,23 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
-
-        conteudo_scroll = QWidget()
-        layout_pedidos = QVBoxLayout(conteudo_scroll)
-        layout_pedidos.setSpacing(15)
-
+        # Produtos
+        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["imagens/tablet.png"])
+        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["imagens/tablet.png"])
+        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["imagens/tablet.png"])
+        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["imagens/tablet.png"])
+        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["imagens/tablet.png"])
+        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["imagens/notebook.png"])
+        
         pedidos = [
-            {"nome": "João Silva", "email": "joao@example.com", "pontuacao": 850},
-            {"nome": "Maria Lima", "email": "maria@example.com", "pontuacao": 910},
-            {"nome": "Carlos Souza", "email": "carlos@example.com", "pontuacao": 720},
+            Pedido(id=1, produto=p1, preco=3620.0),
+            Pedido(id=2, produto=p3, preco=950.0),
+            Pedido(id=3, produto=p5, preco=440.0),
+            Pedido(id=4, produto=p6, preco=200.0),
         ]
 
-        for pedido in pedidos:
-            bloco_botao = QPushButton()
-            bloco_botao.setStyleSheet("""
-                QPushButton {
-                    border: 2px solid #444;
-                    border-radius: 10px;
-                    padding: 15px;
-                    background-color: #222;
-                    text-align: left;
-                }
-                QPushButton:hover {
-                    background-color: #333;
-                }
-            """)
-            bloco_botao.setFixedHeight(100)  # Ajuste conforme quiser
-            bloco_botao.setCursor(Qt.CursorShape.PointingHandCursor)
-
-            conteudo = QWidget()
-            conteudo_layout = QVBoxLayout(conteudo)
-            conteudo_layout.setContentsMargins(10, 10, 10, 10)
-
-            nome = QLabel(f"Nome: {pedido['nome']}")
-            email = QLabel(f"Email: {pedido['email']}")
-            pontuacao = QLabel(f"Pontuação: {pedido['pontuacao']}")
-
-            for widget in [nome, email, pontuacao]:
-                widget.setStyleSheet("font-size: 16px; color: white;")
-
-            conteudo_layout.addWidget(nome)
-            conteudo_layout.addWidget(email)
-            conteudo_layout.addWidget(pontuacao)
-
-            bloco_botao.setLayout(conteudo_layout)
-            bloco_botao.clicked.connect(lambda _, p=pedido: print(f"Pedido clicado: {p['nome']}"))
-
-            layout_pedidos.addWidget(bloco_botao)
-
-        layout_pedidos.addStretch()
-        scroll_area.setWidget(conteudo_scroll)
-
-        layout_vertical.addWidget(scroll_area)
-        layout_vertical.addStretch()
+        blocos = self.tela_lista_pedidos(pedidos)
+        layout_vertical.addWidget(blocos)
 
         return tela
 
