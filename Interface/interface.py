@@ -29,6 +29,7 @@ class MarketplaceUI(QMainWindow):
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
+        self.tela_anterior = []
 
         self.main = Main()
         self.main.visualizar_anuncios()
@@ -45,18 +46,18 @@ class MarketplaceUI(QMainWindow):
             event.ignore()
 
     def voltar_para_lista(self):
-        self.abrir_tela(self.tela_anterior)
+        if self.tela_anterior:
+            index = self.stack.currentIndex()
+            self.stack.setCurrentWidget(self.tela_anterior[index-1])
+
+            self.tela_anterior.pop()
+            widget = self.stack.widget(index)
+            self.stack.removeWidget(widget)
+            widget.deleteLater()
 
     def abrir_tela(self, nova_tela):
-        self.tela_anterior = self.stack.currentWidget()
-        # Remove todas as telas antigas
-        while self.stack.count() > 2:
-            widget = self.stack.widget(0)
-            if widget != self.tela_anterior:
-                self.stack.removeWidget(widget)
-                widget.deleteLater()  # libera memória corretamente
+        self.tela_anterior.append(self.stack.currentWidget())
 
-        # Adiciona a nova tela
         self.stack.addWidget(nova_tela)
         self.stack.setCurrentWidget(nova_tela)
 
