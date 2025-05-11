@@ -121,7 +121,10 @@ class Formulario(QWidget):
         """
         for chave, valor in valores.items():
             if chave in self.inputs:
-                self.inputs[chave].setText(str(valor))
+                if type(valor) is bool:
+                    self.inputs[chave].setText(str("sim" if valor else "não"))
+                else:
+                    self.inputs[chave].setText(str(valor))
 
     def validar_tipos(self, campos_tipos: dict):
         """
@@ -166,8 +169,8 @@ class Formulario(QWidget):
                 self.erros[nome].setText(str(""))
 
             elif tipo_esperado == bool:
-                if texto.lower() not in ["true", "false"]:
-                    erro = "Digite 'true' ou 'false'."
+                if texto.lower() not in ["sim", "não", "nao"]:
+                    erro = "Digite 'Sim' ou 'Não'."
                     self.erros[nome].setText(str(erro))
                     has_error = True
                     continue
@@ -239,8 +242,16 @@ class Formulario(QWidget):
             valor_atual = entrada.text().strip()
             valor_inicial = str(valores_iniciais.get(nome, "")).strip()
 
+            if valor_atual.lower() in ["sim", "não", "nao"]:
+                if valor_atual == 'sim':
+                    valor_comp = True
+                else:
+                    valor_comp = False
+            else:
+                valor_comp = valor_atual
+
             # Se o valor atual for diferente do inicial, armazene no dicionário
-            if valor_atual != valor_inicial:
+            if valor_comp != valor_inicial:
                 valores_alterados[str(nome).lower()] = valor_atual
         
         return valores_alterados

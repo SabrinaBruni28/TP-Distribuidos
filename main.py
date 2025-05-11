@@ -74,9 +74,9 @@ class Main():
             Pedido(id=3, produto=p5, preco=440.0),
             Pedido(id=4, produto=p6, preco=200.0),
         ]
-        self.usuario = Usuario()
+        #self.usuario = Usuario()
 
-        """self.usuario = Usuario_Identificado(
+        self.usuario = Usuario_Identificado(
             nome="Sabrina Bruni de Souza Faria",
             cpf="136.689.956-30",
             email="sabrina.b.faria@ufv.br",
@@ -84,7 +84,7 @@ class Main():
             enderecos=[end],
             lojas=lojas,
             pedidos=pedidos
-        )"""
+        )
         self.anuncios = []
         #self.socket = UnixSocketClient(ip="192.168.1.102", port=5000)
 
@@ -227,6 +227,7 @@ class Main():
         return False
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
+        return True
         mensagem = f"editar|anuncio|{anuncio.id}|{novos_dados}"
         self.socket.send(mensagem)
 
@@ -238,6 +239,7 @@ class Main():
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
+        return True
         mensagem = f"editar|produto|{produto.id}|{novos_dados}"
         self.socket.send(mensagem)
 
@@ -288,6 +290,7 @@ class Main():
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):
+        return True
         mensagem = f"criar|anuncio|{anuncio.to_dict_personalisado()}"
         self.socket.send(mensagem)
 
@@ -299,6 +302,7 @@ class Main():
         return False
     
     def criar_produto(self, produto: Produto):
+        return True
         mensagem = f"criar|produto|{produto.to_dict_personalisado()}"
         self.socket.send(mensagem)
 
@@ -354,24 +358,26 @@ class Main():
         
         return False
     
-    def excluir_anuncio(self, anuncio: Anuncio, loja: Loja):
+    def excluir_anuncio(self, anuncio: Anuncio):
+        return True
         mensagem = f"excluir|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
-            loja.apagar_anuncio(anuncio)
+            anuncio.produto.loja.apagar_anuncio(anuncio)
             return True
         
         return False
     
-    def excluir_produto(self, produto: Produto, loja: Loja):
+    def excluir_produto(self, produto: Produto):
+        return True
         mensagem = f"excluir|produto|{produto.id}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
-            loja.apagar_produto(produto)
+            produto.loja.apagar_produto(produto)
             return True
         
         return False
