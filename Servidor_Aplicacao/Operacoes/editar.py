@@ -1,9 +1,9 @@
 import socket
 import threading
-import server_operation as op # LEMBRA DE MUDAR
+from Operacoes import server_operation as op
 
 class Editar():
-    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens)
+    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens):
         self.mensagemCliente = mensagem
         self.conexaoCliente = socket_cliente
         self.conexaoServidor = socket_servidor
@@ -85,4 +85,7 @@ class Editar():
             self.conexaoCliente.sendall(mensagemAoCliente)
 
         else:
-            mensagemAoCliente = op.codifica("erro | ")
+            mensagemAoCliente = op.codifica("erro | " + str(resposta[1]))
+
+            print("[Servidor] Reportando erro de edição ao cliente...")
+            self.conexaoCliente.sendall(mensagemAoCliente)

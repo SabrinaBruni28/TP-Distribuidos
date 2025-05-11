@@ -13,9 +13,6 @@ class Login():
         self.getOperacao()
 
     def getOperacao(self):
-        self.decisor()
-
-    def decisor(self):
         self.logar()
 
     def logar(self):

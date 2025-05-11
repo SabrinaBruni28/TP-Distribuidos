@@ -1,6 +1,6 @@
 import socket
 import threading
-import server_operation as op # LEMBRA DE MUDAR
+from Operacoes import server_operation as op
 
 class Visualizar():
     def __init__(self, mensagem, socket_cliente, fila_mensagens):

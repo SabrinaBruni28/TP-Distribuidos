@@ -45,7 +45,7 @@ class FilaDeMensagens(threading.Thread):
     
     def conectaBanco(self):
         try:
-            self.socketBD = socket.create_connection(('localhost', 6000))
+            self.socketBD = socket.create_connection(('192.168.1.107', 6000))
             logging.info("[Fila de Mensagens] Conectado ao Banco de Dados.")
         
         except Exception as e:
@@ -90,9 +90,10 @@ class FilaDeMensagens(threading.Thread):
 
 
 class ClientHandler(threading.Thread):
-    def __init__(self, socket_cliente, endereco, fila):
+    def __init__(self, socket_servidor, socket_cliente, endereco, fila):
         super().__init__()
         self.socketCliente = socket_cliente
+        self.socketServidor = socket_servidor
         self.enderecoCliente = endereco
         self.filaDeMensagem = fila
         self.ativo = True
@@ -138,7 +139,7 @@ class ClientHandler(threading.Thread):
                 Login()
 
             case "cadastramento":
-                Cadastramento()
+                Cadastramento(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
 
             case "visualizar":
                 Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).run()
@@ -175,7 +176,7 @@ def rodarServidor(endereco_ip, porta, fila):
 
             # Começa uma nova thread para lidar com
             # este cliente
-            ClientHandler(socketCliente, endereco, fila).start()
+            ClientHandler(servidor, socketCliente, endereco, fila).start()
             
 
 filaDeMensagem = FilaDeMensagens()
