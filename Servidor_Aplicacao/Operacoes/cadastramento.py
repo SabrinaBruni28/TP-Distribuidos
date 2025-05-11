@@ -1,5 +1,6 @@
 import socket
 import threading
+import json
 from Operacoes import server_operation as op
 from Operacoes import thread_email as correio
 
@@ -21,15 +22,16 @@ class Cadastramento():
 
     def cadastrar(self):
         dados = self.mensagemCliente.camposMensagem[1]
-        mensagemServidor = op.codifica("criar | usuario | " + str(dados))
+        dadosJson = json.loads(dados)
+        mensagemServidor = op.codifica("criar | usuario | " + json.dumps(dadosJson))
 
         print("[Servidor] Enviando requisição para a fila...")
         self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoServidor)
         resposta = self.conexaoServidor.recv(2048).decode("utf-8")
 
-        self.signupHandler(dados, resposta)
+        self.signupHandler(dados, dadosJson, resposta)
 
-    def signupHandler(self, dados_json, resposta_banco):
+    def signupHandler(self, dados, dados_json, resposta_banco):
         if resposta_banco[0] == "ok":
             emailCliente = dados_json.get("email")
 
@@ -43,7 +45,7 @@ class Cadastramento():
                 codigoCliente = self.conexaoServidor.recv(2048).decode("utf-8")
 
                 if codigoCliente[1] == codigoConfirmacao:
-                    mensagemAoCliente = op.codifica("ok | " +str(dados_json))
+                    mensagemAoCliente = op.codifica("ok | " +str(dados))
 
                     self.conexaoCliente.sendall(mensagemAoCliente)
                     return

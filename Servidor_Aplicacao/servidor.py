@@ -45,7 +45,7 @@ class FilaDeMensagens(threading.Thread):
     
     def conectaBanco(self):
         try:
-            self.socketBD = socket.create_connection(('192.168.1.107', 6000))
+            self.socketBD = socket.create_connection(('localhost', 6000))
             logging.info("[Fila de Mensagens] Conectado ao Banco de Dados.")
         
         except Exception as e:
@@ -182,4 +182,4 @@ def rodarServidor(endereco_ip, porta, fila):
 filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
-rodarServidor('192.168.1.102', 5000, filaDeMensagem)
+rodarServidor('localhost', 5000, filaDeMensagem)
