@@ -39,6 +39,9 @@ class Visualizar():
 
             case "meus_pedidos":
                 self.meusPedidos()
+            
+            case _:
+                print("[Servidor] Mensagem inválida.")
 
     def todosAnuncios(self):
         mensagemServidor = op.codifica("retornar | anuncios")

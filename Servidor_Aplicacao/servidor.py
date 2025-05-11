@@ -108,7 +108,7 @@ class ClientHandler(threading.Thread):
                 mensagemCliente = Mensagem(stringMensagemCliente)
                 
                 # Se o cliente fecho a conexão
-                if not mensagemCliente:
+                if not mensagemCliente or stringMensagemCliente == "":
                     break
 
                 logging.info(f"[{self.enderecoCliente}] Comando: {mensagemCliente.stringMensagem}")
@@ -121,13 +121,12 @@ class ClientHandler(threading.Thread):
 
                 # Dispara thread para processar cada comando SEM quebrar o loop
                 self.decisor(mensagemCliente)
-                self.socketCliente.sendall("Mensagem recebida.".encode("utf-8")[:2048])
-                del mensagemCliente
 
         except Exception as e:
             logging.info(f"Erro com {self.enderecoCliente} - {e}")
 
         finally:
+            self.socketCliente.close()
             return
 
 
@@ -182,4 +181,4 @@ def rodarServidor(endereco_ip, porta, fila):
 filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
-rodarServidor('', 5000, filaDeMensagem)
+rodarServidor('192.168.1.102', 5000, filaDeMensagem)
