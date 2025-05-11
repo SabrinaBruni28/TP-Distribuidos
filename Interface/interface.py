@@ -6,80 +6,20 @@ from models.loja import Loja
 from models.anuncio import Anuncio
 from models.produto import Produto
 from models.usuario import Usuario_Identificado
-from models.validation_utils import ValidationUtils as vu
 from models.cliente import UnixSocketClient
 from models.endereco import Endereco
 from forms import Formulario, FormularioOpcoes
+from widgets import CarrosselImagem, WidgetHelper, CaixaConfirmacao
 from models.pedido import Pedido
+from main import Main
 
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QSize
 
 from PyQt6.QtWidgets import (
-   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QFileDialog,QFormLayout, QSpacerItem, QSizePolicy,
-   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton, QComboBox
+   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QFileDialog,QFormLayout, QSpacerItem, QSizePolicy, QDialog,
+   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton, QComboBox, QMessageBox
 )
-
-class CarrosselImagem(QWidget):
-    def __init__(self, lista_caminhos_imagem, largura=200, altura=200):
-        super().__init__()
-        self.imagens = lista_caminhos_imagem
-        self.index = 0
-        self.largura = largura
-        self.altura = altura
-
-        # Imagem
-        self.label_imagem = QLabel()
-        self.label_imagem.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.label_imagem.setFixedSize(self.largura, self.altura)
-
-        # Botões
-        self.btn_anterior = QPushButton("◀")
-        self.btn_anterior.clicked.connect(self.imagem_anterior)
-        self.btn_proximo = QPushButton("▶")
-        self.btn_proximo.clicked.connect(self.imagem_proxima)
-
-        # Layout
-        layout = QHBoxLayout()
-        layout.addWidget(self.btn_anterior, alignment=Qt.AlignmentFlag.AlignLeft)
-        layout.addWidget(self.label_imagem, alignment=Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(self.btn_proximo, alignment=Qt.AlignmentFlag.AlignRight)
-        self.setLayout(layout)
-
-        self.setFixedWidth(self.largura + 100)  # 40 px para cada botão
-        self.setFixedHeight(self.altura)
-        layout.setSizeConstraint(QHBoxLayout.SizeConstraint.SetFixedSize)
-
-        # Mostrar a primeira imagem
-        self.mostrar_imagem()
-
-    def mostrar_imagem(self):
-        if not self.imagens:
-            return
-        
-        pixmap = QPixmap(self.imagens[self.index])
-        pixmap = pixmap.scaled(
-            self.largura, self.altura,
-            Qt.AspectRatioMode.KeepAspectRatio,
-            Qt.TransformationMode.SmoothTransformation
-        )
-        self.label_imagem.setPixmap(pixmap)
-
-        # Ativa ou desativa os botões
-        if len(self.imagens) <= 1:
-            self.btn_anterior.setEnabled(False)
-            self.btn_proximo.setEnabled(False)
-        else:
-            self.btn_anterior.setEnabled(self.index > 0)
-            self.btn_proximo.setEnabled(self.index < len(self.imagens) - 1)
-
-    def imagem_anterior(self):
-        self.index = (self.index - 1) % len(self.imagens)
-        self.mostrar_imagem()
-
-    def imagem_proxima(self):
-        self.index = (self.index + 1) % len(self.imagens)
-        self.mostrar_imagem()
 
 class MarketplaceUI(QMainWindow):
     def __init__(self):
@@ -89,193 +29,36 @@ class MarketplaceUI(QMainWindow):
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
-        
-        self.menu_lateral = self.criar_menu_lateral()
-        self.barra_superior = self.criar_barra_superior()
 
-        self.anuncios = self.criar_lista_anuncios()
-        self.tela_lista = self.tela_lista_anuncios(self.anuncios)
+        self.main = Main()
+        self.main.visualizar_anuncios()
+        self.stack.addWidget(self.tela_inicial())
 
-        self.tela_inicial = self.tela_inicial()
+    def closeEvent(self, event):
+        dialogo = CaixaConfirmacao(self, titulo="Confirmar saída", mensagem="Você tem certeza que deseja sair?")
+        resposta = dialogo.exec()
 
-        self.stack.addWidget(self.tela_inicial)
-
-    def copiar_texto(self, label):
-            clipboard = QApplication.clipboard()
-            texto_sem_html = label.text()  # Isso ainda está com HTML
-            # Se quiser extrair só o texto puro:
-            from PyQt6.QtGui import QTextDocument
-            doc = QTextDocument()
-            doc.setHtml(texto_sem_html)
-            texto_puro = doc.toPlainText()
-
-            clipboard.setText(texto_puro)
-
-    def botao_voltar(self):
-        voltar = QPushButton("Voltar")
-        voltar.setFixedSize(110, 30)
-        voltar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        voltar.clicked.connect(self.voltar_para_lista)
-
-        return voltar
-    
-    def botao(self, nome, fonte, acao = None):
-        botao = QPushButton(nome)
-        botao.setFixedSize(110, 30)
-        botao.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        if acao:
-            botao.clicked.connect(acao)
-
-        return botao
-    
-    def botao_confirmar(self, acao = None):
-        botao_confirmar = QPushButton("Confirmar")
-        botao_confirmar.setFixedSize(110, 30)
-        botao_confirmar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        if acao:
-            botao_confirmar.clicked.connect(acao)
-
-        return botao_confirmar
-    
-    def botao_adicionar(self, acao = None):
-        botao_adicionar = QPushButton("Adicionar")
-        botao_adicionar.setFixedSize(110, 30)
-        botao_adicionar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        if acao:
-            botao_adicionar.clicked.connect(acao)
-        return botao_adicionar
-    
-    def botao_excluir(self, acao = None):
-        botao_excluir = QPushButton("Excluir")
-        botao_excluir.setFixedSize(110, 30)
-        botao_excluir.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        if acao:
-            botao_excluir.clicked.connect(acao)
-        return botao_excluir
-
-    def botao_editar(self, acao = None):
-        botao_editar = QPushButton("Editar")
-        botao_editar.setFixedSize(110, 30)
-        botao_editar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        if acao:
-            botao_editar.clicked.connect(acao)
-        return botao_editar
-    
-    def abrir_dialogo_arquivo(self):
-        caminho_arquivo, _ = QFileDialog.getOpenFileName(
-            self,
-            "Escolher arquivo",
-            "",
-            "Todos os arquivos (*.*);;Imagens (*.png *.jpg *.jpeg);;Textos (*.txt)"
-        )
-        if caminho_arquivo:
-            # Caminho de destino onde o arquivo será salvo (pode mudar para o que quiser)
-            nome_arquivo = os.path.basename(caminho_arquivo)
-            destino = os.path.join("uploads", nome_arquivo)
-
-            # Cria a pasta "uploads" se ela não existir
-            os.makedirs("uploads", exist_ok=True)
-
-            # Copia o arquivo para a pasta destino
-            shutil.copy(caminho_arquivo, destino)
-
-    def abrir_tela(self, nova_tela):
-        self.stack.addWidget(nova_tela)
-        self.stack.setCurrentWidget(nova_tela)
+        if resposta == QDialog.DialogCode.Accepted:
+            self.main.socket.close()
+            event.accept()
+        else:
+            event.ignore()
 
     def voltar_para_lista(self):
-        self.stack.setCurrentWidget(self.tela_inicial)
-        self.atualizar_lista_anuncios(self.anuncios)
+        self.abrir_tela(self.tela_anterior)
+
+    def abrir_tela(self, nova_tela):
+        self.tela_anterior = self.stack.currentWidget()
+        # Remove todas as telas antigas
+        while self.stack.count() > 2:
+            widget = self.stack.widget(0)
+            if widget != self.tela_anterior:
+                self.stack.removeWidget(widget)
+                widget.deleteLater()  # libera memória corretamente
+
+        # Adiciona a nova tela
+        self.stack.addWidget(nova_tela)
+        self.stack.setCurrentWidget(nova_tela)
 
     def toggle_menu(self):
         if self.menu_lateral.isVisible():
@@ -300,7 +83,7 @@ class MarketplaceUI(QMainWindow):
         self.input_busca.clear()
         self.input_busca.hide()
         self.botao_reset.hide()
-        self.atualizar_lista_anuncios(self.anuncios)
+        self.atualizar_lista_anuncios(self.main.anuncios)
 
     def atualizar_lista_anuncios(self, nova_lista):
         # Remove widgets antigos
@@ -322,8 +105,351 @@ class MarketplaceUI(QMainWindow):
             self.grid.addWidget(bloco, i // 5, i % 5)
     
     def comprar(self, anuncio: Anuncio, formularioOp: FormularioOpcoes):
-        anuncio.subtrair_quantidade(1)
+        valores = formularioOp.obter_valores()
+        pedido = Pedido(
+            produto=anuncio.produto, 
+            quantidade=int(valores["quantidade"]),
+            preco=anuncio.preco,
+            endereco=self.main.usuario.get_endereco(valores["endereço"])
+        )
         self.abrir_tela(self.tela_pagamento(anuncio))
+        if self.main.criar_pedido(pedido):
+            anuncio.subtrair_quantidade(1)
+
+
+    def criar_loja(self, formulario: Formulario):
+        erro = formulario.validar_tipos(
+            {"Nome": str}
+        )
+
+        if erro:
+            formulario.exibir_erros()
+        else:
+            loja = Loja(formulario.obter_valores())
+            resposta = self.main.criar_loja(loja)
+            
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,padding=50,
+                    mensagem="Loja Criada com Sucesso!"
+                )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=300, altura=50,padding=50,
+                    mensagem="Erro ao criar endereço!"
+                )
+
+    def criar_endereco(self, formulario: Formulario):
+        erro = formulario.validar_tipos(
+            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+        )
+        if erro:
+            formulario.exibir_erros()
+        else:
+            endereco = Endereco(formulario.obter_valores())
+            resposta = self.main.criar_endereco(endereco)
+
+            if isinstance(resposta, dict):
+                capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
+                formulario.definir_erros_especificos(capitalizado)
+                formulario.exibir_erros()
+            
+            elif resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,padding=50,
+                    mensagem="Endereço Criado com Sucesso!"
+                )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=300, altura=50,padding=50,
+                    mensagem="Erro ao criar endereço!"
+                )
+
+    def editar_loja(self, formulario: Formulario, loja: Loja):
+        erro =  formulario.validar_tipos(
+            {
+                "Nome": str
+            }
+        )
+        if erro:
+            formulario.exibir_erros()
+        else:
+            valores_alterados = formulario.obter_valores_alterados(
+                {
+                    "Nome": loja.nome, 
+                    "Imagem": loja.imagem
+                }
+            )
+            if valores_alterados:
+                resposta = self.main.editar_loja(loja, valores_alterados)
+                
+                if resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#4CAF50",
+                        largura=400, altura=50,padding=50,
+                        mensagem="Loja Editada com Sucesso!"
+                    )
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#f44336",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Erro ao editar loja!"
+                    )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#FFC107", fontcolor="#000000",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Nenhuma alteração realizada"
+                    )
+
+    def editar_endereco(self, formulario: Formulario, endereco: Endereco):
+        erro = formulario.validar_tipos(
+            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+        )
+        if erro:
+            formulario.exibir_erros()
+        else:
+            valores_alterados = formulario.obter_valores_alterados(
+                {
+                    "Rua": endereco.rua, 
+                    "N°": endereco.numero, 
+                    "Bairro": endereco.bairro, 
+                    "Cidade": endereco.cidade, 
+                    "Estado": endereco.estado, 
+                    "Complemento": endereco.complemento
+                }
+            )
+            if valores_alterados:
+                resposta = self.main.editar_endereco(endereco, valores_alterados)
+                
+                if resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#4CAF50",
+                        largura=400, altura=50,padding=50,
+                        mensagem="Endereco Editado com Sucesso!"
+                    )
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#f44336",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Erro ao editar dados!"
+                    )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#FFC107", fontcolor="#000000",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Nenhuma alteração realizada"
+                    )
+    
+    def editar_perfil(self, formulario: Formulario):
+        erro = formulario.validar_tipos(
+            {"Nome": str, "CPF": str, "Email": str, "Senha": str}
+        )
+        if erro:
+            formulario.exibir_erros()
+        else:
+            usuario = self.main.usuario
+            valores_alterados = formulario.obter_valores_alterados(
+                {
+                    "Nome": usuario.nome, 
+                    "CPF": usuario.cpf, 
+                    "Email": usuario.email,
+                    "Senha": "*"*len(usuario.senha),
+                }
+            )
+            if valores_alterados:
+                resposta = self.main.editar_usuario(valores_alterados)
+
+                if isinstance(resposta, dict):
+                    capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
+                    formulario.definir_erros_especificos(capitalizado)
+                    formulario.exibir_erros()
+                
+                elif resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#4CAF50",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Perfil Editado com Sucesso!"
+                    )
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#f44336",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Erro ao editar dados!"
+                    )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self, 
+                        backcolor="#FFC107", fontcolor="#000000",
+                        largura=300, altura=50,padding=50,
+                        mensagem="Nenhuma alteração realizada"
+                    )
+                
+    def excluir_loja(self, loja: Loja):
+        dialogo = CaixaConfirmacao(self, titulo="Confirmar excluir loja", mensagem=f"Você tem certeza que deseja excluir loja {loja.nome}?")
+        resposta = dialogo.exec()
+
+        if resposta == QDialog.DialogCode.Accepted:
+            resposta = self.main.excluir_loja(loja)
+            if resposta:
+                 WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=300, altura=50,padding=920,
+                    mensagem="Loja Excluída com Sucesso!"
+                )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=300, altura=50,padding=920,
+                    mensagem="Erro ao excluir loja!"
+                )
+        else:
+            dialogo.close()
+    
+    def cancelar_pedido(self, pedido: Pedido):
+        dialogo = CaixaConfirmacao(self, titulo="Confirmar cancelamento", mensagem=f"Você tem certeza que deseja cancelar pedido {pedido.id}?")
+        resposta = dialogo.exec()
+
+        if resposta == QDialog.DialogCode.Accepted:
+            resposta = self.main.cancelar_pedido(pedido, pedido.produto.loja)
+            if resposta:
+                 WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,paddingV=400, paddingH=950,
+                    mensagem="Pedido Cancelado com Sucesso!"
+                )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=300, altura=50,paddingV=400, paddingH=950,
+                    mensagem="Erro ao cancelar pedido!"
+                )
+        else:
+            dialogo.close()
+
+    def confirmar_pedido(self, pedido: Pedido):
+        dialogo = CaixaConfirmacao(self, titulo="Confirmar", mensagem=f"Você tem certeza que deseja confirmar pedido {pedido.id}?")
+        resposta = dialogo.exec()
+
+        if resposta == QDialog.DialogCode.Accepted:
+            resposta = self.main.confirmar_pedido(pedido, pedido.produto.loja)
+            if resposta:
+                 WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,paddingV=400, paddingH=50,
+                    mensagem="Pedido Confirmado com Sucesso!"
+                )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=300, altura=50,paddingV=400, paddingH=50,
+                    mensagem="Erro ao confirmar pedido!"
+                )
+        else:
+            dialogo.close()
+    
+    def confirmar_codigo(self, formulario: Formulario):
+        erro = formulario.validar_tipos(
+            {"Código": int}
+        )
+        if erro:
+            formulario.exibir_erros()
+        else:
+            valores = formulario.obter_valores()
+            resposta, mensagem = self.main.email_confirmacao(valores)
+            
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,paddingH=20, paddingV=20,
+                    mensagem="Cadastro realizado com Sucesso!"
+                )
+
+            elif mensagem == "codigo_invalido":
+                formulario.definir_erros_especificos(
+                    {
+                        "Código": "Código de confirmação inválido"
+                    }
+                )
+                formulario.exibir_erros()
+
+            elif mensagem == "limite_excedido":
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=400, altura=50,padding=50,
+                    mensagem="Limite de tentativas excedido!"
+                )
+                self.abrir_tela(self.tela_cadastro())
+
+    def cadastrar(self, formulario: Formulario):
+        erro = formulario.validar_tipos(
+            {
+                "Nome": str, 
+                "CPF": str, 
+                "Email": str, 
+                "Senha": str
+            }
+        )
+
+        if erro:
+            formulario.exibir_erros()
+        else:
+            usuario = Usuario_Identificado(formulario.obter_valores())
+            resposta = self.main.cadastrar(usuario)
+
+            if isinstance(resposta, dict):
+                capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
+                formulario.definir_erros_especificos(capitalizado)
+                formulario.exibir_erros()
+
+            elif resposta:
+                self.abrir_tela(self.tela_codigo_confirmacao())
+
+    def login(self, formulario: Formulario):
+        erro = formulario.validar_tipos(
+            {
+                "Email": str, 
+                "Senha": str
+            }
+        )
+
+        if erro:
+            formulario.exibir_erros()
+        else:
+            usuario = Usuario_Identificado(formulario.obter_valores())
+            resposta = self.main.login(usuario)
+
+            if isinstance(resposta, dict):
+                capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
+                formulario.definir_erros_especificos(capitalizado)
+                formulario.exibir_erros()
+
+            elif resposta:
+                self.abrir_tela(self.tela_inicial())
 
     def criar_menu_lateral(self):
         # Crie o menu lateral e esconda no início
@@ -337,64 +463,27 @@ class MarketplaceUI(QMainWindow):
         menu_layout.setSpacing(0)  # Definir o espaçamento entre os botões como 0
         menu_layout.setContentsMargins(0, 0, 0, 0)  # Remove as margens
 
-        # Exemplo de adição de botões à barra lateral
-        botao_perfil = QPushButton("Meu Perfil")
-        botao_perfil.setFixedSize(250, 100)  # Tamanho fixo do botão
-        botao_perfil.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 25px;
-                margin: 20;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
-        botao_perfil.clicked.connect(lambda: self.abrir_tela(self.tela_perfil()))
+        botao_perfil = WidgetHelper.botao(
+            nome="Meu Perfil", 
+            backcolor="", hover="#3a3a3a", border="", pressed='#000000',
+            largura=250, altura=100,
+            acao= lambda: self.abrir_tela(self.tela_perfil())
+        )
 
-        botao_lojas = QPushButton("Minhas lojas")
-        botao_lojas.setFixedSize(250, 100)  # Tamanho fixo do botão
-        botao_lojas.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 25px;
-                margin: 20;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
-        botao_lojas.clicked.connect(lambda: self.abrir_tela(self.tela_minhas_lojas()))
+        botao_lojas = WidgetHelper.botao(
+            nome="Minhas Lojas", 
+            backcolor="", hover="#3a3a3a", border="", pressed='#000000',
+            largura=250, altura=100,
+            acao= lambda: self.abrir_tela(self.tela_minhas_lojas())
+        )
 
-        botao_pedidos = QPushButton("Meus Pedidos")
-        botao_pedidos.setFixedSize(250, 100)  # Tamanho fixo do botão
-        botao_pedidos.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 25px;
-                margin: 20;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
-        botao_pedidos.clicked.connect(lambda: self.abrir_tela(self.tela_meus_pedidos()))
-
+        botao_pedidos = WidgetHelper.botao(
+            nome="Meus Pedidos", 
+            backcolor="", hover="#3a3a3a", border="", pressed='#000000',
+            largura=250, altura=100,
+            acao= lambda: self.abrir_tela(self.tela_meus_pedidos())
+        )
+    
         # Adicionando os botões ao layout da barra lateral
         menu_layout.addWidget(botao_perfil, alignment=Qt.AlignmentFlag.AlignHCenter)
         menu_layout.addWidget(botao_lojas, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -407,43 +496,19 @@ class MarketplaceUI(QMainWindow):
         # Barra superior com botões
         barra_superior = QHBoxLayout()
 
-        botao_menu = QPushButton("≡")
-        botao_menu.setFixedSize(50, 50)
-        botao_menu.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 40px;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
-        botao_menu.clicked.connect(self.toggle_menu)
+        botao_menu = WidgetHelper.botao(
+            nome="≡", fonte=40,
+            largura=50, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= self.toggle_menu
+        )
 
-        botao_login = QPushButton("Login")
-        botao_login.setFixedSize(100, 30)
-        botao_login.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)   
-        botao_login.clicked.connect(lambda: self.abrir_tela(self.tela_login()))
+        botao_login = WidgetHelper.botao(
+            nome="Login", fonte=15,
+            largura=100, altura=30,
+            acao= lambda: self.abrir_tela(self.tela_login())
+        )
 
         self.input_busca = QLineEdit()
         self.input_busca.setPlaceholderText("Pesquisar produto...")
@@ -451,62 +516,40 @@ class MarketplaceUI(QMainWindow):
         self.input_busca.setFixedHeight(40)
         self.input_busca.hide()
 
-        self.botao_reset = QPushButton("❌")
-        self.botao_reset.setFixedSize(50, 50)
-        self.botao_reset.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
+        self.botao_reset = WidgetHelper.botao(
+            nome="❌", fonte=20,
+            largura=50, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= self.resetar_busca
+        )
         self.botao_reset.hide()
-        self.botao_reset.clicked.connect(self.resetar_busca)
 
-        btn_pesquisa = QPushButton("🔍")
-        btn_pesquisa.setFixedSize(100, 50)
-        btn_pesquisa.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 40px;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
-        btn_pesquisa.clicked.connect(self.mostrar_barra_pesquisa)
+        btn_pesquisa = WidgetHelper.botao(
+            nome="🔍", fonte=40,
+            largura=100, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= self.mostrar_barra_pesquisa
+        )
 
-        botao_selecionar_arquivo = QPushButton("Selecionar Arquivo")
-        botao_selecionar_arquivo.clicked.connect(self.abrir_dialogo_arquivo)
-        btn_pesquisa.setFixedSize(100, 50)
-        btn_pesquisa.setStyleSheet("""
-            QPushButton {
-                border: 2px;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 40px;
-            }
-            QPushButton:hover {
-                background-color: #D3D3D3;
-            }
-            QPushButton:pressed {
-                background-color: #000000;
-            }
-        """)
+        btn_atualizar = WidgetHelper.botao(
+            nome="⟲", fonte=40,
+            largura=100, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= lambda: self.main.visualizar_anuncios()
+        )
 
-        if True:
+        botao_selecionar_arquivo = WidgetHelper.botao(
+            nome="Selecionar arquivo", fonte=10,
+            largura=100, altura=30,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= lambda: WidgetHelper.abrir_dialogo_arquivo(self)
+        )
+
+        if self.main.is_identificado():
             barra_superior.addWidget(botao_menu)
         else:
             barra_superior.addWidget(botao_login)
@@ -516,40 +559,9 @@ class MarketplaceUI(QMainWindow):
         barra_superior.addWidget(self.botao_reset)
         barra_superior.addWidget(self.input_busca)
         barra_superior.addWidget(btn_pesquisa)
+        barra_superior.addWidget(btn_atualizar)
 
         return barra_superior
-
-    def criar_lista_anuncios(self):
-        return [
-            Anuncio(
-                produto=Produto(
-                    nome="Notebook", 
-                    descricao="Notebook potente com 16GB RAM",
-                    imagens=["imagens/notebook.png", "imagens/smartphone.png", "imagens/notebook.png"],
-                    loja=Loja(
-                        nome="Ferramentas", 
-                        imagem="imagens/tablet.png"
-                    )
-                ),
-                preco=10.90,
-                quantidade_disponivel=10,
-                chave_pix="13668995630"
-            ),
-            Anuncio(
-                produto=Produto(
-                    nome="Tablet", 
-                    descricao="Notebook potente com 16GB RAM",
-                    imagens=["imagens/tablet.png"],
-                    loja=Loja(
-                        nome="Ferramentas", 
-                        imagem="imagens/tablet.png"
-                    )
-                ),
-                preco=100.90,
-                quantidade_disponivel=20,
-                chave_pix="13668995630"
-            ),
-        ] * 20
 
     def criar_bloco_anuncio(self, anuncio: Anuncio, largura, altura, editar = False):
         bloco = QFrame()
@@ -740,28 +752,16 @@ class MarketplaceUI(QMainWindow):
         largura_bloco = 250
         altura_bloco = 300
 
+        botao_adicionar = WidgetHelper.botao(
+            nome="+", fonte=80,
+            largura=largura_bloco, altura=altura_bloco,
+            backcolor='#e0f7fa', fontcolor='#0078d7',
+            border='dashed #0078d7',
+            hover='#b2ebf2', pressed='#80deea',
+            acao=lambda: self.abrir_tela(self.tela_criar_produto())
+        )
+
         index = 0
-
-        botao_adicionar = QPushButton("+")
-        botao_adicionar.setFixedSize(largura_bloco, altura_bloco)
-        botao_adicionar.setStyleSheet("""
-            QPushButton {
-                background-color: #e0f7fa;
-                border: 2px dashed #0078d7;
-                border-radius: 15px;
-                font-size: 80px;
-                font-weight: bold;
-                color: #0078d7;
-            }
-            QPushButton:hover {
-                background-color: #b2ebf2;
-            }
-            QPushButton:pressed {
-                background-color: #80deea;
-            }
-        """)
-        botao_adicionar.clicked.connect(lambda: self.abrir_tela(self.tela_criar_produto()))
-
         # Adiciona o botão + primeiro, se existir
         if adicionar:
             grid.addWidget(botao_adicionar, 0, 0)
@@ -823,14 +823,17 @@ class MarketplaceUI(QMainWindow):
         layout_h = QHBoxLayout(tela)
 
         # Adiciona a barra lateral ao layout principal (inicialmente oculta)
+        self.menu_lateral = self.criar_menu_lateral()
         layout_h.addWidget(self.menu_lateral)
         
         # Layout vertical para o conteúdo da tela
         layout_conteudo = QVBoxLayout()
 
-        layout_conteudo.addLayout(self.barra_superior)
+        barra_superior = self.criar_barra_superior()
+        layout_conteudo.addLayout(barra_superior)
 
-        layout_conteudo.addWidget(self.tela_lista)
+        tela_lista = self.tela_lista_anuncios(self.main.anuncios)
+        layout_conteudo.addWidget(tela_lista)
 
         # Agora adiciona o conteúdo principal no layout horizontal
         layout_h.addLayout(layout_conteudo)
@@ -843,28 +846,18 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        loja = QPushButton("Loja")
-        loja.setFixedSize(100, 30)
-        loja.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        loja.clicked.connect(lambda: self.abrir_tela(self.tela_detalhes_loja(anuncio.produto.loja)))
-        layout_horizontal.addWidget(loja, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_loja = WidgetHelper.botao(
+            nome="Loja", fonte=15,
+            largura=100,
+            acao=lambda: self.abrir_tela(self.tela_detalhes_loja(anuncio.produto.loja))
+        )
+        layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal)
 
@@ -889,26 +882,11 @@ class MarketplaceUI(QMainWindow):
         quantidade = QLabel(f"<span style='font-size: 20px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
         layout_horizontal_2.addWidget(quantidade, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        comprar = QPushButton("Comprar")
-        comprar.setFixedSize(200, 50)
-        comprar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 30px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        
-        comprar.clicked.connect(lambda: self.abrir_tela(self.tela_comprar(anuncio)))
+        comprar = WidgetHelper.botao(
+            nome="Comprar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.abrir_tela(self.tela_comprar(anuncio) if self.main.is_identificado() else self.tela_login())
+        )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal_2)
@@ -921,15 +899,20 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addLayout(layout_horizontal)
 
-        imagem_label = QLabel()
-        pixmap = QPixmap(loja.imagem).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        imagem_label.setPixmap(pixmap)
-        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        if loja.imagem:
+            imagem_label = QLabel()
+            pixmap = QPixmap(loja.imagem).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
+            imagem_label.setPixmap(pixmap)
+            imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -947,28 +930,19 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        loja = QPushButton(f"Loja")
-        loja.setFixedSize(100, 30)
-        loja.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        loja.clicked.connect(lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja)))
-        layout_horizontal.addWidget(loja, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_loja = WidgetHelper.botao(
+            nome="Loja", fonte=15,
+            acao=lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja))
+        )
+        if not confirmar:
+            layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
+
         layout_vertical.addLayout(layout_horizontal)
 
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{pedido.produto.nome}</span>")
@@ -1012,27 +986,15 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal_4 = QHBoxLayout()
 
-        botao_cancelar = QPushButton(f"Cancelar")
-        botao_cancelar.setFixedSize(100, 30)
-        botao_cancelar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 15px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        #botao_cancelar.clicked.connect(lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja)))
+        botao_cancelar = WidgetHelper.botao(
+            nome="Cancelar",
+            acao=lambda: self.cancelar_pedido(pedido)
+        )
 
-        botao_confirmar = self.botao_confirmar()
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar",
+            acao=lambda: self.confirmar_pedido(pedido)
+        )
 
         if confirmar:
             layout_horizontal_4.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -1049,7 +1011,11 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1067,28 +1033,13 @@ class MarketplaceUI(QMainWindow):
         for i in range(anuncio.quantidade_disponivel):
             formulario.adicionar_opcao(campo="Quantidade", opcao=str(i+1))
 
-        #layout_vertical.addWidget(formulario1, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout_vertical.addWidget(formulario, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        botao_confirmar = QPushButton("Confirmar")
-        botao_confirmar.setFixedSize(200, 50)
-        botao_confirmar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 30px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_confirmar.clicked.connect(lambda: self.comprar(anuncio, formulario))
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.comprar(anuncio, formulario)
+        )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
 
         return tela
@@ -1098,7 +1049,11 @@ class MarketplaceUI(QMainWindow):
         layout_vertical = QVBoxLayout(tela)
         layout_horizontal = QHBoxLayout()
 
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addLayout(layout_horizontal)
         layout_vertical.addSpacing(10)
@@ -1108,7 +1063,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(20)
 
-        dados = vu.gerar_qrcode_pix(
+        dados = WidgetHelper.gerar_qrcode_pix(
             nome="Leticia",
             chave="136.689.956-30",
             cidade="São Paulo",
@@ -1134,31 +1089,48 @@ class MarketplaceUI(QMainWindow):
         string.setMaximumWidth(500)
         layout_vertical.addWidget(string, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        botao_copiar = QPushButton("Copiar texto")
-        botao_copiar.clicked.connect(lambda: self.copiar_texto(string))
+        botao_copiar = WidgetHelper.botao(
+            nome="Copiar texto", fonte=15,
+            backcolor="", 
+            hover='#D3D3D3', pressed='#000000',
+            acao=WidgetHelper.copiar_texto(string)
+        )
         layout_vertical.addWidget(botao_copiar, alignment=Qt.AlignmentFlag.AlignCenter)
-
         layout_vertical.addSpacing(10)
 
-        botao_confirmar = QPushButton("Confirmar")
-        botao_confirmar.setFixedSize(200, 50)
-        botao_confirmar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 30px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        #botao_confirmar.clicked.connect(lambda: self.comprar(anuncio, formulario))
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar", fonte=30,
+            largura=200, altura=50,
+            acao=None
+        )
+        layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        return tela
+    
+    def tela_codigo_confirmacao(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addSpacing(50)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Código de Confirmação</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = Formulario(campos=["Código"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.confirmar_codigo(formulario)
+        )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
 
         return tela
@@ -1167,8 +1139,11 @@ class MarketplaceUI(QMainWindow):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
-        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
-
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(50)
 
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Cadastramento</span>")
@@ -1177,49 +1152,19 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addSpacing(50)
 
         formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
-        formulario.validar_tipos({"Nome": str, "CPF": str, "Email": str, "Senha": str})
         layout_vertical.addWidget(formulario)
 
-        botao_cadastrar = QPushButton("Cadastrar")
-        botao_cadastrar.setFixedSize(200, 50)
-        botao_cadastrar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 30px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_cadastrar.clicked.connect(lambda: formulario.exibir_erros())
+        botao_cadastrar = WidgetHelper.botao(
+            nome="Cadastrar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.cadastrar(formulario)
+        )
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        botao_login = QPushButton("Login")
-        botao_login.setFixedSize(110, 30)
-        botao_login.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_login.clicked.connect(lambda: self.abrir_tela(self.tela_login()))
+        botao_login = WidgetHelper.botao(
+            nome="Login",
+            acao=lambda: self.abrir_tela(self.tela_login())
+        )
         layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignRight)
 
         return tela
@@ -1228,7 +1173,11 @@ class MarketplaceUI(QMainWindow):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
-        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         layout_vertical.addSpacing(50)
 
@@ -1240,47 +1189,17 @@ class MarketplaceUI(QMainWindow):
         formulario = Formulario(campos=["Email", "Senha"], largura=600, altura=50)
         layout_vertical.addWidget(formulario)
 
-        botao_login = QPushButton("Entrar")
-        botao_login.setFixedSize(200, 50)
-        botao_login.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 30px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        
-        #botao_login.clicked.connect(lambda: self.login_usuario(formulario))
+        botao_login = WidgetHelper.botao(
+            nome="Entrar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.login(formulario)
+        )
         layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        botao_cadastrar = QPushButton("Cadastrar")
-        botao_cadastrar.setFixedSize(110, 30)
-        botao_cadastrar.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_cadastrar.clicked.connect(lambda: self.abrir_tela(self.tela_cadastro()))
+        botao_cadastrar = WidgetHelper.botao(
+            nome="Cadastrar",
+            acao=lambda: self.abrir_tela(self.tela_cadastro())
+        )
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignRight)
 
         return tela
@@ -1291,9 +1210,16 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = self.botao_editar(None)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(
+            nome="Editar"
+        )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1313,35 +1239,19 @@ class MarketplaceUI(QMainWindow):
             largura=600,
             altura=50
         )
+        usuario = self.main.usuario
         formulario.preencher_campos(
-            {"Nome": "João Silva", "CPF": "123.456.789-10", "Email": "joaosilva@gmail.com"}
+            {"Nome": usuario.nome, "CPF": usuario.cpf, "Email": usuario.email, "Senha": "*"*len(usuario.senha)}
         )
-        formulario.validar_tipos(
-            {"Nome": str, "CPF": str, "Email": str}
-        )
-        botao_editar.clicked.connect(lambda: formulario.exibir_erros())
+        botao_editar.clicked.connect(lambda: self.editar_perfil(formulario))
         layout_conteudo.addWidget(formulario)
-
-        botao_endereco = QPushButton("Meus Endereços")
-        botao_endereco.setFixedSize(180, 50)
-        botao_endereco.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 20px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
-        botao_endereco.clicked.connect(lambda: self.abrir_tela(self.tela_meus_enderecos()))
         layout_conteudo.addStretch()
+
+        botao_endereco = WidgetHelper.botao(
+            nome="Meus Endereços",
+            largura=180, altura=50,
+            acao=lambda: self.abrir_tela(self.tela_meus_enderecos())
+        )
         layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
 
         # Scroll area com o título e formulário
@@ -1357,7 +1267,12 @@ class MarketplaceUI(QMainWindow):
         layout_vertical = QVBoxLayout(tela)
 
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
@@ -1372,33 +1287,39 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addSpacing(40)
 
         layout_horizontal2 = QHBoxLayout()
-
+        usuario = self.main.usuario
+        quantidade = len(usuario.enderecos)
         formulario = Formulario(
-            campos=[f"Endereço{i+1}" for i in range(10)],
-            largura=600,
+            campos=[f"Endereço{i+1}" for i in range(quantidade)],
+            largura=800,
             altura=50
         )
         formulario.preencher_campos(
-            {f"Endereço{i+1}": f"endereço{i+1}" for i in range(10)}
+            {f"Endereço{i+1}": usuario.enderecos[i].__str__() for i in range(quantidade)}
         )
-        formulario.validar_tipos(
-            {f"Endereço{i+1}": str for i in range(10)}
-        )
+        formulario.bloquear_campos([f"Endereço{i+1}" for i in range(quantidade)])
         layout_horizontal2.addWidget(formulario)
 
         layout_vertical2 = QVBoxLayout()
        
         botao_editar = []
-        for i in range(10):
-            botao_editar.append(self.botao_editar(
-                lambda: self.abrir_tela(self.tela_meu_endereco(f"{i}"))
-            ))
-            layout_vertical2.addWidget(botao_editar[i])
+        for i in range(quantidade):
+            endereco = usuario.enderecos[i]
+            botao = WidgetHelper.botao(
+                nome="Editar",
+                acao=lambda: self.abrir_tela(self.tela_meu_endereco(endereco))
+            )
+            botao_editar.append(botao)
+            layout_vertical2.addWidget(botao)
 
         layout_horizontal2.addLayout(layout_vertical2)
         layout_conteudo.addLayout(layout_horizontal2)
 
-        botao_adicionar = self.botao_adicionar(lambda: self.abrir_tela(self.tela_criar_endereco()))
+        botao_adicionar = WidgetHelper.botao(
+                nome="Adicionar",
+                acao=lambda: self.abrir_tela(self.tela_criar_endereco())
+            )
+        layout_conteudo.addStretch()
         layout_conteudo.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignLeft)
         
         scroll_area = QScrollArea()
@@ -1408,15 +1329,22 @@ class MarketplaceUI(QMainWindow):
 
         return tela
 
-    def tela_meu_endereco(self, endereco):
+    def tela_meu_endereco(self, endereco: Endereco):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = self.botao_editar(None)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(
+            nome="Editar"
+        )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1424,10 +1352,10 @@ class MarketplaceUI(QMainWindow):
         conteudo_scroll = QWidget()
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
-
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Endereço {endereco}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout_conteudo.addSpacing(40)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Endereço</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1437,12 +1365,16 @@ class MarketplaceUI(QMainWindow):
             altura=50
         )
         formulario.preencher_campos(
-            {"Rua": "", "N°": "", "Bairro": "", "Cidade": "", "Estado": "", "Complemento": ""}
+            {
+                "Rua": endereco.rua, 
+                "N°": endereco.numero, 
+                "Bairro": endereco.bairro, 
+                "Cidade": endereco.cidade, 
+                "Estado": endereco.estado, 
+                "Complemento": endereco.complemento
+            }
         )
-        formulario.validar_tipos(
-            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
-        )
-        botao_editar.clicked.connect(lambda: formulario.exibir_erros())
+        botao_editar.clicked.connect(lambda: self.editar_endereco(formulario, endereco))
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário
@@ -1459,10 +1391,18 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_criar = self.botao_confirmar(None)
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar",
+            acao=None
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
@@ -1484,7 +1424,7 @@ class MarketplaceUI(QMainWindow):
         formulario.validar_tipos(
             {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
-        botao_criar.clicked.connect(lambda: formulario.exibir_erros())
+        botao_confirmar.clicked.connect(lambda: self.criar_endereco(formulario))
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário
@@ -1500,14 +1440,22 @@ class MarketplaceUI(QMainWindow):
         layout_vertical = QVBoxLayout(tela)
         layout_horizintal = QHBoxLayout()
 
-        layout_horizintal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
-        botao_adicionar = self.botao_adicionar(lambda: self.abrir_tela(self.tela_criar_loja()))
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizintal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_adicionar = WidgetHelper.botao(
+            nome="Adicionar",
+            acao=lambda: self.abrir_tela(self.tela_criar_loja())
+        )
         layout_horizintal.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizintal)
+        layout_vertical.addSpacing(40)
 
         titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Minhas Lojas</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_vertical.addSpacing(40)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
@@ -1518,58 +1466,7 @@ class MarketplaceUI(QMainWindow):
         layout_loja = QVBoxLayout(conteudo_scroll)
         layout_loja.setSpacing(15)
 
-        # Produtos
-        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["imagens/notebook.png"])
-
-        # Anúncios
-        a1 = Anuncio(id=1, produto=p1)
-        a2 = Anuncio(id=2, produto=p2)
-        a3 = Anuncio(id=3, produto=p3)
-        a4 = Anuncio(id=4, produto=p6)
-
-        # Pedidos
-        pedido1 = Pedido(id=1, produto=p1, preco=3620.0)
-        pedido2 = Pedido(id=2, produto=p3, preco=950.0)
-        pedido3 = Pedido(id=3, produto=p5, preco=440.0)
-        pedido4 = Pedido(id=4, produto=p6, preco=200.0)
-
-        # Loja 1: completa
-        loja1 = Loja(
-            id=101,
-            nome="Digital Tech",
-            imagem="imagens/notebook.png",
-            produtos=[p1, p2, p3, p4, p5, p1, p2, p3, p4, p5, p1, p2, p3, p4, p5],
-            anuncios=[a1, a2, a3, a1, a2, a3, a1, a2, a3],
-            pedidos_confirmados=[pedido1, pedido2, pedido3, pedido1, pedido2, pedido3, pedido1, pedido2, pedido3],
-            pedidos_em_andamento=[pedido1, pedido2, pedido3]
-        )
-
-        # Loja 2: simples
-        loja2 = Loja(
-            id=102,
-            nome="WebStore",
-            imagem="imagens/notebook.png",
-            produtos=[p6],
-            anuncios=[a4],
-            pedidos_confirmados=[pedido4]
-        )
-
-        # Loja 3: vazia
-        loja3 = Loja(
-            id=103,
-            nome="Nova Loja",
-            imagem="imagens/notebook.png"
-        )
-
-        # Lista de lojas
-        lojas = [loja1, loja2, loja3]
-
-        blocos = self.tela_lista_lojas(lojas)
+        blocos = self.tela_lista_lojas(self.main.usuario.lojas)
         layout_vertical.addWidget(blocos)
         layout_vertical.addStretch()
 
@@ -1581,9 +1478,16 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal = QHBoxLayout()
 
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = self.botao_editar(lambda: self.abrir_tela(self.tela_loja(loja)))
+        botao_editar = WidgetHelper.botao(
+            nome="Editar",
+            acao=lambda: self.abrir_tela(self.tela_loja(loja))
+        )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal)
@@ -1602,84 +1506,26 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal2 = QHBoxLayout()
 
-        botao_anuncios = QPushButton("Anuncios")
-        botao_anuncios.setFixedSize(110, 30)
-        botao_anuncios.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 18px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
+        botao_anuncios = WidgetHelper.botao(
+            nome="Anúncios", fonte=18,
+        )
         layout_horizontal2.addWidget(botao_anuncios)
 
-        botao_produtos = QPushButton("Produtos")
-        botao_produtos.setFixedSize(110, 30)
-        botao_produtos.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 18px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
+        botao_produtos = WidgetHelper.botao(
+            nome="Produtos", fonte=18,
+        )
         layout_horizontal2.addWidget(botao_produtos)
 
-        botao_pedidos_confirmados = QPushButton("Pedidos Confirmados")
-        botao_pedidos_confirmados.setFixedSize(220, 30)
-        botao_pedidos_confirmados.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 18px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
+        botao_pedidos_confirmados = WidgetHelper.botao(
+            nome="Pedidos Confirmados", fonte=18,
+            largura=220,
+        )
         layout_horizontal2.addWidget(botao_pedidos_confirmados)
 
-        botao_pedidos_em_andamento = QPushButton("Pedidos Em Andamento")
-        botao_pedidos_em_andamento.setFixedSize(220, 30)
-        botao_pedidos_em_andamento.setStyleSheet("""
-            QPushButton {
-                background-color: #0078d7;
-                color: white;
-                border: 2px solid #005fa3;
-                border-radius: 10px;
-                font-weight: bold;
-                font-size: 18px;
-            }
-            QPushButton:hover {
-                background-color: #005fa3;
-            }
-            QPushButton:pressed {
-                background-color: #003f7f;
-            }
-        """)
+        botao_pedidos_em_andamento = WidgetHelper.botao(
+            nome="Pedidos Em Andamento", fonte=18,
+            largura=230
+        )
         layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
         lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
@@ -1711,11 +1557,18 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addLayout(layout_horizontal)
 
-        botao_criar = self.botao_editar()
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_editar = WidgetHelper.botao(
+            nome="Editar"
+        )
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
@@ -1741,14 +1594,7 @@ class MarketplaceUI(QMainWindow):
                 "Imagem": loja.imagem
             }
         )
-    
-        formulario.validar_tipos(
-            {
-                "Nome": str, 
-                "Imagem": str
-            }
-        )
-    
+        botao_editar.clicked.connect(lambda: self.editar_loja(formulario, loja))
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário
@@ -1757,7 +1603,10 @@ class MarketplaceUI(QMainWindow):
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
 
-        botao_excluir = self.botao_excluir()
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=lambda: self.excluir_loja(loja)
+        )
         layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
         return tela
@@ -1768,10 +1617,17 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_criar = self.botao_confirmar(None)
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar"
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
@@ -1790,10 +1646,7 @@ class MarketplaceUI(QMainWindow):
             largura=600,
             altura=50
         )
-    
-        formulario.validar_tipos(
-            {"Nome": str, "Imagem": str}
-        )
+        botao_confirmar.clicked.connect(lambda: self.criar_loja(formulario))
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário
@@ -1810,10 +1663,17 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
-        layout_vertical.addLayout(layout_horizontal)
 
-        botao_editar = self.botao_editar()
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(
+            nome="Editar",
+            acao=None
+        )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1821,10 +1681,10 @@ class MarketplaceUI(QMainWindow):
         conteudo_scroll = QWidget()
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
 
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>{produto.nome}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1834,10 +1694,20 @@ class MarketplaceUI(QMainWindow):
             altura=50
         )
 
-        formulario.preencher_campos( {"Nome": produto.nome, "Descrição": produto.descricao, "Imagens": produto.imagens[0]})
+        formulario.preencher_campos( 
+            {
+                "Nome": produto.nome, 
+                "Descrição": produto.descricao, 
+                "Imagens": produto.imagens[0]
+            }
+        )
     
         formulario.validar_tipos(
-            {"Nome": str, "Descrição": str, "Imagens": str}
+            {
+                "Nome": str, 
+                "Descrição": str, 
+                "Imagens": str
+            }
         )
         layout_conteudo.addWidget(formulario)
         
@@ -1849,12 +1719,18 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal_2 = QHBoxLayout()
 
-        botao_excluir = self.botao_excluir()
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=None
+        )
         layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_criar = self.botao(nome="Criar Anúncio",fonte=15, acao=lambda: self.abrir_tela(self.tela_criar_anuncio(produto)))
+        botao_criar = WidgetHelper.botao(
+            nome="Criar Anúncio",
+            largura=200,
+            acao=lambda: self.abrir_tela(self.tela_criar_anuncio(produto))
+        )
         layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
-
         layout_vertical.addLayout(layout_horizontal_2)
 
         return tela
@@ -1865,21 +1741,28 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
-        layout_vertical.addLayout(layout_horizontal)
 
-        botao_criar = self.botao_editar()
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(
+            nome="Editar",
+            acao=None
+        )
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
         conteudo_scroll = QWidget()
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
 
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Anúncio: {anuncio.produto.nome}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1915,7 +1798,10 @@ class MarketplaceUI(QMainWindow):
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
 
-        botao_excluir = self.botao_excluir()
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=None
+        )
         layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
         return tela
@@ -1926,21 +1812,28 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
-        layout_vertical.addLayout(layout_horizontal)
 
-        botao_criar = self.botao_confirmar(None)
-        layout_horizontal.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar",
+            acao=None
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
         # CONTEÚDO DO SCROLL
         conteudo_scroll = QWidget()
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
 
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Produto</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1951,7 +1844,11 @@ class MarketplaceUI(QMainWindow):
         )
     
         formulario.validar_tipos(
-            {"Nome": str, "Descrição": str, "Imagens": str}
+            {
+                "Nome": str, 
+                "Descrição": str, 
+                "Imagens": str
+            }
         )
         layout_conteudo.addWidget(formulario)
         
@@ -1969,9 +1866,16 @@ class MarketplaceUI(QMainWindow):
 
         # Topo fixo (fora do scroll): botão voltar e editar
         layout_horizontal = QHBoxLayout()
-        layout_horizontal.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_confirmar = self.botao_confirmar()
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar",
+            acao=self.voltar_para_lista
+        )
         layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1979,10 +1883,10 @@ class MarketplaceUI(QMainWindow):
         conteudo_scroll = QWidget()
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
 
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Anúncio</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -2000,7 +1904,6 @@ class MarketplaceUI(QMainWindow):
                 "Pausado": bool
             }
         )
-    
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário
@@ -2015,30 +1918,19 @@ class MarketplaceUI(QMainWindow):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
-        layout_vertical.addWidget(self.botao_voltar(), alignment=Qt.AlignmentFlag.AlignLeft)
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=self.voltar_para_lista
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addSpacing(40)
 
         titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Pedidos</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
-        layout_vertical.addSpacing(40)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
-        # Produtos
-        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["imagens/notebook.png"])
-        
-        pedidos = [
-            Pedido(id=1, produto=p1, preco=3620.0),
-            Pedido(id=2, produto=p3, preco=950.0),
-            Pedido(id=3, produto=p5, preco=440.0),
-            Pedido(id=4, produto=p6, preco=200.0),
-        ]
-
-        blocos = self.tela_lista_pedidos(pedidos)
+        blocos = self.tela_lista_pedidos(self.main.usuario.pedidos)
         layout_vertical.addWidget(blocos)
 
         return tela

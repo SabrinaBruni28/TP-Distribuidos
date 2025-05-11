@@ -1,22 +1,28 @@
 from models.endereco import Endereco
 from models.pedido import Pedido
 from models.loja import Loja
+from typing import Optional
 
 class Usuario:
     def __init__(self):
-        return
+        self.id = 0
 
 class Usuario_Identificado(Usuario):
-    def __init__(self, id = 0, nome = "", cpf = "", email = "", senha = "", lojas = [], enderecos = [], pedidos = []):
-        self.id_usuario = id
+    def __init__(
+            self, id = 0, nome = "", cpf = "", email = "", senha = "", 
+            lojas: Optional[list[Loja]] = None, 
+            enderecos: Optional[list[Endereco]] = None, 
+            pedidos: Optional[list[Pedido]] = None
+        ):
+        self.id = id
         self.nome = nome
         self.cpf = cpf
         self.email = email
         self.senha = senha
 
-        self.lojas = lojas
-        self.enderecos = enderecos
-        self.pedidos = pedidos
+        self.lojas = lojas if lojas is not None else []
+        self.enderecos = enderecos if enderecos is not None else []
+        self.pedidos = pedidos if pedidos is not None else []
 
     def criar_loja(self, loja):
         self.lojas.append(loja)
@@ -63,6 +69,12 @@ class Usuario_Identificado(Usuario):
             return True
         return False
     
+    def get_endereco(self, endereco: str):
+        for end in self.enderecos:
+            if end.__str__() == endereco:
+                end
+        return None
+    
     def to_dict(self):
         return {
             "id_usuario": self.id_usuario,
@@ -75,10 +87,16 @@ class Usuario_Identificado(Usuario):
             "pedidos": [pedido.to_dict() for pedido in self.pedidos] if self.pedidos else []
         } 
 
-    def to_dict_personalisado(self):
+    def to_dict_cadastramento(self):
         return {
             "nome": self.nome,
             "cpf": self.cpf,
+            "email": self.email,
+            "senha": self.senha,
+        } 
+    
+    def to_dict_login(self):
+        return {
             "email": self.email,
             "senha": self.senha,
         } 

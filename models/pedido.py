@@ -5,11 +5,11 @@ from models.endereco import Endereco
 class Pedido:
     def __init__(self, id = 0, produto: Produto = None, quantidade = 0, preco = 0, endereco: Endereco = None, data = None):
         self.id = id
-        self.data = data if data else datetime.datetime.now()
         self.produto = produto
         self.quantidade = quantidade
         self.preco = preco
         self.endereco = endereco
+        self.data = data if data else datetime.datetime.now()
 
     def calcular_total(self):
         total = self.preco * self.quantidade

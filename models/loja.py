@@ -32,7 +32,7 @@ class Loja:
             return True
         return False
     
-    def apagar_anuncio(self, anuncio):
+    def apagar_anuncio(self, anuncio: Anuncio):
         if anuncio in self.anuncios:
             self.anuncios.remove(anuncio)
             return True

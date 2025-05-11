@@ -2,13 +2,18 @@ import socket
 
 class UnixSocketClient:
     def __init__(self, ip, port):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((ip, port))
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((ip, port))
+        except Exception as e:
+            print(e)
+            self.socket = None
         self.socket = s
 
     def close(self):
         if self.socket:
             self.socket.close()
+            print("Fechar socket:", self.socket)
 
     def send(self, data: str):
         if not self.socket:

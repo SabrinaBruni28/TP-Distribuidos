@@ -2,7 +2,7 @@ import sys, os
 # Adiciona o diretório raiz ao sys.path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from models.validation_utils import ValidationUtils as vu
+from widgets import WidgetHelper
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
    QWidget, QLabel, QLineEdit, QFormLayout, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox
@@ -64,6 +64,15 @@ class FormularioOpcoes(QWidget):
     def adicionar_opcao(self, campo, opcao="Nova opção"):
         combo = self.inputs[campo]
         combo.addItem(opcao)
+
+    def obter_valores(self) -> dict:
+        """
+        Retorna os valores selecionados nos campos do formulário de opções.
+        """
+        valores = {}
+        for nome, combo in self.inputs.items():
+            valores[str(nome).lower()] = combo.currentText()
+        return valores
 
 class Formulario(QWidget):
     def __init__(self, campos=[], largura=300, altura=30):
@@ -165,7 +174,7 @@ class Formulario(QWidget):
                 self.erros[nome].setText(str(""))
 
             if nome.lower() == "email":
-                if not vu.check_email(texto):
+                if not WidgetHelper.check_email(texto):
                     erro = "Email inválido."
                     self.erros[nome].setText(str(erro))
                     has_error = True
@@ -174,7 +183,7 @@ class Formulario(QWidget):
                     self.erros[nome].setText(str(""))
 
             elif nome.lower() == "cpf":
-                if not vu.check_cpf(texto):
+                if not WidgetHelper.check_cpf(texto):
                     erro = "CPF inválido."
                     self.erros[nome].setText(str(erro))
                     has_error = True
@@ -194,3 +203,57 @@ class Formulario(QWidget):
                 erro.setVisible(True)
             else:
                 erro.setVisible(False)
+
+    def definir_erros_especificos(self, erros: dict):
+        """
+        Atribui mensagens de erro específicas para os campos.
+
+        :param erros: dicionário no formato {"Nome": "Erro em nome", "Email": "Erro em email", ...}
+        """
+        for nome, mensagem in erros.items():
+            if nome in self.erros:
+                self.erros[nome].setText(mensagem)
+                self.erros[nome].setVisible(bool(mensagem))
+
+    def obter_valores(self) -> dict:
+        """
+        Retorna os valores digitados nos campos do formulário.
+        """
+        valores = {}
+        for nome, campo in self.inputs.items():
+            valores[str(nome).lower()] = campo.text().strip()
+        return valores
+    
+    def obter_valores_alterados(self, valores_iniciais: dict) -> dict:
+        """
+        Compara os valores atuais do formulário com os valores iniciais fornecidos e retorna
+        um dicionário contendo apenas os campos que foram alterados.
+        
+        :param valores_iniciais: Dicionário com os valores iniciais, por exemplo:
+                                  {"Nome": "Ana", "Email": "ana@email.com"}
+        :return: Dicionário contendo os campos alterados, por exemplo:
+                 {"Nome": "Maria"}
+        """
+        valores_alterados = {}
+        for nome, entrada in self.inputs.items():
+            valor_atual = entrada.text().strip()
+            valor_inicial = str(valores_iniciais.get(nome, "")).strip()
+
+            # Se o valor atual for diferente do inicial, armazene no dicionário
+            if valor_atual != valor_inicial:
+                valores_alterados[str(nome).lower()] = valor_atual
+        
+        return valores_alterados
+    
+    def bloquear_campos(self, nomes_campos: list):
+        """
+        Torna os campos especificados como não editáveis.
+        
+        :param nomes_campos: Lista de nomes dos campos (como definidos na criação do formulário)
+        """
+        for nome_campo in nomes_campos:
+            if nome_campo in self.inputs:
+                self.inputs[nome_campo].setReadOnly(True) # Impede edição
+                self.inputs[nome_campo].setFocusPolicy(Qt.FocusPolicy.NoFocus)  # Impede que o campo receba foco para digitar
+            
+
