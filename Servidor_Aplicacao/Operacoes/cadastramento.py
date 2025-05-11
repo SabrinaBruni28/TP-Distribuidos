@@ -33,16 +33,27 @@ class Cadastramento():
         if resposta_banco[0] == "ok":
             emailCliente = dados_json.get("email")
 
-            while True:
-                email = correio.ThreadEmail("confirmacao cadastro", emailCliente).start()
-                codigoConfirmacao = email.codigo
+            email = correio.ThreadEmail("confirmacao cadastro", emailCliente).start()
+            codigoConfirmacao = email.codigo
+
+            tentativas = 0
+
+            while tentativas < 3:
+                tentativas += 1
                 codigoCliente = self.conexaoServidor.recv(2048).decode("utf-8")
 
                 if codigoCliente[1] == codigoConfirmacao:
                     mensagemAoCliente = op.codifica("ok | " +str(dados_json))
 
                     self.conexaoCliente.sendall(mensagemAoCliente)
-                    break
+                    return
+
+                else:
+                    mensagemAoCliente = op.codifica("erro | codigo_invalido")
+                    self.conexaoCliente.sendall(mensagemAoCliente)
+
+            mensagemAoCliente = op.codifica("erro | limite_excedido")
+            self.conexaoCliente.sendall(mensagemAoCliente)
 
         else:
             mensagemAoCliente = op.codifica("erro | " + str(resposta_banco[1]))
