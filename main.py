@@ -74,8 +74,8 @@ class Main():
             Pedido(id=3, produto=p5, preco=440.0),
             Pedido(id=4, produto=p6, preco=200.0),
         ]
-        #self.usuario = Usuario()
-
+        self.usuario = Usuario()
+        """
         self.usuario = Usuario_Identificado(
             nome="Sabrina Bruni de Souza Faria",
             cpf="136.689.956-30",
@@ -84,7 +84,7 @@ class Main():
             enderecos=[end],
             lojas=lojas,
             pedidos=pedidos
-        )
+        )"""
         self.anuncios = []
         #self.socket = UnixSocketClient(ip="192.168.1.102", port=5000)
 
@@ -101,10 +101,12 @@ class Main():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "email_confirmacao":
-            return True, "sucesso"
+            return True
         
         elif resposta[0] == "erro":
-            return False, resposta[1]
+            return resposta[1]
+
+        return False
         
     def email_confirmacao(self, codigo):
         return True, ""
@@ -120,6 +122,7 @@ class Main():
             return False, resposta[1]
         
     def login(self, usuario: Usuario_Identificado):
+        return True
         mensagem = f"login|{usuario.to_dict_login()}"
         self.socket.send(mensagem)
 
@@ -131,6 +134,8 @@ class Main():
         elif resposta[0] == "erro":
             return resposta[1]
         
+        return False
+
     def visualizar_anuncios(self):
         self.anuncios = self.criar_lista_anuncios()
         return
@@ -148,6 +153,7 @@ class Main():
         return False
     
     def visualizar_anuncio(self, anuncio: Anuncio):
+        return True
         mensagem = f"visualizar|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
 
@@ -159,6 +165,7 @@ class Main():
         return False
     
     def visualizar_produto(self, produto: Produto):
+        return True
         mensagem = f"visualizar|produto|{produto.id}"
         self.socket.send(mensagem)
 
@@ -170,6 +177,7 @@ class Main():
         return False
     
     def visualizar_loja(self, loja: Loja):
+        return True
         mensagem = f"visualizar|loja|{loja.id}"
         self.socket.send(mensagem)
 
@@ -181,6 +189,7 @@ class Main():
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
+        return True
         mensagem = f"visualizar|minha_loja|{loja.id}"
         self.socket.send(mensagem)
 
@@ -192,6 +201,7 @@ class Main():
         return False
     
     def visualizar_minhas_lojas(self):
+        return True
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
 
@@ -202,8 +212,34 @@ class Main():
             return True
         
         return False
+
+    def visualizar_endereco(self, endereco: Endereco):
+        return True
+        mensagem = f"visualizar|endereco|{endereco.id}"
+        self.socket.send(mensagem)
+
+        resposta = self.divide_mensagem(self.socket.receive())
+        if resposta[0] == "endereco":
+            endereco = Endereco.from_dict(resposta[1])
+            return True
+
+        return False
+
+    def visualizar_meus_enderecos(self):
+        return True
+        mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
+        self.socket.send(mensagem)
+
+        resposta = self.divide_mensagem(self.socket.receive())
+        if resposta[0] == "meus_enderecos":
+            for i in range(1, len(resposta)):
+                self.usuario.enderecos.append(Endereco.from_dict(resposta[i]))
+            return True
+        
+        return False
     
     def visualizar_pedido(self, pedido: Pedido):
+        return True
         mensagem = f"visualizar|pedido|{pedido.id}"
         self.socket.send(mensagem)
 
@@ -215,6 +251,7 @@ class Main():
         return False
 
     def visualizar_meus_pedidos(self):
+        return True
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
         self.socket.send(mensagem)
 
@@ -395,6 +432,7 @@ class Main():
         return False
     
     def excluir_endereco(self, endereco: Endereco):
+        return True
         mensagem = f"excluir|endereco|{endereco.id}"
         self.socket.send(mensagem)
 

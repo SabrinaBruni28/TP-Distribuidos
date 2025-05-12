@@ -69,7 +69,7 @@ class Usuario_Identificado(Usuario):
             return True
         return False
     
-    def get_endereco(self, endereco: str):
+    def get_endereco(self, endereco: str) -> Endereco:
         for end in self.enderecos:
             if end.__str__() == endereco:
                 end

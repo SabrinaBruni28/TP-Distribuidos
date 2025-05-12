@@ -29,11 +29,10 @@ class MarketplaceUI(QMainWindow):
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
-        self.tela_anterior = []
 
         self.main = Main()
         self.main.visualizar_anuncios()
-        self.stack.addWidget(self.tela_inicial())
+        self.abrir_tela(self.tela_inicial())
 
     def closeEvent(self, event):
         dialogo = CaixaConfirmacao(self, titulo="Confirmar saída", mensagem="Você tem certeza que deseja sair?")
@@ -53,31 +52,24 @@ class MarketplaceUI(QMainWindow):
             index = total + index  # Ex: -1 vira total-1
 
         if index < 0 or index >= total:
-            return  # ou levanta um erro, se preferir
+            return
 
         self.stack.setCurrentIndex(index)
 
         # Remove widgets após o índice atual
         for i in range(total - 1, index, -1):
-            if self.tela_anterior:
-                self.tela_anterior.pop()
             widget = self.stack.widget(i)
             self.stack.removeWidget(widget)
             widget.deleteLater()
 
     def voltar_tela(self):
-        if self.tela_anterior:
-            index = self.stack.currentIndex()
-            self.stack.setCurrentWidget(self.tela_anterior[index-1])
-
-            self.tela_anterior.pop()
-            widget = self.stack.widget(index)
-            self.stack.removeWidget(widget)
-            widget.deleteLater()
+        index = self.stack.currentIndex()
+        self.stack.setCurrentIndex(index - 1)
+        widget = self.stack.widget(index)
+        self.stack.removeWidget(widget)
+        widget.deleteLater()
 
     def abrir_tela(self, nova_tela):
-        self.tela_anterior.append(self.stack.currentWidget())
-
         self.stack.addWidget(nova_tela)
         self.stack.setCurrentWidget(nova_tela)
 
@@ -96,7 +88,7 @@ class MarketplaceUI(QMainWindow):
     def aplicar_filtro(self, texto):
         texto = texto.lower().strip()
         anuncios_filtrados = [
-            a for a in self.anuncios if texto in a.produto.nome.lower()
+            a for a in self.main.anuncios if texto in a.produto.nome.lower()
         ]
         self.atualizar_lista_anuncios(anuncios_filtrados)
 
@@ -146,12 +138,12 @@ class MarketplaceUI(QMainWindow):
                 largura=400, altura=50,paddingH=50, paddingV=50,
                 mensagem="Pedido Criado com Sucesso!"
             )
-            self.set_tela(0)
+            self.set_tela(-3)
         else:
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self, 
                 backcolor="#f44336",
-                largura=300, altura=50,paddingH=50, paddingV=50,
+                largura=400, altura=50,paddingH=50, paddingV=50,
                 mensagem="Erro ao criar pedido!"
             )
 
@@ -163,7 +155,7 @@ class MarketplaceUI(QMainWindow):
         if erro:
             formulario.exibir_erros()
         else:
-            loja = Loja(formulario.obter_valores())
+            loja = Loja.from_dict(formulario.obter_valores())
             resposta = self.main.criar_loja(loja)
             
             if resposta:
@@ -173,12 +165,13 @@ class MarketplaceUI(QMainWindow):
                     largura=400, altura=50,paddingH=50, paddingV=50,
                     mensagem="Loja Criada com Sucesso!"
                 )
+                self.set_tela(-2)
             else:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50,paddingH=50, paddingV=50,
-                    mensagem="Erro ao criar endereço!"
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Erro ao criar loja!"
                 )
 
     def criar_endereco(self, formulario: Formulario):
@@ -188,26 +181,22 @@ class MarketplaceUI(QMainWindow):
         if erro:
             formulario.exibir_erros()
         else:
-            endereco = Endereco(formulario.obter_valores())
+            endereco = Endereco.from_dict(formulario.obter_valores())
             resposta = self.main.criar_endereco(endereco)
-
-            if isinstance(resposta, dict):
-                capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
-                formulario.definir_erros_especificos(capitalizado)
-                formulario.exibir_erros()
             
-            elif resposta:
+            if resposta:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#4CAF50",
                     largura=400, altura=50, paddingH=50, paddingV=50,
                     mensagem="Endereço Criado com Sucesso!"
                 )
+                self.set_tela(-2)
             else:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50, paddingH=50, paddingV=50,
+                    largura=400, altura=50, paddingH=50, paddingV=50,
                     mensagem="Erro ao criar endereço!"
                 )
 
@@ -222,7 +211,7 @@ class MarketplaceUI(QMainWindow):
         if erro:
             formulario.exibir_erros()
         else:
-            produto = Produto(formulario.obter_valores())
+            produto = Produto.from_dict(formulario.obter_valores())
             resposta = self.main.criar_produto(produto)
 
             if resposta:
@@ -237,11 +226,11 @@ class MarketplaceUI(QMainWindow):
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50, paddingH=50, paddingV=50,
+                    largura=400, altura=50, paddingH=50, paddingV=50,
                     mensagem="Erro ao criar produto!"
                 )
 
-    def criar_anuncio(self, formulario: Formulario):
+    def criar_anuncio(self, formulario: Formulario, produto: Produto):
         erro = formulario.validar_tipos(
            {
                 "Preço": float, 
@@ -253,7 +242,8 @@ class MarketplaceUI(QMainWindow):
         if erro:
             formulario.exibir_erros()
         else:
-            anuncio = Anuncio(formulario.obter_valores())
+            anuncio = Anuncio.from_dict(formulario.obter_valores())
+            anuncio.produto = produto
             resposta = self.main.criar_anuncio(anuncio)
 
             if resposta:
@@ -268,7 +258,7 @@ class MarketplaceUI(QMainWindow):
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50, paddingH=50, paddingV=50,
+                    largura=400, altura=50, paddingH=50, paddingV=50,
                     mensagem="Erro ao criar anúncio!"
                 )
 
@@ -287,7 +277,7 @@ class MarketplaceUI(QMainWindow):
                 {
                     "Nome": produto.nome, 
                     "Descrição": produto.descricao, 
-                    "Imagens": produto.imagens
+                    "Imagens": produto.imagens[0]
                 }
             )
             if valores_alterados:
@@ -304,23 +294,20 @@ class MarketplaceUI(QMainWindow):
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self, 
                         backcolor="#f44336",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
+                        largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Erro ao editar produto!"
                     )
             else:
                 WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self, 
-                        backcolor="#FFC107", fontcolor="#000000",
-                        largura=300, altura=50, paddingH=50, paddingV=50,
-                        mensagem="Nenhuma alteração realizada"
-                    )
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Nenhuma alteração realizada"
+                )
 
     def editar_loja(self, formulario: Formulario, loja: Loja):
-        erro =  formulario.validar_tipos(
-            {
-                "Nome": str
-            }
-        )
+        erro =  formulario.validar_tipos({ "Nome": str})
+
         if erro:
             formulario.exibir_erros()
         else:
@@ -344,16 +331,16 @@ class MarketplaceUI(QMainWindow):
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self, 
                         backcolor="#f44336",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
+                        largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Erro ao editar loja!"
                     )
             else:
                 WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self, 
-                        backcolor="#FFC107", fontcolor="#000000",
-                        largura=300, altura=50, paddingH=50, paddingV=50,
-                        mensagem="Nenhuma alteração realizada"
-                    )
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Nenhuma alteração realizada"
+                )
 
     def editar_endereco(self, formulario: Formulario, endereco: Endereco):
         erro = formulario.validar_tipos(
@@ -380,22 +367,22 @@ class MarketplaceUI(QMainWindow):
                         parent_widget=self, 
                         backcolor="#4CAF50",
                         largura=400, altura=50,paddingH=50, paddingV=50,
-                        mensagem="Endereco Editado com Sucesso!"
+                        mensagem="Endereço Editado com Sucesso!"
                     )
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self, 
                         backcolor="#f44336",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
-                        mensagem="Erro ao editar dados!"
+                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        mensagem="Erro ao editar endereço!"
                     )
             else:
                 WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self, 
-                        backcolor="#FFC107", fontcolor="#000000",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
-                        mensagem="Nenhuma alteração realizada"
-                    )
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Nenhuma alteração realizada"
+                )
     
     def editar_perfil(self, formulario: Formulario):
         erro = formulario.validar_tipos(
@@ -425,23 +412,23 @@ class MarketplaceUI(QMainWindow):
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self, 
                         backcolor="#4CAF50",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
+                        largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Perfil Editado com Sucesso!"
                     )
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self, 
                         backcolor="#f44336",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
-                        mensagem="Erro ao editar dados!"
+                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        mensagem="Erro ao editar perfil!"
                     )
             else:
                 WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self, 
-                        backcolor="#FFC107", fontcolor="#000000",
-                        largura=300, altura=50,paddingH=50, paddingV=50,
-                        mensagem="Nenhuma alteração realizada"
-                    )
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Nenhuma alteração realizada"
+                )
     
     def editar_anuncio(self, formulario: Formulario, anuncio: Anuncio):
         erro =  formulario.validar_tipos(
@@ -473,7 +460,6 @@ class MarketplaceUI(QMainWindow):
                         largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Anúncio Editado com Sucesso!"
                     )
-                    self.set_tela(-2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self, 
@@ -483,40 +469,49 @@ class MarketplaceUI(QMainWindow):
                     )
             else:
                 WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self, 
-                        backcolor="#FFC107", fontcolor="#000000",
-                        largura=300, altura=50, paddingH=50, paddingV=50,
-                        mensagem="Nenhuma alteração realizada"
-                    )
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Nenhuma alteração realizada"
+                )
                 
     def excluir_loja(self, loja: Loja):
-        dialogo = CaixaConfirmacao(self, titulo="Confirmar excluir loja", mensagem=f"Você tem certeza que deseja excluir loja {loja.nome}?")
-        resposta = dialogo.exec()
+        dialogo = CaixaConfirmacao(
+            self, titulo="Confirmar excluir loja",
+            mensagem=f"Você tem certeza que deseja excluir loja {loja.nome}?",
+            largura=420
+        )
+        escolha = dialogo.exec()
 
-        if resposta == QDialog.DialogCode.Accepted:
+        if escolha == QDialog.DialogCode.Accepted:
             resposta = self.main.excluir_loja(loja)
             if resposta:
-                 WidgetHelper.mostrar_alerta_temporario(
+                WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#4CAF50",
-                    largura=300, altura=50,paddingH=920, paddingV=920,
+                    largura=400, altura=50,paddingH=920, paddingV=920,
                     mensagem="Loja Excluída com Sucesso!"
                 )
+                self.set_tela(-3)
             else:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50,paddingH=920, paddingV=920,
+                    largura=400, altura=50,paddingH=920, paddingV=920,
                     mensagem="Erro ao excluir loja!"
                 )
         else:
             dialogo.close()
 
     def excluir_produto(self, produto: Produto):
-        dialogo = CaixaConfirmacao(self, titulo="Confirmar excluir produto", mensagem=f"Você tem certeza que deseja excluir produto {produto.nome}?")
-        resposta = dialogo.exec()
+        dialogo = CaixaConfirmacao(
+            self, titulo="Confirmar excluir produto",
+            mensagem=f"Você tem certeza que deseja excluir produto {produto.nome}?",
+            largura=420
+        )
+        escolha = dialogo.exec()
 
-        if resposta == QDialog.DialogCode.Accepted:
+        if escolha == QDialog.DialogCode.Accepted:
             resposta = self.main.excluir_produto(produto)
             if resposta:
                 WidgetHelper.mostrar_alerta_temporario(
@@ -537,10 +532,14 @@ class MarketplaceUI(QMainWindow):
             dialogo.close()
 
     def excluir_anuncio(self, anuncio: Anuncio):
-        dialogo = CaixaConfirmacao(self, titulo="Confirmar excluir anúncio", mensagem=f"Você tem certeza que deseja excluir anúncio?")
-        resposta = dialogo.exec()
+        dialogo = CaixaConfirmacao(
+            self, titulo="Confirmar excluir anúncio",
+            mensagem=f"Você tem certeza que deseja excluir esse anúncio?",
+            largura=420
+        )
+        escolha = dialogo.exec()
 
-        if resposta == QDialog.DialogCode.Accepted:
+        if escolha == QDialog.DialogCode.Accepted:
             resposta = self.main.excluir_anuncio(anuncio)
             if resposta:
                 WidgetHelper.mostrar_alerta_temporario(
@@ -559,6 +558,34 @@ class MarketplaceUI(QMainWindow):
                 )
         else:
             dialogo.close()
+
+    def excluir_endereco(self, endereco: Endereco):
+        dialogo = CaixaConfirmacao(
+            self, titulo="Confirmar excluir endereço",
+            mensagem=f"Você tem certeza que deseja excluir esse endereço?",
+            largura=420
+        )
+        escolha = dialogo.exec()
+
+        if escolha == QDialog.DialogCode.Accepted:
+            resposta = self.main.excluir_endereco(endereco)
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self,
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,paddingH=920, paddingV=100,
+                    mensagem="Endereço Excluído com Sucesso!"
+                )
+                self.set_tela(-2)
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=400, altura=50,paddingH=920, paddingV=100,
+                    mensagem="Erro ao excluir endereço!"
+                )
+        else:
+            dialogo.close()
     
     def cancelar_pedido(self, pedido: Pedido):
         dialogo = CaixaConfirmacao(
@@ -566,9 +593,9 @@ class MarketplaceUI(QMainWindow):
             mensagem=f"Você tem certeza que deseja cancelar pedido {pedido.id}?",
             largura=500
         )
-        resposta = dialogo.exec()
+        escolha = dialogo.exec()
 
-        if resposta == QDialog.DialogCode.Accepted:
+        if escolha == QDialog.DialogCode.Accepted:
             resposta = self.main.cancelar_pedido(pedido, pedido.produto.loja)
             if resposta:
                 WidgetHelper.mostrar_alerta_temporario(
@@ -582,7 +609,7 @@ class MarketplaceUI(QMainWindow):
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50,paddingV=100, paddingH=950,
+                    largura=400, altura=50,paddingV=100, paddingH=950,
                     mensagem="Erro ao cancelar pedido!"
                 )
         else:
@@ -594,9 +621,9 @@ class MarketplaceUI(QMainWindow):
             mensagem=f"Você tem certeza que deseja confirmar pedido {pedido.id}?",
             largura=500
         )
-        resposta = dialogo.exec()
+        escolha = dialogo.exec()
 
-        if resposta == QDialog.DialogCode.Accepted:
+        if escolha == QDialog.DialogCode.Accepted:
             resposta = self.main.confirmar_pedido(pedido, pedido.produto.loja)
             if resposta:
                 WidgetHelper.mostrar_alerta_temporario(
@@ -610,7 +637,7 @@ class MarketplaceUI(QMainWindow):
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#f44336",
-                    largura=300, altura=50,paddingV=100, paddingH=50,
+                    largura=400, altura=50,paddingV=100, paddingH=50,
                     mensagem="Erro ao confirmar pedido!"
                 )
         else:
@@ -633,13 +660,10 @@ class MarketplaceUI(QMainWindow):
                     largura=400, altura=50,paddingH=20, paddingV=20,
                     mensagem="Cadastro realizado com Sucesso!"
                 )
+                self.set_tela(-4)
 
             elif mensagem == "codigo_invalido":
-                formulario.definir_erros_especificos(
-                    {
-                        "Código": "Código de confirmação inválido"
-                    }
-                )
+                formulario.definir_erros_especificos({"Código": "Código de confirmação inválido"})
                 formulario.exibir_erros()
 
             elif mensagem == "limite_excedido":
@@ -649,7 +673,7 @@ class MarketplaceUI(QMainWindow):
                     largura=400, altura=50,paddingH=50, paddingV=50,
                     mensagem="Limite de tentativas excedido!"
                 )
-                self.abrir_tela(self.tela_cadastro())
+                self.set_tela(-2)
 
     def cadastrar(self, formulario: Formulario):
         erro = formulario.validar_tipos(
@@ -675,6 +699,14 @@ class MarketplaceUI(QMainWindow):
             elif resposta:
                 self.abrir_tela(self.tela_codigo_confirmacao())
 
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self,
+                    backcolor="#f44336",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Erro ao realizar cadastramento!"
+                )
+
     def login(self, formulario: Formulario):
         erro = formulario.validar_tipos(
             {
@@ -695,7 +727,21 @@ class MarketplaceUI(QMainWindow):
                 formulario.exibir_erros()
 
             elif resposta:
-                self.abrir_tela(self.tela_inicial())
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self,
+                    backcolor="#4CAF50",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Login realizado com Sucesso!"
+                )
+                self.set_tela(-2)
+
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self,
+                    backcolor="#f44336",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Erro ao realizar login!"
+                )
 
     def criar_menu_lateral(self):
         # Crie o menu lateral e esconda no início
@@ -784,7 +830,7 @@ class MarketplaceUI(QMainWindow):
             largura=100, altura=50,
             backcolor="", hover="#3a3a3a", border="",
             pressed='#000000',
-            acao= lambda: self.main.visualizar_anuncios()
+            acao= lambda: (self.main.visualizar_anuncios(), self.atualizar_lista_anuncios(self.main.anuncios))
         )
 
         botao_selecionar_arquivo = WidgetHelper.botao(
@@ -885,7 +931,7 @@ class MarketplaceUI(QMainWindow):
         bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_produto(produto))
         return bloco
     
-    def criar_bloco_pedido(self, pedido: Pedido, largura, altura, confirmar):
+    def criar_bloco_pedido(self, pedido: Pedido, largura, altura, botao_confirmar = False, botao_loja = True):
         bloco = QFrame()
         bloco.setFixedSize(QSize(largura, altura))
         bloco.setFrameShape(QFrame.Shape.StyledPanel)
@@ -926,7 +972,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(preco_label)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_detalhes_pedido(pedido, confirmar))
+        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja))
         return bloco
     
     def criar_bloco_loja(self, loja: Loja, largura, altura):
@@ -1022,7 +1068,7 @@ class MarketplaceUI(QMainWindow):
         scroll.setWidget(conteudo)
         return scroll
     
-    def tela_lista_pedidos(self, pedidos, confirmar = False):
+    def tela_lista_pedidos(self, pedidos, botao_confirmar = False, botao_loja = True):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -1036,7 +1082,7 @@ class MarketplaceUI(QMainWindow):
         largura_bloco = 250
         altura_bloco = 220
         for i, pedido in enumerate(pedidos):
-            bloco = self.criar_bloco_pedido(pedido, largura_bloco, altura_bloco, confirmar)
+            bloco = self.criar_bloco_pedido(pedido, largura_bloco, altura_bloco, botao_confirmar, botao_loja)
             self.grid.addWidget(bloco, i // 5, i % 5)
 
         scroll.setWidget(conteudo)
@@ -1087,6 +1133,7 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_detalhes_anuncio(self, anuncio: Anuncio):
+        self.main.visualizar_anuncio(anuncio)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1140,6 +1187,7 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_detalhes_loja(self, loja: Loja):
+        self.main.visualizar_loja(loja)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1170,7 +1218,8 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_detalhes_pedido(self, pedido: Pedido, confirmar = False):
+    def tela_detalhes_pedido(self, pedido: Pedido, botao_confirmar = False, botao_loja = True):
+        self.main.visualizar_pedido(pedido)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1182,11 +1231,21 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
+        loja_existe = pedido.produto.loja
+
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
             acao=lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja))
+                if loja_existe
+                else
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Produto ou Loja excluídos!"
+                )
         )
-        if not confirmar:
+        if botao_loja:
             layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal)
@@ -1242,7 +1301,7 @@ class MarketplaceUI(QMainWindow):
             acao=lambda: self.confirmar_pedido(pedido)
         )
 
-        if confirmar:
+        if botao_confirmar:
             layout_horizontal_4.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
             layout_horizontal_4.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1271,11 +1330,12 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addSpacing(50)
 
         formulario = FormularioOpcoes(campos=["Quantidade", "Endereço"],largura=600, altura=50)
-        end = Endereco(rua="Aristides Teixeira Duarte", numero=234, bairro="California", cidade="Florestal", estado="MG", complemento="Apartamento 205")
-        formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
-        end = Endereco(rua="São José", numero=92, bairro="Saõ Jośe do Triunfo", cidade="Viçosa", estado="MG", complemento="Casa")
-        formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
-        formulario.ativar_botao_adicionar(campo="Endereço", acao=formulario.adicionar_opcao(campo="Endereço"))
+
+        for end in self.main.usuario.enderecos:
+            formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
+
+        formulario.ativar_botao_adicionar(campo="Endereço", acao=lambda: self.abrir_tela(self.tela_criar_endereco()))
+
         for i in range(anuncio.quantidade_disponivel):
             formulario.adicionar_opcao(campo="Quantidade", opcao=str(i+1))
 
@@ -1310,11 +1370,11 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addSpacing(20)
 
         dados = WidgetHelper.gerar_qrcode_pix(
-            nome="Leticia",
-            chave="136.689.956-30",
-            cidade="São Paulo",
-            valor=12.50,
-            descricao="Pagamento do almoço",
+            nome=anuncio.produto.loja.nome,
+            chave=anuncio.chave_pix,
+            cidade="Florestal",
+            valor=pedido.calcular_total(),
+            descricao="Pagamento de pedido",
             pagamento_multiplo=False,
             nome_arquivo="qrcode",
             salvar_png = True,
@@ -1336,7 +1396,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(string, alignment=Qt.AlignmentFlag.AlignCenter)
 
         botao_copiar = WidgetHelper.botao(
-            nome="Copiar texto", fonte=15,
+            nome="Copiar chave", fonte=15,
             backcolor="", 
             hover='#D3D3D3', pressed='#000000',
             acao=WidgetHelper.copiar_texto(string)
@@ -1463,9 +1523,7 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = WidgetHelper.botao(
-            nome="Editar"
-        )
+        botao_editar = WidgetHelper.botao(nome="Editar")
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1509,6 +1567,8 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_meus_enderecos(self):
+        self.main.visualizar_meus_enderecos()
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1526,7 +1586,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus enderecos</span>")
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Endereços</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
@@ -1536,14 +1596,14 @@ class MarketplaceUI(QMainWindow):
         usuario = self.main.usuario
         quantidade = len(usuario.enderecos)
         formulario = Formulario(
-            campos=[f"Endereço{i+1}" for i in range(quantidade)],
+            campos=[f"Endereço {i+1}" for i in range(quantidade)],
             largura=800,
             altura=50
         )
         formulario.preencher_campos(
-            {f"Endereço{i+1}": usuario.enderecos[i].__str__() for i in range(quantidade)}
+            {f"Endereço {i+1}": usuario.enderecos[i].__str__() for i in range(quantidade)}
         )
-        formulario.bloquear_campos([f"Endereço{i+1}" for i in range(quantidade)])
+        formulario.bloquear_campos([f"Endereço {i+1}" for i in range(quantidade)])
         layout_horizontal2.addWidget(formulario)
 
         layout_vertical2 = QVBoxLayout()
@@ -1576,6 +1636,8 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_meu_endereco(self, endereco: Endereco):
+        self.main.visualizar_endereco(endereco)
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1588,9 +1650,7 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = WidgetHelper.botao(
-            nome="Editar"
-        )
+        botao_editar = WidgetHelper.botao(nome="Editar")
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1622,6 +1682,15 @@ class MarketplaceUI(QMainWindow):
         )
         botao_editar.clicked.connect(lambda: self.editar_endereco(formulario, endereco))
         layout_conteudo.addWidget(formulario)
+        layout_conteudo.addStretch()
+
+        layout_horizontal_2 = QVBoxLayout()
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=lambda: self.excluir_endereco(endereco)
+        )
+        layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_conteudo.addLayout(layout_horizontal_2)
         
         # Scroll area com o título e formulário
         scroll_area = QScrollArea()
@@ -1645,8 +1714,7 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_confirmar = WidgetHelper.botao(
-            nome="Confirmar",
-            acao=None
+            nome="Confirmar"
         )
         layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
@@ -1682,6 +1750,8 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_minhas_lojas(self):
+        self.main.visualizar_minhas_lojas()
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
         layout_horizintal = QHBoxLayout()
@@ -1719,6 +1789,8 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_minha_loja(self, loja: Loja):
+        self.main.visualizar_minha_loja(loja)
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1776,8 +1848,8 @@ class MarketplaceUI(QMainWindow):
 
         lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
         lista_produtos = self.tela_lista_produtos(loja.produtos, adicionar=True)
-        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados)
-        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, confirmar=True)
+        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, botao_loja=False)
+        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, botao_confirmar=True, botao_loja=False)
 
         # Container para trocar os conteúdos
         container_listas = QStackedWidget()
@@ -1798,6 +1870,8 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_loja(self, loja: Loja):
+        self.main.visualizar_loja(loja)
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1811,9 +1885,7 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addLayout(layout_horizontal)
 
-        botao_editar = WidgetHelper.botao(
-            nome="Editar"
-        )
+        botao_editar = WidgetHelper.botao(nome="Editar")
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1904,6 +1976,8 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_produto(self, produto):
+        self.main.visualizar_produto(produto)
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1916,10 +1990,7 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = WidgetHelper.botao(
-            nome="Editar",
-            acao=None
-        )
+        botao_editar = WidgetHelper.botao(nome="Editar")
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -1975,6 +2046,8 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_anuncio(self, anuncio: Anuncio):
+        self.main.visualizar_anuncio(anuncio)
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1987,9 +2060,7 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        botao_editar = WidgetHelper.botao(
-            nome="Editar"
-        )
+        botao_editar = WidgetHelper.botao(nome="Editar")
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
@@ -2081,7 +2152,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_criar_anuncio(self, produto):
+    def tela_criar_anuncio(self, produto: Produto):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -2115,7 +2186,7 @@ class MarketplaceUI(QMainWindow):
             largura=600,
             altura=50
         )
-        botao_confirmar.clicked.connect(lambda: self.criar_anuncio(formulario))
+        botao_confirmar.clicked.connect(lambda: self.criar_anuncio(formulario, produto))
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário
@@ -2127,6 +2198,8 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_meus_pedidos(self):
+        self.main.visualizar_meus_pedidos()
+
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -2142,7 +2215,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
-        blocos = self.tela_lista_pedidos(self.main.usuario.pedidos)
+        blocos = self.tela_lista_pedidos(self.main.usuario.pedidos, botao_loja=True)
         layout_vertical.addWidget(blocos)
 
         return tela

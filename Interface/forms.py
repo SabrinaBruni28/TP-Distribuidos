@@ -33,10 +33,11 @@ class FormularioOpcoes(QWidget):
             combo.setStyleSheet("font-size: 18px;")
 
             # Botão
-            botao_adicionar = QPushButton("Adicionar")
-            botao_adicionar.setFixedSize(100, 40)
+            botao_adicionar = WidgetHelper.botao(
+                nome="Adicionar",
+                largura=100, altura=40, fonte=18
+            )
             botao_adicionar.hide()
-            botao_adicionar.setStyleSheet("font-size: 18px;")
 
             # Layout para Combo + Botão
             layout_combo = QHBoxLayout()
@@ -56,9 +57,10 @@ class FormularioOpcoes(QWidget):
         layout_principal.addLayout(form_layout)
         self.setLayout(layout_principal)
 
-    def ativar_botao_adicionar(self, campo, acao):
+    def ativar_botao_adicionar(self, campo, acao=None):
         botao = self.botoes_adicionar[campo]
-        botao.clicked.connect(lambda: acao)
+        if acao:
+            botao.clicked.connect(acao)
         botao.show()
 
     def adicionar_opcao(self, campo, opcao="Nova opção"):
@@ -115,16 +117,14 @@ class Formulario(QWidget):
         self.setLayout(layout_principal)
 
     def preencher_campos(self, valores: dict):
-        """
-        Preenche os campos do formulário com os valores fornecidos.
-        Exemplo: {"Nome": "Ana", "Email": "ana@email.com"}
-        """
         for chave, valor in valores.items():
             if chave in self.inputs:
-                if type(valor) is bool:
-                    self.inputs[chave].setText(str("sim" if valor else "não"))
+                if isinstance(valor, bool):
+                    texto = "sim" if valor else "não"
                 else:
-                    self.inputs[chave].setText(str(valor))
+                    texto = str(valor)
+                self.inputs[chave].setText(texto)
+                self.inputs[chave].setCursorPosition(0)  # <-- move o cursor para o início
 
     def validar_tipos(self, campos_tipos: dict):
         """

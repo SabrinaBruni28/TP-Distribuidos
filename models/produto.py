@@ -32,7 +32,7 @@ class Produto:
         nome = data.get("nome", "")
         descricao = data.get("descricao", "")
         imagens = data.get("imagens", [])
-        loja = Loja.from_dict(data["loja"]) if "loja" in data else []
+        loja = Loja.from_dict(data["loja"]) if "loja" in data else None
 
         return cls(id, nome, descricao, imagens, loja)
 
