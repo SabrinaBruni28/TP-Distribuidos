@@ -32,7 +32,18 @@ class MarketplaceUI(QMainWindow):
 
         self.main = Main()
         self.main.visualizar_anuncios()
-        self.abrir_tela(self.tela_inicial())
+        #self.abrir_tela(self.tela_inicial())
+        self.abrir_tela(WidgetHelper.criar_tela_carregando_com_spinner(gif_path="spinner.gif"))
+
+    def executar_tela(self, tela, requisicao, mensagem = "Carregando ..."):
+        tela_carregando = WidgetHelper.criar_tela_carregando_com_spinner(mensagem)
+
+        self.carregamento_thread = WidgetHelper.carregar_em_thread(
+            funcao_segundo_plano=requisicao,
+            quando_terminar=self.abrir_tela(tela),
+            tela_loading=tela_carregando,
+            abrir_tela=self.abrir_tela
+        )
 
     def closeEvent(self, event):
         dialogo = CaixaConfirmacao(self, titulo="Confirmar saída", mensagem="Você tem certeza que deseja sair?")

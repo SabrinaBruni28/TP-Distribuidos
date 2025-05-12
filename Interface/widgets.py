@@ -3,14 +3,84 @@ import re, sys, os, shutil
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 from pybrcode.pix import generate_simple_pix
 
-from PyQt6.QtGui import QPixmap, QPainterPath, QRegion
-from PyQt6.QtCore import Qt, QTimer, QRectF
+from PyQt6.QtGui import QPixmap, QPainterPath, QRegion, QMovie
+from PyQt6.QtCore import Qt, QTimer, QRectF, QThread, QObject, pyqtSignal
 
 from PyQt6.QtWidgets import (
    QApplication, QWidget, QLabel, QFileDialog,QHBoxLayout, QPushButton, QVBoxLayout, QDialog
 )
 
+class WorkerGenerico(QObject):
+    terminado = pyqtSignal()
+
+    def __init__(self, funcao):
+        super().__init__()
+        self.funcao = funcao
+
+    def run(self):
+        self.funcao()
+        self.terminado.emit()
+
+
 class WidgetHelper(QWidget):
+
+    @staticmethod
+    def carregar_em_thread(funcao_segundo_plano, quando_terminar, tela_loading=None, abrir_tela=None):
+        thread = QThread()
+        worker = WorkerGenerico(funcao_segundo_plano)
+        worker.moveToThread(thread)
+
+        thread.started.connect(worker.run)
+        worker.terminado.connect(thread.quit)
+        worker.terminado.connect(worker.deleteLater)
+        thread.finished.connect(thread.deleteLater)
+
+        def ao_terminar():
+            if quando_terminar:
+                quando_terminar()
+        
+        worker.terminado.connect(ao_terminar)
+
+        thread.start()
+
+        # Mostrar tela de carregamento se fornecida
+        if tela_loading and abrir_tela:
+            abrir_tela(tela_loading)
+
+        return thread
+    
+    @staticmethod
+    def criar_tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):
+        tela = QWidget()
+        layout = QVBoxLayout(tela)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Spinner animado
+        spinner = QLabel()
+        movie = QMovie(gif_path)
+        spinner.setMovie(movie)
+        movie.start()
+
+        # Mensagem opcional
+        texto = QLabel(f"<span style='font-size: 20px'>{mensagem}</span>")
+        texto.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(spinner)
+        layout.addWidget(texto)
+
+        return tela
+
+    @staticmethod
+    def criar_tela_carregando(mensagem="Carregando..."):
+        tela = QWidget()
+        layout = QVBoxLayout(tela)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        label = QLabel(f"<span style='font-size: 24px'>{mensagem}</span>")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+
+        return tela
 
     @staticmethod
     def mostrar_alerta_temporario(
