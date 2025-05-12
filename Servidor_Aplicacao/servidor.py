@@ -3,7 +3,7 @@ import threading
 import logging
 from Operacoes import server_operation as op
 from queue import Queue, Empty
-from Operacoes import Login, Cadastramento, Visualizar, Editar, Criar, Apagar, Pedido
+from Operacoes import Login, Cadastramento, Visualizar, Editar, Criar, Excluir, Pedido
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
@@ -136,7 +136,7 @@ class ClientHandler(threading.Thread):
 
         match cabecalhoTipoMensagem:
             case "login":
-                Login()
+                Login(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
 
             case "cadastramento":
                 Cadastramento(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
@@ -145,16 +145,16 @@ class ClientHandler(threading.Thread):
                 Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).run()
 
             case "editar":
-                Editar()
+                Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
 
             case "criar":
-                Criar()
+                Criar(mensagem, self.socketCliente, self.filaDeMensagem).run()
             
-            case "apagar":
-                Apagar()
+            case "excluir":
+                Excluir(mensagem, self.socketCliente, self.filaDeMensagem).run()
 
             case "pedido":
-                Pedido()
+                Pedido(mensagem, self.socketCliente, self.filaDeMensagem).run()
 
             case _:
                 logging.info("Comando inválido")

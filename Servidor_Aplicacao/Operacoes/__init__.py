@@ -1,4 +1,4 @@
-from .apagar import Apagar
+from .excluir import Excluir
 from .cadastramento import Cadastramento
 from .criar import Criar
 from .editar import Editar
