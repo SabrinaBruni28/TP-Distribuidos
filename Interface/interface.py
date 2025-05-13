@@ -1,6 +1,7 @@
 import sys, os, shutil
 # Adiciona o diretório raiz ao sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+CAMINHO_BASE = sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from models.loja import Loja
 from models.anuncio import Anuncio
@@ -32,15 +33,16 @@ class MarketplaceUI(QMainWindow):
 
         self.main = Main()
         self.main.visualizar_anuncios()
-        #self.abrir_tela(self.tela_inicial())
-        self.abrir_tela(WidgetHelper.criar_tela_carregando_com_spinner(gif_path="spinner.gif"))
+        self.abrir_tela(self.tela_inicial())
 
-    def executar_tela(self, tela, requisicao, mensagem = "Carregando ..."):
-        tela_carregando = WidgetHelper.criar_tela_carregando_com_spinner(mensagem)
+    def executar_tela(self, tela, requisicao, mensagem="Carregando ..."):
+        tela_carregando = WidgetHelper.criar_tela_carregando_com_spinner(
+            mensagem, gif_path="spinner.gif"
+        )
 
         self.carregamento_thread = WidgetHelper.carregar_em_thread(
             funcao_segundo_plano=requisicao,
-            quando_terminar=self.abrir_tela(tela),
+            quando_terminar=tela,  # <<< função que retorna um QWidget
             tela_loading=tela_carregando,
             abrir_tela=self.abrir_tela
         )
@@ -80,7 +82,13 @@ class MarketplaceUI(QMainWindow):
         self.stack.removeWidget(widget)
         widget.deleteLater()
 
-    def abrir_tela(self, nova_tela):
+    def abrir_tela(self, nova_tela, excluir_anterior = False):
+        if excluir_anterior:
+            index = self.stack.currentIndex()
+            widget = self.stack.widget(index)
+            self.stack.removeWidget(widget)
+            widget.deleteLater()
+
         self.stack.addWidget(nova_tela)
         self.stack.setCurrentWidget(nova_tela)
 
@@ -777,14 +785,20 @@ class MarketplaceUI(QMainWindow):
             nome="Minhas Lojas", 
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
-            acao= lambda: self.abrir_tela(self.tela_minhas_lojas())
+            acao= lambda: self.executar_tela(
+                tela=lambda: self.tela_minhas_lojas(),
+                requisicao=lambda: self.main.visualizar_minhas_lojas()
+            )
         )
 
         botao_pedidos = WidgetHelper.botao(
             nome="Meus Pedidos", 
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
-            acao= lambda: self.abrir_tela(self.tela_meus_pedidos())
+            acao= lambda: self.executar_tela(
+                tela=lambda: self.tela_meus_pedidos(),
+                requisicao=lambda: self.main.visualizar_meus_pedidos()
+            )
         )
     
         # Adicionando os botões ao layout da barra lateral
@@ -841,7 +855,10 @@ class MarketplaceUI(QMainWindow):
             largura=100, altura=50,
             backcolor="", hover="#3a3a3a", border="",
             pressed='#000000',
-            acao= lambda: (self.main.visualizar_anuncios(), self.atualizar_lista_anuncios(self.main.anuncios))
+            acao= lambda: (
+                self.main.visualizar_anuncios(),
+                self.atualizar_lista_anuncios(self.main.anuncios)
+            )
         )
 
         botao_selecionar_arquivo = WidgetHelper.botao(
@@ -903,7 +920,18 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(nome_label)
         layout.addWidget(preco_label)
 
-        bloco.mousePressEvent = lambda e: self.abrir_tela( self.tela_anuncio(anuncio) if editar else self.tela_detalhes_anuncio(anuncio))
+        bloco.mousePressEvent = lambda e: (
+            self.executar_tela(
+                tela=lambda: self.tela_anuncio(anuncio),
+                requisicao=lambda: self.main.visualizar_anuncio(anuncio)
+            ) 
+            if editar
+            else
+            self.executar_tela(
+                tela=lambda: self.tela_detalhes_anuncio(anuncio),
+                requisicao=lambda: self.main.visualizar_anuncio(anuncio)
+            )
+        )
         return bloco
     
     def criar_bloco_produto(self, produto: Produto, largura, altura):
@@ -939,7 +967,10 @@ class MarketplaceUI(QMainWindow):
         layout.addSpacing(5)
         layout.addWidget(nome_label)
 
-        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_produto(produto))
+        bloco.mousePressEvent = lambda e: self.executar_tela(
+            tela=lambda: self.tela_produto(produto),
+            requisicao=lambda: self.main.visualizar_produto(produto)
+        )
         return bloco
     
     def criar_bloco_pedido(self, pedido: Pedido, largura, altura, botao_confirmar = False, botao_loja = True):
@@ -983,7 +1014,10 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(preco_label)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja))
+        bloco.mousePressEvent = lambda e: self.executar_tela(
+            tela=lambda: self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja),
+            requisicao=lambda: self.main.visualizar_pedido(pedido)
+        ) 
         return bloco
     
     def criar_bloco_loja(self, loja: Loja, largura, altura):
@@ -1018,7 +1052,10 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(nome_label)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.abrir_tela(self.tela_minha_loja(loja))
+        bloco.mousePressEvent = lambda e: self.executar_tela(
+            tela=lambda: self.tela_minha_loja(loja),
+            requisicao=lambda: self.main.visualizar_minha_loja(loja)
+        )
         return bloco
     
     def tela_lista_anuncios(self, anuncios, editar = False):
@@ -1144,7 +1181,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_detalhes_anuncio(self, anuncio: Anuncio):
-        self.main.visualizar_anuncio(anuncio)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1198,7 +1234,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_detalhes_loja(self, loja: Loja):
-        self.main.visualizar_loja(loja)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1230,7 +1265,6 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_detalhes_pedido(self, pedido: Pedido, botao_confirmar = False, botao_loja = True):
-        self.main.visualizar_pedido(pedido)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1246,7 +1280,11 @@ class MarketplaceUI(QMainWindow):
 
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
-            acao=lambda: self.abrir_tela(self.tela_detalhes_loja(pedido.produto.loja))
+            acao=lambda e: (
+                self.executar_tela(
+                    tela=lambda: self.tela_detalhes_loja(pedido.produto.loja),
+                    requisicao=lambda: self.main.visualizar_loja(pedido.produto.loja)
+                )
                 if loja_existe
                 else
                 WidgetHelper.mostrar_alerta_temporario(
@@ -1255,6 +1293,7 @@ class MarketplaceUI(QMainWindow):
                     largura=400, altura=50, paddingH=50, paddingV=50,
                     mensagem="Produto ou Loja excluídos!"
                 )
+            )
         )
         if botao_loja:
             layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
@@ -1382,7 +1421,7 @@ class MarketplaceUI(QMainWindow):
 
         dados = WidgetHelper.gerar_qrcode_pix(
             nome=anuncio.produto.loja.nome,
-            chave=anuncio.chave_pix,
+            chave="136.689.956-30",
             cidade="Florestal",
             valor=pedido.calcular_total(),
             descricao="Pagamento de pedido",
@@ -1565,7 +1604,10 @@ class MarketplaceUI(QMainWindow):
         botao_endereco = WidgetHelper.botao(
             nome="Meus Endereços",
             largura=180, altura=50,
-            acao=lambda: self.abrir_tela(self.tela_meus_enderecos())
+            acao=lambda: self.executar_tela(
+                tela=lambda: self.tela_meus_enderecos(),
+                requisicao=lambda: self.main.visualizar_meus_enderecos()
+            )
         )
         layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1578,8 +1620,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_meus_enderecos(self):
-        self.main.visualizar_meus_enderecos()
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1624,7 +1664,10 @@ class MarketplaceUI(QMainWindow):
             endereco = usuario.enderecos[i]
             botao = WidgetHelper.botao(
                 nome="Editar",
-                acao=lambda: self.abrir_tela(self.tela_meu_endereco(endereco))
+                acao=lambda e: self.executar_tela(
+                    tela=lambda: self.tela_meu_endereco(endereco),
+                    requisicao=lambda: self.main.visualizar_endereco(endereco)
+                )
             )
             botao_editar.append(botao)
             layout_vertical2.addWidget(botao)
@@ -1647,8 +1690,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_meu_endereco(self, endereco: Endereco):
-        self.main.visualizar_endereco(endereco)
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1761,8 +1802,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_minhas_lojas(self):
-        self.main.visualizar_minhas_lojas()
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
         layout_horizintal = QHBoxLayout()
@@ -1800,8 +1839,6 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_minha_loja(self, loja: Loja):
-        self.main.visualizar_minha_loja(loja)
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1815,7 +1852,10 @@ class MarketplaceUI(QMainWindow):
 
         botao_editar = WidgetHelper.botao(
             nome="Editar",
-            acao=lambda: self.abrir_tela(self.tela_loja(loja))
+            acao=lambda e: self.executar_tela(
+                tela=lambda: self.tela_loja(loja),
+                requisicao=lambda: self.main.visualizar_loja(loja)
+            )
         )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1881,8 +1921,6 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_loja(self, loja: Loja):
-        self.main.visualizar_loja(loja)
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1987,8 +2025,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_produto(self, produto):
-        self.main.visualizar_produto(produto)
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -2057,8 +2093,6 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     def tela_anuncio(self, anuncio: Anuncio):
-        self.main.visualizar_anuncio(anuncio)
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -2209,8 +2243,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_meus_pedidos(self):
-        self.main.visualizar_meus_pedidos()
-
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 

@@ -1,6 +1,8 @@
 import re, sys, os, shutil
 # Adiciona o diretório raiz ao sys.path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+sys.path.append(CAMINHO_BASE)
 from pybrcode.pix import generate_simple_pix
 
 from PyQt6.QtGui import QPixmap, QPainterPath, QRegion, QMovie
@@ -23,32 +25,31 @@ class WorkerGenerico(QObject):
 
 
 class WidgetHelper(QWidget):
+    @staticmethod
+    def caminho_imagem(path):
+        return os.path.join(CAMINHO_BASE, path)
 
     @staticmethod
-    def carregar_em_thread(funcao_segundo_plano, quando_terminar, tela_loading=None, abrir_tela=None):
+    def carregar_em_thread(funcao_segundo_plano, quando_terminar, tela_loading, abrir_tela):
         thread = QThread()
         worker = WorkerGenerico(funcao_segundo_plano)
         worker.moveToThread(thread)
 
         thread.started.connect(worker.run)
-        worker.terminado.connect(thread.quit)
-        worker.terminado.connect(worker.deleteLater)
-        thread.finished.connect(thread.deleteLater)
-
-        def ao_terminar():
-            if quando_terminar:
-                quando_terminar()
-        
-        worker.terminado.connect(ao_terminar)
-
+        worker.terminado.connect(lambda: WidgetHelper._finalizar_thread(thread, worker, quando_terminar, abrir_tela))
         thread.start()
+        abrir_tela(tela_loading)
 
-        # Mostrar tela de carregamento se fornecida
-        if tela_loading and abrir_tela:
-            abrir_tela(tela_loading)
+        return thread  # opcionalmente guardar o thread
 
-        return thread
-    
+    @staticmethod
+    def _finalizar_thread(thread, worker, callback, abrir_tela):
+        thread.quit()
+        thread.wait()
+        thread.deleteLater()
+        worker.deleteLater()
+        abrir_tela(callback(), excluir_anterior=True)  # Aqui `callback` precisa ser uma função que retorna a tela
+
     @staticmethod
     def criar_tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):
         tela = QWidget()
@@ -57,7 +58,7 @@ class WidgetHelper(QWidget):
 
         # Spinner animado
         spinner = QLabel()
-        movie = QMovie(gif_path)
+        movie = QMovie(WidgetHelper.caminho_imagem(gif_path))
         spinner.setMovie(movie)
         movie.start()
 
