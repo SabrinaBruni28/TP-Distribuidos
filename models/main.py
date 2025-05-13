@@ -13,12 +13,12 @@ class Main():
         end2 = Endereco(rua="Alecrins", numero=234, bairro="Nossa Senhaora Aparecida", cidade="Florestal", estado="MG", complemento="Apartamento 103")
         # Produtos
         # Produtos
-        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["imagens/notebook.png"])
+        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["tablet.png"])
+        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["tablet.png"])
+        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["tablet.png"])
+        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["tablet.png"])
+        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["tablet.png"])
+        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["notebook.png"])
 
         # Anúncios
         a1 = Anuncio(id=1, produto=p1)
@@ -36,7 +36,7 @@ class Main():
         loja1 = Loja(
             id=101,
             nome="Digital Tech",
-            imagem="imagens/notebook.png",
+            imagem="notebook.png",
             produtos=[p1, p2, p3, p4, p5, p1, p2, p3, p4, p5, p1, p2, p3, p4, p5],
             anuncios=[a1, a2, a3, a1, a2, a3, a1, a2, a3],
             pedidos_confirmados=[pedido1, pedido2, pedido3, pedido1, pedido2, pedido3, pedido1, pedido2, pedido3],
@@ -47,7 +47,7 @@ class Main():
         loja2 = Loja(
             id=102,
             nome="WebStore",
-            imagem="imagens/notebook.png",
+            imagem="notebook.png",
             produtos=[p6],
             anuncios=[a4],
             pedidos_confirmados=[pedido4]
@@ -57,19 +57,19 @@ class Main():
         loja3 = Loja(
             id=103,
             nome="Nova Loja",
-            imagem="imagens/notebook.png"
+            imagem="notebook.png"
         )
 
         # Lista de lojas
         lojas = [loja1, loja2, loja3]
 
         # Produtos
-        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["imagens/tablet.png"])
-        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["imagens/notebook.png"])
+        p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["tablet.png"])
+        p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["tablet.png"])
+        p3 = Produto(id=3, nome="Cadeira Gamer", descricao="dinedendine", imagens=["tablet.png"])
+        p4 = Produto(id=4, nome="Monitor 24\"", descricao="dinedendine", imagens=["tablet.png"])
+        p5 = Produto(id=5, nome="Teclado Mecânico", descricao="dinedendine", imagens=["tablet.png"])
+        p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["notebook.png"])
         
         pedidos = [
             Pedido(id=1, produto=p1, preco=3620.0),
@@ -149,17 +149,19 @@ class Main():
         self.socket.send(mensagem)
         print("Enviar:", mensagem)
         print("Reposta:")
-        resposta = self.divide_mensagem(self.socket.receive())
-        if resposta[0] == "anuncios":
-            for i in range(0, len(resposta)):
-                print(resposta[i])
-                #self.anuncios.append(Anuncio.from_dict(resposta[i]))
+        while True:
+            resposta = self.divide_mensagem(self.socket.receive())
+            if resposta[0] == "anuncios":
+                anuncio = Anuncio.from_dict(resposta[i])
+                self.anuncios.append(anuncio)
+                for imagem in anuncio.produto.imagens:
+                    self.socket.receive_image(path=f"uploads/{imagem}")
             return True
         print(resposta)
         return False
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        time.sleep(10)
+        #time.sleep(10)
         return True
         mensagem = f"visualizar|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
@@ -167,6 +169,8 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
             anuncio = Anuncio.from_dict(resposta[1])
+            for imagem in anuncio.produto.imagens:
+                self.socket.receive_image(path=f"uploads/{imagem}")
             return True
         
         return False
@@ -180,6 +184,8 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
             produto = Produto.from_dict(resposta[1])
+            self.socket.receive_image(path=f"uploads/{imagem}")
+            
             return True
         
         return False
@@ -193,6 +199,11 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             loja = Loja.from_dict(resposta[1])
+            if loja.imagem:
+                self.socket.receive_image(path=f"uploads/{loja.imagem}")
+            for produto in loja.produtos:
+                for imagem in produto.imagens:
+                    self.socket.receive_image(path=f"uploads/{imagem}")
             return True
         
         return False
@@ -206,6 +217,12 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "minha_loja":
             loja = Loja.from_dict(resposta[1])
+            if loja.imagem:
+                self.socket.receive_image(path=f"uploads/{loja.imagem}")
+
+            for produto in loja.produtos:
+                for imagem in produto.imagens:
+                    self.socket.receive_image(path=f"uploads/{imagem}")
             return True
         
         return False
@@ -216,13 +233,16 @@ class Main():
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
 
-        resposta = self.divide_mensagem(self.socket.receive())
-        if resposta[0] == "minhas_lojas":
-            for i in range(1, len(resposta)):
-                self.usuario.lojas.append(Loja.from_dict(resposta[i]))
-            return True
-        
-        return False
+        while True:
+            resposta = self.divide_mensagem(self.socket.receive())
+            if resposta[0] == "minhas_lojas":
+                loja = Loja.from_dict(resposta[i])
+                self.usuario.lojas.append(loja)
+                if loja.imagem:
+                    self.socket.receive_image(path=f"uploads/{loja.imagem}")
+            else:
+                return False
+        return True
 
     def visualizar_meus_enderecos(self):
         time.sleep(10)
@@ -247,6 +267,8 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "pedido":
             pedido = Pedido.from_dict(resposta[1])
+            for imagem in pedido.produto.imagens:
+                self.socket.receive_image(path=f"uploads/{imagem}")
             return True
         
         return False
@@ -493,10 +515,10 @@ class Main():
                 produto=Produto(
                     nome="Notebook", 
                     descricao="Notebook potente com 16GB RAM",
-                    imagens=["imagens/notebook.png", "imagens/smartphone.png", "imagens/notebook.png"],
+                    imagens=["notebook.png", "smartphone.png", "notebook.png"],
                     loja=Loja(
                         nome="Ferramentas", 
-                        imagem="imagens/tablet.png"
+                        imagem="tablet.png"
                     )
                 ),
                 preco=10.90,
@@ -507,10 +529,10 @@ class Main():
                 produto=Produto(
                     nome="Tablet", 
                     descricao="Notebook potente com 16GB RAM",
-                    imagens=["imagens/tablet.png"],
+                    imagens=["tablet.png"],
                     loja=Loja(
                         nome="Ferramentas", 
-                        imagem="imagens/tablet.png"
+                        imagem="tablet.png"
                     )
                 ),
                 preco=100.90,

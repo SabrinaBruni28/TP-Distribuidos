@@ -5,8 +5,8 @@ CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
 from pybrcode.pix import generate_simple_pix
 
-from PyQt6.QtGui import QPixmap, QPainterPath, QRegion, QMovie
-from PyQt6.QtCore import Qt, QTimer, QRectF, QThread, QObject, pyqtSignal
+from PyQt6.QtGui import QPixmap, QMovie
+from PyQt6.QtCore import Qt, QTimer, QThread, QObject, pyqtSignal
 
 from PyQt6.QtWidgets import (
    QApplication, QWidget, QLabel, QFileDialog,QHBoxLayout, QPushButton, QVBoxLayout, QDialog
@@ -25,6 +25,20 @@ class WorkerGenerico(QObject):
 
 
 class WidgetHelper(QWidget):
+    @staticmethod
+    def imagem(imagem, pasta = "uploads/", scaled = 200):
+        imagem_label = QLabel()
+
+        caminho = WidgetHelper.caminho_imagem(pasta+imagem)
+        pixmap = QPixmap(caminho).scaled(
+            scaled, scaled, 
+            Qt.AspectRatioMode.KeepAspectRatio, 
+            Qt.TransformationMode.SmoothTransformation
+        )
+        imagem_label.setPixmap(pixmap)
+        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        return imagem_label
+    
     @staticmethod
     def caminho_imagem(path):
         return os.path.join(CAMINHO_BASE, path)
@@ -50,7 +64,6 @@ class WidgetHelper(QWidget):
         if abrir_tela and tela_loading:
             abrir_tela(tela_loading)
 
-    @staticmethod
     @staticmethod
     def _finalizar_thread(thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, tela_loading=None, resultado=None):
         thread.quit()
@@ -301,6 +314,13 @@ class WidgetHelper(QWidget):
 
             # Copia o arquivo para a pasta destino
             shutil.copy(caminho_arquivo, destino)
+    
+    @staticmethod
+    def excluir_arquivos_pasta(caminho_pasta):
+        for arquivo in os.listdir(caminho_pasta):
+            caminho_arquivo = os.path.join(caminho_pasta, arquivo)
+            if os.path.isfile(caminho_arquivo):
+                os.remove(caminho_arquivo)
 
 class CarrosselImagem(QWidget):
     def __init__(self, lista_caminhos_imagem, largura=200, altura=200):
@@ -339,7 +359,11 @@ class CarrosselImagem(QWidget):
         if not self.imagens:
             return
         
-        pixmap = QPixmap(self.imagens[self.index])
+        pixmap = QPixmap(
+            WidgetHelper.caminho_imagem(
+                f"uploads/{self.imagens[self.index]}"
+            )
+        )
         pixmap = pixmap.scaled(
             self.largura, self.altura,
             Qt.AspectRatioMode.KeepAspectRatio,

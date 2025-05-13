@@ -1,25 +1,23 @@
-import sys, os, shutil
-# Adiciona o diretório raiz ao sys.path
+import sys, os
 
-CAMINHO_BASE = sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from models.loja import Loja
 from models.anuncio import Anuncio
 from models.produto import Produto
 from models.usuario import Usuario_Identificado
-from models.cliente import UnixSocketClient
 from models.endereco import Endereco
 from forms import Formulario, FormularioOpcoes
 from widgets import CarrosselImagem, WidgetHelper, CaixaConfirmacao
 from models.pedido import Pedido
-from main import Main
+from models.main import Main
 
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtCore import Qt, QSize
 
 from PyQt6.QtWidgets import (
-   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QFileDialog,QFormLayout, QSpacerItem, QSizePolicy, QDialog,
-   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget, QPushButton, QComboBox, QMessageBox
+   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QDialog,
+   QVBoxLayout, QHBoxLayout, QGridLayout, QScrollArea, QFrame, QStackedWidget
 )
 
 class MarketplaceUI(QMainWindow):
@@ -37,7 +35,7 @@ class MarketplaceUI(QMainWindow):
 
     def executar_tela(self, tela, requisicao, mensagem="Carregando ..."):
         tela_carregando = WidgetHelper.criar_tela_carregando_com_spinner(
-            mensagem, gif_path="spinner.gif"
+            mensagem, gif_path="imagens/spinner.gif"
         )
 
         WidgetHelper.carregar_em_thread(
@@ -49,7 +47,7 @@ class MarketplaceUI(QMainWindow):
 
     def executar_mensagem(self, requisicao, acao, mensagem="Salvando ..."):
         tela_carregando = WidgetHelper.criar_tela_carregando_com_spinner(
-            mensagem, gif_path="spinner.gif"
+            mensagem, gif_path="imagens/spinner.gif"
         )
 
         WidgetHelper.carregar_em_thread(
@@ -66,7 +64,8 @@ class MarketplaceUI(QMainWindow):
         resposta = dialogo.exec()
 
         if resposta == QDialog.DialogCode.Accepted:
-            self.main.socket.close()
+            #self.main.socket.close()
+            #WidgetHelper.excluir_arquivos_pasta("uploads")
             event.accept()
         else:
             event.ignore()
@@ -315,7 +314,7 @@ class MarketplaceUI(QMainWindow):
                 {
                     "Nome": produto.nome, 
                     "Descrição": produto.descricao, 
-                    "Imagens": produto.imagens[0]
+                    "Imagens": produto.imagens
                 }
             )
             if valores_alterados:
@@ -923,20 +922,16 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = QLabel()
-        pixmap = QPixmap(anuncio.produto.imagens[0]).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        imagem_label.setPixmap(pixmap)
-        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
+        layout.addWidget(imagem_label)
+        layout.addSpacing(5)
 
         nome_label = QLabel(f"<b>{anuncio.produto.nome}</b>")
         nome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        preco_label = QLabel(f"R$ {anuncio.preco:.2f}")
-        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(imagem_label)
-        layout.addSpacing(5)
         layout.addWidget(nome_label)
+
+        preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {anuncio.preco}</span>")
+        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(preco_label)
 
         bloco.mousePressEvent = lambda e: (
@@ -974,16 +969,12 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = QLabel()
-        pixmap = QPixmap(produto.imagens[0]).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        imagem_label.setPixmap(pixmap)
-        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        imagem_label = WidgetHelper.imagem(produto.imagens[0])
+        layout.addWidget(imagem_label)
+        layout.addSpacing(5)
 
         nome_label = QLabel(f"<b>{produto.nome}</b>")
         nome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(imagem_label)
-        layout.addSpacing(5)
         layout.addWidget(nome_label)
 
         bloco.mousePressEvent = lambda e: self.executar_tela(
@@ -1060,16 +1051,13 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = QLabel()
-        pixmap = QPixmap(loja.imagem).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        imagem_label.setPixmap(pixmap)
-        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        imagem_label = WidgetHelper.imagem(loja.imagem)
         layout.addWidget(imagem_label)
+        layout.addSpacing(5)
 
         nome_label = QLabel(f"<b>{loja.nome}</b>")
         nome_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(nome_label)
-        layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.executar_tela(
             tela=lambda: self.tela_minha_loja(loja),
@@ -1267,10 +1255,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addLayout(layout_horizontal)
 
         if loja.imagem:
-            imagem_label = QLabel()
-            pixmap = QPixmap(loja.imagem).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-            imagem_label.setPixmap(pixmap)
-            imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+            imagem_label = WidgetHelper.imagem(loja.imagem)
             layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
@@ -1445,15 +1430,12 @@ class MarketplaceUI(QMainWindow):
             valor=pedido.calcular_total(),
             descricao="Pagamento de pedido",
             pagamento_multiplo=False,
-            nome_arquivo="qrcode",
+            nome_arquivo="imagens/qrcode",
             salvar_png = True,
             salvar_svg = False
         )
 
-        imagem_label = QLabel()
-        pixmap = QPixmap("qrcode").scaled(300, 300, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        imagem_label.setPixmap(pixmap)
-        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        imagem_label = WidgetHelper.imagem(pasta="imagens/",imagem="qrcode.png", scaled=300)
         layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addSpacing(10)
 
@@ -1878,10 +1860,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addLayout(layout_horizontal)
         layout_vertical.addSpacing(20)
 
-        imagem_label = QLabel()
-        pixmap = QPixmap(loja.imagem).scaled(180, 180, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
-        imagem_label.setPixmap(pixmap)
-        imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        imagem_label = WidgetHelper.imagem(loja.imagem)
         layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
@@ -2078,7 +2057,7 @@ class MarketplaceUI(QMainWindow):
             {
                 "Nome": produto.nome, 
                 "Descrição": produto.descricao, 
-                "Imagens": produto.imagens[0]
+                "Imagens": produto.imagens
             }
         )
         botao_editar.clicked.connect(lambda: self.editar_produto(formulario, produto))
