@@ -13,15 +13,15 @@ from PyQt6.QtWidgets import (
 )
 
 class WorkerGenerico(QObject):
-    terminado = pyqtSignal()
+    terminado = pyqtSignal(object)  # envia resultado
 
-    def __init__(self, funcao):
+    def __init__(self, func):
         super().__init__()
-        self.funcao = funcao
+        self.func = func
 
     def run(self):
-        self.funcao()
-        self.terminado.emit()
+        resultado = self.func()
+        self.terminado.emit(resultado)
 
 
 class WidgetHelper(QWidget):
@@ -30,25 +30,46 @@ class WidgetHelper(QWidget):
         return os.path.join(CAMINHO_BASE, path)
 
     @staticmethod
-    def carregar_em_thread(funcao_segundo_plano, quando_terminar, tela_loading, abrir_tela):
+    def carregar_em_thread(funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, passar_resultado=False):
         thread = QThread()
         worker = WorkerGenerico(funcao_segundo_plano)
         worker.moveToThread(thread)
 
         thread.started.connect(worker.run)
-        worker.terminado.connect(lambda: WidgetHelper._finalizar_thread(thread, worker, quando_terminar, abrir_tela))
-        thread.start()
-        abrir_tela(tela_loading)
 
-        return thread  # opcionalmente guardar o thread
+        if passar_resultado:
+            worker.terminado.connect(lambda resultado: WidgetHelper._finalizar_thread(
+                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, tela_loading, resultado
+            ))
+        else:
+            worker.terminado.connect(lambda: WidgetHelper._finalizar_thread(
+                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, tela_loading
+            ))
+
+        thread.start()
+        if abrir_tela and tela_loading:
+            abrir_tela(tela_loading)
 
     @staticmethod
-    def _finalizar_thread(thread, worker, callback, abrir_tela):
+    @staticmethod
+    def _finalizar_thread(thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, tela_loading=None, resultado=None):
         thread.quit()
         thread.wait()
         thread.deleteLater()
         worker.deleteLater()
-        abrir_tela(callback(), excluir_anterior=True)  # Aqui `callback` precisa ser uma função que retorna a tela
+
+        if voltar_tela:
+            voltar_tela()
+
+        if abrir_tela and nova_tela_callback:
+            nova_tela = nova_tela_callback()
+            abrir_tela(nova_tela, excluir_anterior=True)
+
+        if quando_terminar:
+            if resultado is not None:
+                quando_terminar(resultado)
+            else:
+                quando_terminar()
 
     @staticmethod
     def criar_tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):

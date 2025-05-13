@@ -40,11 +40,25 @@ class MarketplaceUI(QMainWindow):
             mensagem, gif_path="spinner.gif"
         )
 
-        self.carregamento_thread = WidgetHelper.carregar_em_thread(
+        WidgetHelper.carregar_em_thread(
             funcao_segundo_plano=requisicao,
-            quando_terminar=tela,  # <<< função que retorna um QWidget
             tela_loading=tela_carregando,
-            abrir_tela=self.abrir_tela
+            abrir_tela=self.abrir_tela,
+            nova_tela_callback=tela
+        )
+
+    def executar_mensagem(self, requisicao, acao, mensagem="Salvando ..."):
+        tela_carregando = WidgetHelper.criar_tela_carregando_com_spinner(
+            mensagem, gif_path="spinner.gif"
+        )
+
+        WidgetHelper.carregar_em_thread(
+            funcao_segundo_plano=requisicao,
+            tela_loading=tela_carregando,
+            abrir_tela=self.abrir_tela,
+            voltar_tela=self.voltar_tela,
+            quando_terminar=acao,
+            passar_resultado=True
         )
 
     def closeEvent(self, event):
@@ -147,24 +161,29 @@ class MarketplaceUI(QMainWindow):
         self.abrir_tela(self.tela_pagamento(pedido, anuncio))
 
     def criar_pedido(self, pedido: Pedido, anuncio: Anuncio):
-        resposta = self.main.criar_pedido(pedido)
+        def ao_criar_pedido(resposta):
+            if resposta:
+                anuncio.subtrair_quantidade(1)
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Pedido Criado com Sucesso!"
+                )
+                self.set_tela(-3)
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#f44336",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Erro ao criar pedido!"
+                )
 
-        if resposta:
-            anuncio.subtrair_quantidade(1)
-            WidgetHelper.mostrar_alerta_temporario(
-                parent_widget=self, 
-                backcolor="#4CAF50",
-                largura=400, altura=50,paddingH=50, paddingV=50,
-                mensagem="Pedido Criado com Sucesso!"
-            )
-            self.set_tela(-3)
-        else:
-            WidgetHelper.mostrar_alerta_temporario(
-                parent_widget=self, 
-                backcolor="#f44336",
-                largura=400, altura=50,paddingH=50, paddingV=50,
-                mensagem="Erro ao criar pedido!"
-            )
+        # Executa:
+        self.executar_mensagem(
+            requisicao=lambda: self.main.criar_pedido(pedido),
+            acao=ao_criar_pedido
+        )
 
     def criar_loja(self, formulario: Formulario):
         erro = formulario.validar_tipos(
@@ -1664,10 +1683,7 @@ class MarketplaceUI(QMainWindow):
             endereco = usuario.enderecos[i]
             botao = WidgetHelper.botao(
                 nome="Editar",
-                acao=lambda e: self.executar_tela(
-                    tela=lambda: self.tela_meu_endereco(endereco),
-                    requisicao=lambda: self.main.visualizar_endereco(endereco)
-                )
+                acao=lambda _, endereco=endereco: self.abrir_tela(self.tela_meu_endereco(endereco))
             )
             botao_editar.append(botao)
             layout_vertical2.addWidget(botao)

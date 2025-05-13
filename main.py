@@ -10,6 +10,8 @@ import time
 class Main():
     def __init__(self):
         end = Endereco(rua="Aristides Teixeira Duarte", numero=234, bairro="California", cidade="Florestal", estado="MG", complemento="Apartamento 205")
+        end2 = Endereco(rua="Alecrins", numero=234, bairro="Nossa Senhaora Aparecida", cidade="Florestal", estado="MG", complemento="Apartamento 103")
+        # Produtos
         # Produtos
         p1 = Produto(id=1, nome="Notebook Dell", descricao="dinedendine", imagens=["imagens/tablet.png"])
         p2 = Produto(id=2, nome="Mouse sem fio", descricao="dinedendine", imagens=["imagens/tablet.png"])
@@ -82,7 +84,7 @@ class Main():
             cpf="136.689.956-30",
             email="sabrina.b.faria@ufv.br",
             senha="123**",
-            enderecos=[end],
+            enderecos=[end, end2],
             lojas=lojas,
             pedidos=pedidos
         )
@@ -220,19 +222,6 @@ class Main():
                 self.usuario.lojas.append(Loja.from_dict(resposta[i]))
             return True
         
-        return False
-
-    def visualizar_endereco(self, endereco: Endereco):
-        time.sleep(10)
-        return True
-        mensagem = f"visualizar|endereco|{endereco.id}"
-        self.socket.send(mensagem)
-
-        resposta = self.divide_mensagem(self.socket.receive())
-        if resposta[0] == "endereco":
-            endereco = Endereco.from_dict(resposta[1])
-            return True
-
         return False
 
     def visualizar_meus_enderecos(self):
@@ -393,6 +382,7 @@ class Main():
         return False
     
     def criar_pedido(self, pedido: Pedido):
+        time.sleep(10)
         return True
         mensagem = f"criar|pedido|{self.usuario.id}|{pedido.to_dict_personalisado()}"
         self.socket.send(mensagem)
