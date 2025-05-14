@@ -162,7 +162,7 @@ class MarketplaceUI(QMainWindow):
     def criar_pedido(self, pedido: Pedido, anuncio: Anuncio):
         def ao_criar_pedido(resposta):
             if resposta:
-                anuncio.subtrair_quantidade(1)
+                anuncio.subtrair_quantidade(pedido.quantidade)
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self, 
                     backcolor="#4CAF50",
@@ -237,7 +237,7 @@ class MarketplaceUI(QMainWindow):
                     mensagem="Erro ao criar endereço!"
                 )
 
-    def criar_produto(self, formulario: Formulario):
+    def criar_produto(self, formulario: Formulario, loja: Loja):
         erro = formulario.validar_tipos(
             {
                 "Nome": str, 
@@ -249,6 +249,7 @@ class MarketplaceUI(QMainWindow):
             formulario.exibir_erros()
         else:
             produto = Produto.from_dict(formulario.obter_valores())
+            produto.loja = loja
             resposta = self.main.criar_produto(produto)
 
             if resposta:
@@ -1085,7 +1086,7 @@ class MarketplaceUI(QMainWindow):
         scroll.setWidget(conteudo)
         return scroll
     
-    def tela_lista_produtos(self, produtos, adicionar=False):
+    def tela_lista_produtos(self, loja: Loja, produtos, adicionar=False):
         scroll = QScrollArea()
         scroll.setWidgetResizable(True)
 
@@ -1105,7 +1106,7 @@ class MarketplaceUI(QMainWindow):
             backcolor='#e0f7fa', fontcolor='#0078d7',
             border='dashed #0078d7',
             hover='#b2ebf2', pressed='#80deea',
-            acao=lambda: self.abrir_tela(self.tela_criar_produto())
+            acao=lambda: self.abrir_tela(self.tela_criar_produto(loja))
         )
 
         index = 0
@@ -1893,7 +1894,7 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
         lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
-        lista_produtos = self.tela_lista_produtos(loja.produtos, adicionar=True)
+        lista_produtos = self.tela_lista_produtos(loja, loja.produtos, adicionar=True)
         lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, botao_loja=False)
         lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, botao_confirmar=True, botao_loja=False)
 
@@ -2146,7 +2147,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_criar_produto(self):
+    def tela_criar_produto(self, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -2181,7 +2182,7 @@ class MarketplaceUI(QMainWindow):
             largura=600,
             altura=50
         )
-        botao_confirmar.clicked.connect(lambda: self.criar_produto(formulario))
+        botao_confirmar.clicked.connect(lambda: self.criar_produto(formulario, loja))
         layout_conteudo.addWidget(formulario)
         
         # Scroll area com o título e formulário

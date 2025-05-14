@@ -8,6 +8,16 @@ class Produto:
         self.imagens = imagens
         self.loja = loja
 
+    def criar_imagem(self, imagem):
+        self.imagens.append(imagem)
+        return imagem
+
+    def apagar_imagem(self, imagem):
+        if imagem in self.imagens:
+            self.imagens.remove(imagem)
+            return True
+        return False
+
     def to_dict(self):
         return {
             "id": self.id,

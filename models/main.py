@@ -95,7 +95,13 @@ class Main():
         [ws.strip() for ws in stringMensagem.split('|')]
     
     def is_identificado(self):
-        return isinstance( self.usuario, Usuario_Identificado)
+        return isinstance(self.usuario, Usuario_Identificado)
+
+    def atributos_preenchidos(obj):
+        for nome, valor in vars(obj).items():
+            if not valor:  # False para None, "", [], {}, 0, etc.
+                return False
+        return True
 
     def cadastrar(self, usuario: Usuario_Identificado):
         time.sleep(10)
@@ -147,18 +153,18 @@ class Main():
         return
         mensagem = f"visualizar|todos_anuncios"
         self.socket.send(mensagem)
-        print("Enviar:", mensagem)
-        print("Reposta:")
-        while True:
+
+        quantidade = self.socket.receive_size()
+        for i in range(quantidade):
             resposta = self.divide_mensagem(self.socket.receive())
             if resposta[0] == "anuncios":
-                anuncio = Anuncio.from_dict(resposta[i])
+                anuncio = Anuncio.from_dict(resposta[1])
                 self.anuncios.append(anuncio)
                 for imagem in anuncio.produto.imagens:
                     self.socket.receive_image(path=f"uploads/{imagem}")
-            return True
-        print(resposta)
-        return False
+            else:
+                return False
+        return True
     
     def visualizar_anuncio(self, anuncio: Anuncio):
         #time.sleep(10)
@@ -172,7 +178,6 @@ class Main():
             for imagem in anuncio.produto.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
             return True
-        
         return False
     
     def visualizar_produto(self, produto: Produto):
@@ -184,10 +189,9 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
             produto = Produto.from_dict(resposta[1])
-            self.socket.receive_image(path=f"uploads/{imagem}")
-            
+            for imagem in produto.imagens:
+                self.socket.receive_image(path=f"uploads/{imagem}")
             return True
-        
         return False
     
     def visualizar_loja(self, loja: Loja):
@@ -201,11 +205,11 @@ class Main():
             loja = Loja.from_dict(resposta[1])
             if loja.imagem:
                 self.socket.receive_image(path=f"uploads/{loja.imagem}")
+
             for produto in loja.produtos:
                 for imagem in produto.imagens:
                     self.socket.receive_image(path=f"uploads/{imagem}")
             return True
-        
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
@@ -217,26 +221,25 @@ class Main():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "minha_loja":
             loja = Loja.from_dict(resposta[1])
-            if loja.imagem:
-                self.socket.receive_image(path=f"uploads/{loja.imagem}")
-
             for produto in loja.produtos:
                 for imagem in produto.imagens:
                     self.socket.receive_image(path=f"uploads/{imagem}")
             return True
-        
         return False
     
     def visualizar_minhas_lojas(self):
+        if self.usuario.lojas:
+            return True
         time.sleep(10)
         return True
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
 
-        while True:
+        quantidade = self.socket.receive_size()
+        for i in range(quantidade):
             resposta = self.divide_mensagem(self.socket.receive())
             if resposta[0] == "minhas_lojas":
-                loja = Loja.from_dict(resposta[i])
+                loja = Loja.from_dict(resposta[1])
                 self.usuario.lojas.append(loja)
                 if loja.imagem:
                     self.socket.receive_image(path=f"uploads/{loja.imagem}")
@@ -245,18 +248,20 @@ class Main():
         return True
 
     def visualizar_meus_enderecos(self):
+        if self.usuario.enderecos:
+            return True
         time.sleep(10)
         return True
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
-
-        resposta = self.divide_mensagem(self.socket.receive())
-        if resposta[0] == "meus_enderecos":
-            for i in range(1, len(resposta)):
-                self.usuario.enderecos.append(Endereco.from_dict(resposta[i]))
-            return True
-        
-        return False
+        quantidade = self.socket.receive_size()
+        for i in range(quantidade):
+            resposta = self.divide_mensagem(self.socket.receive())
+            if resposta[0] == "meus_enderecos":
+                self.usuario.enderecos.append(Endereco.from_dict(resposta[1]))
+            else:
+                return False
+        return True
     
     def visualizar_pedido(self, pedido: Pedido):
         time.sleep(10)
@@ -270,22 +275,23 @@ class Main():
             for imagem in pedido.produto.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
             return True
-        
         return False
 
     def visualizar_meus_pedidos(self):
+        if self.usuario.pedidos:
+            return True
         time.sleep(10)
         return True
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
         self.socket.send(mensagem)
-
-        resposta = self.divide_mensagem(self.socket.receive())
-        if resposta[0] == "meus_pedidos":
-            for i in range(1, len(resposta)):
+        quantidade = self.socket.receive_size()
+        for i in range(quantidade):
+            resposta = self.divide_mensagem(self.socket.receive())
+            if resposta[0] == "meus_pedidos":
                 self.usuario.pedidos.append(Pedido.from_dict(resposta[i]))
-            return True
-        
-        return False
+            else:
+                return False
+        return True
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
         time.sleep(10)
@@ -297,7 +303,6 @@ class Main():
         if resposta[0] == "anuncio":
             anuncio = Anuncio.from_dict(resposta[1])
             return True
-        
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
@@ -310,7 +315,6 @@ class Main():
         if resposta[0] == "produto":
             produto = Produto.from_dict(resposta[1])
             return True
-        
         return False
     
     def editar_loja(self, loja: Loja, novos_dados):
@@ -318,12 +322,15 @@ class Main():
         return True
         mensagem = f"editar|loja|{loja.id}|{novos_dados}"
         self.socket.send(mensagem)
+        if novos_dados["imagem"]:
+            self.socket.send_image(novos_dados["imagem"])
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             loja = Loja.from_dict(resposta[1])
+            if loja.imagem:
+                self.socket.receive_image(path=f"uploads/{loja.imagem}")
             return True
-        
         return False
     
     def editar_usuario(self, novos_dados):
@@ -352,7 +359,6 @@ class Main():
         if resposta[0] == "endereco":
             endereco = Endereco.from_dict(resposta[1])
             return True
-
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):
@@ -365,7 +371,6 @@ class Main():
         if resposta[0] == "anuncio":
             anuncio.produto.loja.criar_anuncio(Anuncio.from_dict(resposta[1]))
             return True
-        
         return False
     
     def criar_produto(self, produto: Produto):
@@ -382,7 +387,7 @@ class Main():
             produto.loja.criar_produto(Produto.from_dict(resposta[1]))
 
             for imagem in produto.imagens:
-                self.socket.receive_image(path=imagem)
+                self.socket.receive_image(path=f"uploads/{imagem}")
 
             return True
         
@@ -393,14 +398,16 @@ class Main():
         return True
         mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalisado()}"
         self.socket.send(mensagem)
-        self.socket.send_image(loja.imagem)
+        if loja.imagem:
+            self.socket.send_image(loja.imagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
-            self.usuario.criar_loja(Loja.from_dict(resposta[1]))
-            self.socket.receive_image(path=loja.imagem)
+            loja = Loja.from_dict(resposta[1])
+            self.usuario.criar_loja(loja)
+            if loja.imagem:
+                self.socket.receive_image(path=f"uploads/{loja.imagem}")
             return True
-        
         return False
     
     def criar_pedido(self, pedido: Pedido):
@@ -413,7 +420,6 @@ class Main():
         if resposta[0] == "pedido":
             self.usuario.criar_pedido(Pedido.from_dict(resposta[1]))
             return True
-        
         return False
     
     def criar_endereco(self, endereco: Endereco):
@@ -426,7 +432,20 @@ class Main():
         if resposta[0] == "endereco":
             self.usuario.criar_endereco(Endereco.from_dict(resposta[1]))
             return True
-        
+        return False
+
+    def criar_imagem(self, produto: Produto, imagem):
+        time.sleep(10)
+        return True
+        mensagem = f"criar|imagem|{produto.id}"
+        self.socket.send(mensagem)
+        self.socket.send_image(imagem)
+
+        resposta = self.divide_mensagem(self.socket.receive())
+        if resposta[0] == "imagem":
+            produto.criar_imagem(resposta[1])
+            self.socket.receive_image(resposta[1])
+            return True
         return False
     
     def excluir_anuncio(self, anuncio: Anuncio):
@@ -439,7 +458,6 @@ class Main():
         if resposta[0] == "anuncio":
             anuncio.produto.loja.apagar_anuncio(anuncio)
             return True
-        
         return False
     
     def excluir_produto(self, produto: Produto):
@@ -452,7 +470,6 @@ class Main():
         if resposta[0] == "produto":
             produto.loja.apagar_produto(produto)
             return True
-        
         return False
     
     def excluir_loja(self, loja: Loja):
@@ -465,7 +482,6 @@ class Main():
         if resposta[0] == "loja":
             self.usuario.apagar_loja(loja)
             return True
-        
         return False
     
     def excluir_endereco(self, endereco: Endereco):
@@ -478,9 +494,20 @@ class Main():
         if resposta[0] == "endereco":
             self.usuario.apagar_endereco(endereco)
             return True
-        
         return False
     
+    def excluir_imagem(self, produto: Produto, imagem):
+        time.sleep(10)
+        return True
+        mensagem = f"excluir|imagem|{imagem}"
+        self.socket.send(mensagem)
+
+        resposta = self.divide_mensagem(self.socket.receive())
+        if resposta[0] == "imagem":
+            produto.apagar_imagem(imagem)
+            return True
+        return False
+
     def confirmar_pedido(self, pedido: Pedido, loja: Loja):
         time.sleep(10)
         return True
@@ -491,7 +518,6 @@ class Main():
         if resposta[0] == "ok":
             loja.confirmar_pedido(pedido)
             return True
-        
         return False
     
     def cancelar_pedido(self, pedido: Pedido, loja: Loja):
@@ -504,7 +530,6 @@ class Main():
         if resposta[0] == "ok":
             loja.cancelar_pedido(pedido)
             return True
-        
         return False
     
 
