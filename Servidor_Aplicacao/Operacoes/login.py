@@ -1,13 +1,12 @@
 import socket
 import threading
 from Operacoes import server_operation as op
+from Operacoes import operacao
+from Estruturas.mensagem import Mensagem
 
-class Login():
-    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens):
-        self.mensagemCliente = mensagem
-        self.conexaoCliente = socket_cliente
-        self.conexaoServidor = socket_servidor
-        self.fila = fila_mensagens
+class Login(operacao.Operacao):
+    def __init__(self, mensagem, socket_cliente, fila_mensagens):
+        super().__init__(mensagem, socket_cliente, fila_mensagens)
 
     def run(self):
         self.getOperacao()
@@ -17,21 +16,26 @@ class Login():
 
     def logar(self):
         dados = self.mensagemCliente.camposMensagem[1]
-        mensagemServidor = op.codifica("login | " + str(dados))
+        mensagemServidor = Mensagem.produtorMensagem(f"login | {dados}")
 
+        # A operação de Login enfileira, efetivamente, apenas a mensagem e o socket do cliente além do callback.
+        # A operação de login é simples e não há "discussão" entre o servidor e o banco de dados.
         print("[Servidor] Enviando requisição para a fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoServidor)
-        resposta = self.conexaoServidor.recv(2048).decode("utf-8")
+        self.fila.enfileira(mensagemServidor, self.loginCallback, self.conexaoCliente, "login")
+    
+    @staticmethod
+    def loginCallback(respostaBD, socket_cliente):
+        resposta = [ws.strip() for ws in respostaBD.split('|')]
+        print(resposta)
 
         if resposta[0] == "ok":
-            mensagemAoCliente = op.codifica("ok | " + str(resposta[1]))
+            mensagemAoCliente = Mensagem.produtorMensagem(f"ok | {resposta[1]}")
 
             print("[Servidor] Confirmando login do cliente...")
-            self.conexaoCliente.sendall(mensagemAoCliente)
+            op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
         else:
-            mensagemAoCliente = op.codifica("erro | " + str(resposta[1]))
-
+            mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
+        
             print("[Servidor] Reportando erro de login ao cliente...")
-            self.conexaoCliente.sendall(mensagemAoCliente)
-    
+            op.enviaMensagem(socket_cliente, mensagemAoCliente)

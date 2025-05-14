@@ -1,12 +1,11 @@
 import socket
 import threading
 from Operacoes import server_operation as op
+from Operacoes import operacao
 
-class Visualizar():
+class Visualizar(operacao.Operacao):
     def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        self.mensagemCliente = mensagem
-        self.conexao = socket_cliente
-        self.fila = fila_mensagens
+        super().__init__(mensagem, socket_cliente, fila_mensagens)
 
     def run(self):
         self.getOperacao()
@@ -47,46 +46,46 @@ class Visualizar():
         mensagemServidor = op.codifica("retornar | anuncios")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
 
     def anuncio(self):
         idAnuncio = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica("retornar | anuncio |" + str(idAnuncio))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
 
     def loja(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica("retornar | loja | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
 
     def minhaLoja(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica("retornar | minha_loja | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
 
     def minhasListaLojas(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica("retornar | minhas_lojas | " + str(idUsuario))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
 
     def pedidos(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica("retornar | pedido | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
 
     def meusPedidos(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica("retornar | meus_pedidos | " + str(idUsuario))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexao)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)

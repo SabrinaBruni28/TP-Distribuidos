@@ -1,3 +1,6 @@
 Servidor_Aplicacao/__pycache__/
 Servidor_Aplicacao/Operacoes/__pycache__/
+Servidor_Dados/
+Cliente/
+docker-compose.yml
 .idea/

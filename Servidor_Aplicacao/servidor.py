@@ -2,114 +2,39 @@ import socket
 import threading
 import logging
 from Operacoes import server_operation as op
-from queue import Queue, Empty
 from Operacoes import Login, Cadastramento, Visualizar, Editar, Criar, Excluir, Pedido
+from Estruturas import *
+from queue import Queue, Empty
+
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
-
-class Mensagem():
-    def __init__(self, mensagem):
-        self.stringMensagem = mensagem
-        self.camposMensagem = self.divideString()
-        self.tamanho = len(self.camposMensagem)
-
-    def divideString(self):
-        return [ws.strip() for ws in self.stringMensagem.split('|')]
-
-
-class FilaDeMensagens(threading.Thread):
-    def __init__(self):
-        super().__init__(daemon=True)
-        self._fila = Queue()
-        self.socketBD = None
-
-
-    def enfileira(self, mensagem, callback, conexao):
-        self._fila.put((mensagem, callback, conexao))
-
-
-    def desenfileira(self):
-        try:
-            return self._fila.get()
-        except Empty:
-            return None
-        
-        
-    def vazia(self):
-        return self._fila.empty()
-    
-
-    def tamanho(self):
-        return self._fila.qsize()
-    
-    
-    def conectaBanco(self):
-        try:
-            self.socketBD = socket.create_connection(('localhost', 6000))
-            logging.info("[Fila de Mensagens] Conectado ao Banco de Dados.")
-        
-        except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro ao conectar ao Banco de Dados: {e}")
-            self.socketBD = None
-    
-
-    def enviaAoBanco(self, mensagem):
-        try:
-            if self.socketBD is None:
-                self.conectaBanco()
-
-            if self.socketBD:
-                self.socketBD.sendall(mensagem)
-                resposta = self.socketBD.recv(2048)
-                return op.carrega(resposta)
-            
-            else:
-                return "[Erro] Conexão com Banco de Dados não estabelecida"
-
-        except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
-            self.socketBD = None
-            return f"[Erro] Falha ao enviar ao banco: {e}"
         
 
-    def run(self):
-        while True:
-            try:
-                mensagem, callback, connect = self.desenfileira()
-            except ValueError:
-                logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
-                continue
-
-            if mensagem and callback:
-                logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
-                resposta = self.enviaAoBanco(mensagem)
-                callback(resposta, connect)
-
-            else:
-                logging.info("[Fila de mensagens] Erro ao obter callback.")
-
-
+# Várias instâncias de ClientHandler vão acontecer conforme clientes vão se conectando ao servidor.
 class ClientHandler(threading.Thread):
-    def __init__(self, socket_servidor, socket_cliente, endereco, fila):
+    def __init__(self, socket_servidor, socket_cliente, endereco, fila: FilaDeMensagens):
         super().__init__()
         self.socketCliente = socket_cliente
         self.socketServidor = socket_servidor
         self.enderecoCliente = endereco
         self.filaDeMensagem = fila
         self.ativo = True
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()  # Os momentos que precisam de trava no servidor já têm ela
+                                        # implementada por padrão. No caso, enfileirar mensagens
+                                        # já tem sistema de lock implementados em Queue.
 
+    # run vai ser executado logo após a thread ClientHandler ser disparada
     def run(self):
         logging.info(f"Cliente conectado: {self.enderecoCliente}")
 
         try:
             while self.ativo:
-                stringMensagemCliente = op.decodifica(self.socketCliente)
-
-                mensagemCliente = Mensagem(stringMensagemCliente)
+                # Recebe a mensagem do cliente e separa seus campos
+                mensagemCliente = Mensagem.receptorMensagem(self.socketCliente)
                 
-                # Se o cliente fecho a conexão
-                if not mensagemCliente or stringMensagemCliente == "":
+                # Se o cliente fechou a conexão
+                if not mensagemCliente or mensagemCliente.camposMensagem[0] == "":
+                    self.ativo = False
                     break
 
                 logging.info(f"[{self.enderecoCliente}] Comando: {mensagemCliente.stringMensagem}")
@@ -118,7 +43,8 @@ class ClientHandler(threading.Thread):
                 if mensagemCliente.camposMensagem[0] == "fim":
                     self.socketCliente.sendall("closed".encode("utf-8")[:2048])
                     self.socketCliente.close()
-                    return
+                    self.ativo = False
+                    break
 
                 # Dispara thread para processar cada comando SEM quebrar o loop
                 self.decisor(mensagemCliente)
@@ -128,41 +54,64 @@ class ClientHandler(threading.Thread):
 
         finally:
             self.socketCliente.close()
-            return
 
 
-    def decisor(self, mensagem):
+    def decisor(self, mensagem: Mensagem):
         cabecalhoTipoMensagem = mensagem.camposMensagem[0]
 
         match cabecalhoTipoMensagem:
             case "login":
-                Login(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
+                Login(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case "cadastramento":
-                Cadastramento(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
+                Cadastramento(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).start()
 
             case "visualizar":
-                Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case "editar":
-                Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).run()
+                Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).start()
 
             case "criar":
-                Criar(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                Criar(mensagem, self.socketCliente, self.filaDeMensagem).start()
             
             case "excluir":
-                Excluir(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                Excluir(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case "pedido":
-                Pedido(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                Pedido(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case _:
                 logging.info("Comando inválido")
+                self.socketCliente.sendall("[Erro] Comando inválido.")
                 return
 
+def terminalServidor(flag_encerramento):
+    while not flag_encerramento.is_set():
+        comando = input()
+        if comando.lower() in ("sair", "exit", "shutdown", "fim", "q"):
+            print("[Servidor] Encerrando por comando.")
+            flag_encerramento.set()
+
+def conectaNovoCliente(servidor: socket.socket, fila: FilaDeMensagens):
+    try:                                                                        #
+        # Aceita a conexão (de um cliente)                                      #
+        socketCliente, endereco = servidor.accept()                             #    Fluxo se repete
+                                                                                #    para cada
+        # Começa uma nova thread para lidar com esta conexão (desse cliente)    #    novo
+        ClientHandler(servidor, socketCliente, endereco, fila).start()          #    cliente.
+                                                                                #
+    except socket.timeout:                                                      #
+        pass                                                                    #
 
 def rodarServidor(endereco_ip, porta, fila):
+    # O terminal do servidor ficará aberto para receber comandos, assim é possível encerrar o
+    # servidor pelo terminal do servidor sem necessitar do ctrl+c.
+    flagEncerramento = threading.Event()
+    threading.Thread(target=terminalServidor, args=(flagEncerramento, ), daemon=True).start()
+
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
+        servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         # Vinculação do socket servidor ao endereço e porta
         servidor.bind((endereco_ip, porta))
 
@@ -170,16 +119,20 @@ def rodarServidor(endereco_ip, porta, fila):
         servidor.listen()
         logging.info(f"Ouvindo em {endereco_ip}:{porta}")
 
-        while True:
-            # Aceita a conexão
-            socketCliente, endereco = servidor.accept()
+        servidor.settimeout(0.2)
 
-            # Começa uma nova thread para lidar com
-            # este cliente
-            ClientHandler(servidor, socketCliente, endereco, fila).start()
-            
+        # Enquanto o servidor não fecha, aceita novas conexões e cria novas thread para elas
+        while not flagEncerramento.is_set():
+            conectaNovoCliente(servidor, fila)
 
+        
+    print("[Servidor] Conexão encerrada.")
+
+# ==== Execução do servidor ====
+
+# Inicialização da Fila de Mensagens
 filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
+# Inicialização do socket servidor
 rodarServidor('localhost', 5000, filaDeMensagem)

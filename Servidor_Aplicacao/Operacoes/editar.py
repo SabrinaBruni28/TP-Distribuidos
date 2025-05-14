@@ -1,13 +1,12 @@
 import socket
 import threading
 from Operacoes import server_operation as op
+from Operacoes import operacao
 
-class Editar():
+class Editar(operacao.Operacao):
     def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens):
-        self.mensagemCliente = mensagem
-        self.conexaoCliente = socket_cliente
+        super().__init__(mensagem, socket_cliente, fila_mensagens)
         self.conexaoServidor = socket_servidor
-        self.fila = fila_mensagens
 
     def run(self):
         self.getOperacao()

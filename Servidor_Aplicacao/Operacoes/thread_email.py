@@ -49,10 +49,3 @@ class ThreadEmail(threading.Thread):
             server.starttls()
             server.login(email_remetente, senha_app)
             server.send_message(msg)
-
-
-email = ThreadEmail("confirmacao cadastro", "luiz.gontijo@ufv.br")
-email.start()
-codigo = email.codigo
-
-print(codigo)
