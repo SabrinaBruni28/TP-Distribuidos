@@ -1,5 +1,5 @@
 from models.usuario import Usuario, Usuario_Identificado
-from models.cliente import UnixSocketClient
+from controladores.cliente import UnixSocketClient
 from models.endereco import Endereco
 from models.anuncio import Anuncio
 from models.produto import Produto
@@ -7,7 +7,7 @@ from models.pedido import Pedido
 from models.loja import Loja
 import time
 
-class Main():
+class ClienteAplicacao():
     def __init__(self):
         end = Endereco(rua="Aristides Teixeira Duarte", numero=234, bairro="California", cidade="Florestal", estado="MG", complemento="Apartamento 205")
         end2 = Endereco(rua="Alecrins", numero=234, bairro="Nossa Senhaora Aparecida", cidade="Florestal", estado="MG", complemento="Apartamento 103")
@@ -91,6 +91,17 @@ class Main():
         self.anuncios = []
         #self.socket = UnixSocketClient(ip="192.168.1.102", port=5000)
 
+    def chamar(self, obj, *args, **kwargs):
+        nome_funcao = f"visualizar_{obj}"
+        func = getattr(self, nome_funcao, None)
+        if func:
+            try:
+                func(*args, **kwargs)
+            except TypeError as e:
+                print(f"Erro ao chamar '{nome_funcao}': {e}")
+        else:
+            print(f"Função '{nome_funcao}' não encontrada.")
+
     def divide_mensagem(self, stringMensagem):
         [ws.strip() for ws in stringMensagem.split('|')]
     
@@ -104,7 +115,7 @@ class Main():
         return True
 
     def cadastrar(self, usuario: Usuario_Identificado):
-        time.sleep(10)
+        
         return True
         mensagem = f"cadastramento|{usuario.to_dict_cadastramento()}"
         self.socket.send(mensagem)
@@ -119,7 +130,7 @@ class Main():
         return False
         
     def email_confirmacao(self, codigo):
-        time.sleep(10)
+        
         return True, ""
         mensagem = f"codigo|{codigo}"
         self.socket.send(mensagem)
@@ -133,7 +144,7 @@ class Main():
             return False, resposta[1]
         
     def login(self, usuario: Usuario_Identificado):
-        time.sleep(10)
+        
         return True
         mensagem = f"login|{usuario.to_dict_login()}"
         self.socket.send(mensagem)
@@ -167,7 +178,7 @@ class Main():
         return True
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        #time.sleep(10)
+        #
         return True
         mensagem = f"visualizar|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
@@ -181,7 +192,7 @@ class Main():
         return False
     
     def visualizar_produto(self, produto: Produto):
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|produto|{produto.id}"
         self.socket.send(mensagem)
@@ -195,7 +206,7 @@ class Main():
         return False
     
     def visualizar_loja(self, loja: Loja):
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|loja|{loja.id}"
         self.socket.send(mensagem)
@@ -213,7 +224,7 @@ class Main():
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|minha_loja|{loja.id}"
         self.socket.send(mensagem)
@@ -230,7 +241,7 @@ class Main():
     def visualizar_minhas_lojas(self):
         if self.usuario.lojas:
             return True
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -250,7 +261,7 @@ class Main():
     def visualizar_meus_enderecos(self):
         if self.usuario.enderecos:
             return True
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -264,7 +275,7 @@ class Main():
         return True
     
     def visualizar_pedido(self, pedido: Pedido):
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|pedido|{pedido.id}"
         self.socket.send(mensagem)
@@ -280,7 +291,7 @@ class Main():
     def visualizar_meus_pedidos(self):
         if self.usuario.pedidos:
             return True
-        time.sleep(10)
+        
         return True
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -294,7 +305,7 @@ class Main():
         return True
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
-        time.sleep(10)
+        
         return True
         mensagem = f"editar|anuncio|{anuncio.id}|{novos_dados}"
         self.socket.send(mensagem)
@@ -306,7 +317,7 @@ class Main():
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
-        time.sleep(10)
+        
         return True
         mensagem = f"editar|produto|{produto.id}|{novos_dados}"
         self.socket.send(mensagem)
@@ -318,7 +329,7 @@ class Main():
         return False
     
     def editar_loja(self, loja: Loja, novos_dados):
-        time.sleep(10)
+        
         return True
         mensagem = f"editar|loja|{loja.id}|{novos_dados}"
         self.socket.send(mensagem)
@@ -334,7 +345,7 @@ class Main():
         return False
     
     def editar_usuario(self, novos_dados):
-        time.sleep(10)
+        
         return True
         mensagem = f"editar|usuario|{self.usuario.id}|{novos_dados}"
         self.socket.send(mensagem)
@@ -350,7 +361,7 @@ class Main():
         return False
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
-        time.sleep(10)
+        
         return True
         mensagem = f"editar|endereco|{endereco.id}|{novos_dados}"
         self.socket.send(mensagem)
@@ -362,7 +373,7 @@ class Main():
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):
-        time.sleep(10)
+        
         return True
         mensagem = f"criar|anuncio|{anuncio.to_dict_personalisado()}"
         self.socket.send(mensagem)
@@ -374,7 +385,7 @@ class Main():
         return False
     
     def criar_produto(self, produto: Produto):
-        time.sleep(10)
+        
         return True
         mensagem = f"criar|produto|{produto.to_dict_personalisado()}"
         self.socket.send(mensagem)
@@ -394,7 +405,7 @@ class Main():
         return False
     
     def criar_loja(self, loja: Loja):
-        time.sleep(10)
+        
         return True
         mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalisado()}"
         self.socket.send(mensagem)
@@ -411,7 +422,7 @@ class Main():
         return False
     
     def criar_pedido(self, pedido: Pedido):
-        time.sleep(10)
+        
         return True
         mensagem = f"criar|pedido|{self.usuario.id}|{pedido.to_dict_personalisado()}"
         self.socket.send(mensagem)
@@ -423,7 +434,7 @@ class Main():
         return False
     
     def criar_endereco(self, endereco: Endereco):
-        time.sleep(10)
+        
         return True
         mensagem = f"criar|endereco|{self.usuario.id}|{endereco.to_dict_personalisado()}"
         self.socket.send(mensagem)
@@ -435,7 +446,7 @@ class Main():
         return False
 
     def criar_imagem(self, produto: Produto, imagem):
-        time.sleep(10)
+        
         return True
         mensagem = f"criar|imagem|{produto.id}"
         self.socket.send(mensagem)
@@ -449,7 +460,7 @@ class Main():
         return False
     
     def excluir_anuncio(self, anuncio: Anuncio):
-        time.sleep(10)
+        
         return True
         mensagem = f"excluir|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
@@ -461,7 +472,7 @@ class Main():
         return False
     
     def excluir_produto(self, produto: Produto):
-        time.sleep(10)
+        
         return True
         mensagem = f"excluir|produto|{produto.id}"
         self.socket.send(mensagem)
@@ -473,7 +484,7 @@ class Main():
         return False
     
     def excluir_loja(self, loja: Loja):
-        time.sleep(10)
+        
         return True
         mensagem = f"excluir|loja|{loja.id}"
         self.socket.send(mensagem)
@@ -485,7 +496,7 @@ class Main():
         return False
     
     def excluir_endereco(self, endereco: Endereco):
-        time.sleep(10)
+        
         return True
         mensagem = f"excluir|endereco|{endereco.id}"
         self.socket.send(mensagem)
@@ -497,7 +508,7 @@ class Main():
         return False
     
     def excluir_imagem(self, produto: Produto, imagem):
-        time.sleep(10)
+        
         return True
         mensagem = f"excluir|imagem|{imagem}"
         self.socket.send(mensagem)
@@ -509,7 +520,7 @@ class Main():
         return False
 
     def confirmar_pedido(self, pedido: Pedido, loja: Loja):
-        time.sleep(10)
+        
         return True
         mensagem = f"pedido|confirmar|{pedido.id}"
         self.socket.send(mensagem)
@@ -521,7 +532,7 @@ class Main():
         return False
     
     def cancelar_pedido(self, pedido: Pedido, loja: Loja):
-        time.sleep(10)
+        
         return True
         mensagem = f"pedido|cancelar|{pedido.id}"
         self.socket.send(mensagem)

@@ -3,9 +3,10 @@ import sys, os
 CAMINHO_BASE = sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from widgets import WidgetHelper
+from utils import Utils
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (
-   QWidget, QLabel, QLineEdit, QFormLayout, QVBoxLayout, QHBoxLayout, QPushButton, QComboBox
+   QWidget, QLabel, QLineEdit, QFormLayout, QVBoxLayout, QHBoxLayout, QComboBox
 ) 
 
 class FormularioOpcoes(QWidget):
@@ -177,7 +178,7 @@ class Formulario(QWidget):
                 self.erros[nome].setText(str(""))
 
             if nome.lower() == "email":
-                if not WidgetHelper.check_email(texto):
+                if not Utils.check_email(texto):
                     erro = "Email inválido."
                     self.erros[nome].setText(str(erro))
                     has_error = True
@@ -186,7 +187,7 @@ class Formulario(QWidget):
                     self.erros[nome].setText(str(""))
 
             elif nome.lower() == "cpf":
-                if not WidgetHelper.check_cpf(texto):
+                if not Utils.check_cpf(texto):
                     erro = "CPF inválido."
                     self.erros[nome].setText(str(erro))
                     has_error = True

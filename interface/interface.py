@@ -1,0 +1,1436 @@
+import sys, os
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from models.loja import Loja
+from models.anuncio import Anuncio
+from models.produto import Produto
+from models.endereco import Endereco
+from forms import Formulario, FormularioOpcoes
+from widgets import CarrosselImagem, WidgetHelper, CaixaConfirmacao, ViewHelper
+from models.pedido import Pedido
+from controladores.handler import InterfaceHandler
+from utils import Utils
+
+from PyQt6.QtCore import Qt
+
+from PyQt6.QtWidgets import (
+   QApplication, QMainWindow, QWidget, QLabel, QLineEdit, QDialog,
+   QVBoxLayout, QHBoxLayout, QScrollArea, QFrame, QStackedWidget
+)
+
+class MarketplaceUI(QMainWindow):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("Caldeirão")
+        self.setGeometry(100, 100, 1000, 600)
+
+        self.stack = QStackedWidget()
+        self.setCentralWidget(self.stack)
+
+        self.handler = InterfaceHandler(parent=self, stack=self.stack)
+        self.handler.visualizar(self.tela_inicial(), "anuncios")
+
+    ##############  AUXILIARES  ################
+    def closeEvent(self, event):
+        dialogo = CaixaConfirmacao(self, titulo="Confirmar saída", mensagem="Você tem certeza que deseja sair?")
+        resposta = dialogo.exec()
+
+        if resposta == QDialog.DialogCode.Accepted:
+            #self.handler.aplicacao.socket.close()
+            #Utils.excluir_arquivos_pasta("uploads")
+            event.accept()
+        else:
+            event.ignore()
+
+    def toggle_menu(self):
+        if self.menu_lateral.isVisible():
+            self.menu_lateral.hide()
+        else:
+            self.menu_lateral.show()
+
+    def mostrar_barra_pesquisa(self):
+        self.input_busca.show()
+        self.botao_reset.show()
+        self.input_busca.setFocus()
+        self.input_busca.textChanged.connect(self.aplicar_filtro)
+
+    def aplicar_filtro(self, texto):
+        texto = texto.lower().strip()
+        anuncios_filtrados = [
+            a for a in self.handler.aplicacao.anuncios if texto in a.produto.nome.lower()
+        ]
+        self.atualizar_lista_anuncios(anuncios_filtrados)
+
+    def resetar_busca(self):
+        self.input_busca.clear()
+        self.input_busca.hide()
+        self.botao_reset.hide()
+        self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios)
+
+    def atualizar_lista_anuncios(self, nova_lista):
+        # Remove widgets antigos
+        for i in reversed(range(self.grid.count())):
+            widget = self.grid.itemAt(i).widget()
+            if widget:
+                widget.setParent(None)
+
+        largura_bloco = 250
+        altura_bloco = 300
+        lista = []
+
+        for anuncio in nova_lista:
+            if not anuncio.pausado:
+                lista.append(anuncio)
+
+        for i, anuncio in enumerate(lista):
+            bloco = self.bloco_anuncio(anuncio, largura_bloco, altura_bloco)
+            self.grid.addWidget(bloco, i // 5, i % 5)
+
+    def comprar(self, anuncio: Anuncio, formularioOp: FormularioOpcoes):
+        valores = formularioOp.obter_valores()
+        pedido = Pedido(
+            produto=anuncio.produto, 
+            quantidade=int(valores["quantidade"]),
+            preco=anuncio.preco,
+            endereco=self.handler.aplicacao.usuario.get_endereco(valores["endereço"])
+        )
+        ViewHelper.abrir_tela(self.stack, self.tela_pagamento(pedido, anuncio))
+    
+    #############  BLOCOS  #################
+    def bloco_anuncio(self, anuncio: Anuncio, largura, altura, editar = False):
+        bloco = WidgetHelper.bloco(largura, altura)
+        layout = QVBoxLayout(bloco)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
+        layout.addWidget(imagem_label)
+        layout.addSpacing(5)
+
+        WidgetHelper.label_b(layout, anuncio.produto.nome)
+        WidgetHelper.label_preco(layout, anuncio.preco)
+        preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {anuncio.preco}</span>")
+        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(preco_label)
+
+        bloco.mousePressEvent = lambda e: (
+            self.handler.visualizar(
+                self.tela_editar_anuncio(anuncio), "anuncio", anuncio
+            )
+            if editar
+            else
+            self.handler.visualizar(
+                self.tela_detalhes_anuncio(anuncio), "anuncio", anuncio
+            )
+        )
+        return bloco
+    
+    def bloco_produto(self, produto: Produto, largura, altura):
+        bloco = WidgetHelper.bloco(largura, altura)
+        layout = QVBoxLayout(bloco)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        imagem_label = WidgetHelper.imagem(produto.imagens[0])
+        layout.addWidget(imagem_label)
+        layout.addSpacing(5)
+
+        WidgetHelper.label_b(layout, produto.nome)
+
+        bloco.mousePressEvent = lambda e: self.handler.visualizar(
+            self.tela_editar_produto(produto), "produto", produto
+        )
+        return bloco
+    
+    def bloco_pedido(self, pedido: Pedido, largura, altura, botao_confirmar = False, botao_loja = True):
+        bloco = WidgetHelper.bloco(largura, altura)
+        layout = QVBoxLayout(bloco)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        WidgetHelper.label_b(layout, pedido.data.strftime('%d/%m/%Y - %H:%M'))
+        WidgetHelper.label_b(layout, pedido.produto.nome)
+        WidgetHelper.label_b(layout, pedido.quantidade)
+        WidgetHelper.label_preco(layout, pedido.quantidade * pedido.preco)
+
+        bloco.mousePressEvent = lambda e: self.handler.visualizar(
+            self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja), "pedido", pedido
+        )
+        return bloco
+    
+    def bloco_loja(self, loja: Loja, largura, altura):
+        bloco = WidgetHelper.bloco(largura, altura)
+        layout = QVBoxLayout(bloco)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        imagem_label = WidgetHelper.imagem(loja.imagem)
+        layout.addWidget(imagem_label)
+        layout.addSpacing(5)
+
+        WidgetHelper.label_b(layout, loja.nome)
+
+        bloco.mousePressEvent = lambda e: self.handler.visualizar(
+            self.tela_detalhes_minha_loja(loja), "minha_loja", loja
+        )
+        return bloco
+    
+    ###################  TELAS  ########################
+    def tela_inicial(self):
+        tela = QWidget()
+
+        # Layout horizontal principal (menu + conteúdo)
+        layout_h = QHBoxLayout(tela)
+
+        # Adiciona a barra lateral ao layout principal (inicialmente oculta)
+        self.menu_lateral = self.menu_lateral()
+        layout_h.addWidget(self.menu_lateral)
+        
+        # Layout vertical para o conteúdo da tela
+        layout_conteudo = QVBoxLayout()
+
+        barra_superior = self.barra_superior()
+        layout_conteudo.addLayout(barra_superior)
+
+        tela_lista = self.tela_lista_anuncios(self.handler.aplicacao.anuncios)
+        layout_conteudo.addWidget(tela_lista)
+
+        # Agora adiciona o conteúdo principal no layout horizontal
+        layout_h.addLayout(layout_conteudo)
+
+        return tela
+
+    def tela_comprar(self, anuncio: Anuncio):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addLayout(layout_horizontal)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Comprar</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = FormularioOpcoes(campos=["Quantidade", "Endereço"],largura=600, altura=50)
+
+        for end in self.handler.aplicacao.usuario.enderecos:
+            formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
+
+        formulario.ativar_botao_adicionar(campo="Endereço", acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_endereco()))
+
+        for i in range(anuncio.quantidade_disponivel):
+            formulario.adicionar_opcao(campo="Quantidade", opcao=str(i+1))
+
+        layout_vertical.addWidget(formulario, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.comprar(anuncio, formulario)
+        )
+        layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        return tela
+    
+    def tela_pagamento(self, pedido: Pedido, anuncio: Anuncio):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addLayout(layout_horizontal)
+        layout_vertical.addSpacing(10)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Pagamento</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(20)
+
+        dados = Utils.gerar_qrcode_pix(
+            nome=anuncio.produto.loja.nome,
+            chave="136.689.956-30",
+            cidade="Florestal",
+            valor=pedido.calcular_total(),
+            descricao="Pagamento de pedido",
+            pagamento_multiplo=False,
+            nome_arquivo="imagens/qrcode",
+            salvar_png = True,
+            salvar_svg = False
+        )
+
+        imagem_label = WidgetHelper.imagem(pasta="imagens/",imagem="qrcode.png", scaled=300)
+        layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addSpacing(10)
+
+        string = QLabel(f"<span style='font-size: 12px; font-weight: 950'>{dados['payload']}</span>")
+        string.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        string.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        string.setWordWrap(True)
+        string.setMaximumWidth(500)
+        layout_vertical.addWidget(string, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        botao_copiar = WidgetHelper.botao(
+            nome="Copiar chave", fonte=15,
+            backcolor="", 
+            hover='#D3D3D3', pressed='#000000',
+            acao=WidgetHelper.copiar_texto(string)
+        )
+        layout_vertical.addWidget(botao_copiar, alignment=Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addSpacing(10)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.handler.criar_pedido(pedido, anuncio)
+        )
+        layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        return tela
+    
+    def tela_codigo_confirmacao(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addSpacing(50)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Código de Confirmação</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = Formulario(campos=["Código"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.handler.confirmar_codigo(formulario)
+        )
+        layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        return tela
+
+    def tela_cadastro(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addSpacing(50)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Cadastramento</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = Formulario(campos=["Nome", "CPF", "Email", "Senha"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        botao_cadastrar = WidgetHelper.botao(
+            nome="Cadastrar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.handler.cadastrar(formulario)
+        )
+        layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        botao_login = WidgetHelper.botao(
+            nome="Login",
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_login())
+        )
+        layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignRight)
+
+        return tela
+
+    def tela_login(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addSpacing(50)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Login</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        formulario = Formulario(campos=["Email", "Senha"], largura=600, altura=50)
+        layout_vertical.addWidget(formulario)
+
+        botao_login = WidgetHelper.botao(
+            nome="Entrar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: self.login(formulario)
+        )
+        layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        botao_cadastrar = WidgetHelper.botao(
+            nome="Cadastrar",
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_cadastro())
+        )
+        layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        return tela
+    
+    def tela_meus_enderecos(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Endereços</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        layout_horizontal2 = QHBoxLayout()
+        usuario = self.handler.aplicacao.usuario
+        quantidade = len(usuario.enderecos)
+        formulario = Formulario(
+            campos=[f"Endereço {i+1}" for i in range(quantidade)],
+            largura=800,
+            altura=50
+        )
+        formulario.preencher_campos(
+            {f"Endereço {i+1}": usuario.enderecos[i].__str__() for i in range(quantidade)}
+        )
+        formulario.bloquear_campos([f"Endereço {i+1}" for i in range(quantidade)])
+        layout_horizontal2.addWidget(formulario)
+
+        layout_vertical2 = QVBoxLayout()
+       
+        botao_editar = []
+        for i in range(quantidade):
+            endereco = usuario.enderecos[i]
+            botao = WidgetHelper.botao(
+                nome="Editar",
+                acao=lambda _, endereco=endereco: ViewHelper.abrir_tela(self.stack, self.tela_editar_endereco(endereco))
+            )
+            botao_editar.append(botao)
+            layout_vertical2.addWidget(botao)
+
+        layout_horizontal2.addLayout(layout_vertical2)
+        layout_conteudo.addLayout(layout_horizontal2)
+
+        botao_adicionar = WidgetHelper.botao(
+                nome="Adicionar",
+                acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_endereco())
+            )
+        layout_conteudo.addStretch()
+        layout_conteudo.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignLeft)
+        
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+    
+    def tela_minhas_lojas(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+        layout_horizintal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizintal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_adicionar = WidgetHelper.botao(
+            nome="Adicionar",
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_loja())
+        )
+        layout_horizintal.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizintal)
+        layout_vertical.addSpacing(40)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Minhas Lojas</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(40)
+
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        conteudo_scroll = QWidget()
+        layout_loja = QVBoxLayout(conteudo_scroll)
+        layout_loja.setSpacing(15)
+
+        blocos = self.tela_lista_lojas(self.handler.aplicacao.usuario.lojas)
+        layout_vertical.addWidget(blocos)
+        layout_vertical.addStretch()
+
+        return tela
+    
+    def tela_meus_pedidos(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addSpacing(40)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Pedidos</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(40)
+
+        blocos = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos, botao_loja=True)
+        layout_vertical.addWidget(blocos)
+
+        return tela
+    
+    ##############  TELAS DE CRIAÇÃO  #################
+    def tela_criar_endereco(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar"
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Endereço</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Rua", "N°", "Bairro", "Cidade", "Estado", "Complemento"],
+            largura=600,
+            altura=50
+        )
+        formulario.validar_tipos(
+            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+        )
+        botao_confirmar.clicked.connect(lambda: self.handler.criar_endereco(formulario))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+
+    def tela_criar_loja(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar"
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Loja</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Nome", "Imagem"],
+            largura=600,
+            altura=50
+        )
+        botao_confirmar.clicked.connect(lambda: self.handler.criar_loja(formulario))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+
+    def tela_criar_produto(self, loja: Loja):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar"
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Produto</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Nome", "Descrição", "Imagens"],
+            largura=600,
+            altura=50
+        )
+        botao_confirmar.clicked.connect(lambda: self.handler.criar_produto(formulario, loja))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+    
+    def tela_criar_anuncio(self, produto: Produto):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar"
+        )
+        layout_horizontal.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Anúncio</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Preço", "Quantidade Disponível", "Chave Pix", "Pausado"],
+            largura=600,
+            altura=50
+        )
+        botao_confirmar.clicked.connect(lambda: self.handler.criar_anuncio(formulario, produto))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+
+    ###############  TELAS DE EDIÇÃO  ################
+    def tela_editar_perfil(self):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(nome="Editar")
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meu Perfil</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Nome", "CPF", "Email", "Senha"],
+            largura=600,
+            altura=50
+        )
+        usuario = self.handler.aplicacao.usuario
+        formulario.preencher_campos(
+            {"Nome": usuario.nome, "CPF": usuario.cpf, "Email": usuario.email, "Senha": "*"*len(usuario.senha)}
+        )
+        botao_editar.clicked.connect(lambda: self.handler.editar_perfil(formulario))
+        layout_conteudo.addWidget(formulario)
+        layout_conteudo.addStretch()
+
+        botao_endereco = WidgetHelper.botao(
+            nome="Meus Endereços",
+            largura=180, altura=50,
+            acao=lambda: self.handler.visualizar(
+                self.tela_meus_enderecos(), "meus_enderecos"
+            )
+        )
+        layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+
+    def tela_editar_endereco(self, endereco: Endereco):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(nome="Editar")
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Endereço</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Rua", "N°", "Bairro", "Cidade", "Estado", "Complemento"],
+            largura=600,
+            altura=50
+        )
+        formulario.preencher_campos(
+            {
+                "Rua": endereco.rua, "N°": endereco.numero, 
+                "Bairro": endereco.bairro, "Cidade": endereco.cidade, 
+                "Estado": endereco.estado, "Complemento": endereco.complemento
+            }
+        )
+        botao_editar.clicked.connect(lambda: self.handler.editar_endereco(formulario, endereco))
+        layout_conteudo.addWidget(formulario)
+        layout_conteudo.addStretch()
+
+        layout_horizontal_2 = QVBoxLayout()
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=lambda: self.handler.excluir_endereco(endereco)
+        )
+        layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_conteudo.addLayout(layout_horizontal_2)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        return tela
+    
+    def tela_editar_loja(self, loja: Loja):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_vertical.addLayout(layout_horizontal)
+
+        botao_editar = WidgetHelper.botao(nome="Editar")
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Editar Loja</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addSpacing(40)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Nome", "Imagem"],
+            largura=600,
+            altura=50
+        )
+
+        formulario.preencher_campos({"Nome": loja.nome, "Imagem": loja.imagem})
+
+        botao_editar.clicked.connect(lambda: self.handler.editar_loja(formulario, loja))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=lambda: self.handler.excluir_loja(loja)
+        )
+        layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        return tela
+
+    def tela_editar_produto(self, produto):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(nome="Editar")
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>{produto.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Nome", "Descrição", "Imagens"],
+            largura=600,
+            altura=50
+        )
+
+        formulario.preencher_campos({"Nome": produto.nome, "Descrição": produto.descricao, "Imagens": produto.imagens})
+
+        botao_editar.clicked.connect(lambda: self.handler.editar_produto(formulario, produto))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        layout_horizontal_2 = QHBoxLayout()
+
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=lambda: self.handler.excluir_produto(produto)
+        )
+        layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_criar = WidgetHelper.botao(
+            nome="Criar Anúncio",
+            largura=200,
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_anuncio(produto))
+        )
+        layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal_2)
+
+        return tela
+    
+    def tela_editar_anuncio(self, anuncio: Anuncio):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        # Topo fixo (fora do scroll): botão voltar e editar
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(nome="Editar")
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+        layout_vertical.addLayout(layout_horizontal)
+
+        # CONTEÚDO DO SCROLL
+        conteudo_scroll = QWidget()
+        layout_conteudo = QVBoxLayout(conteudo_scroll)
+        layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
+        layout_conteudo.addSpacing(40)
+
+        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Anúncio: {anuncio.produto.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_conteudo.addWidget(titulo)
+        layout_conteudo.addSpacing(40)
+
+        formulario = Formulario(
+            campos=["Preço", "Quantidade Disponível", "Chave Pix", "Pausado"],
+            largura=600,
+            altura=50
+        )
+
+        formulario.preencher_campos(
+            {
+                "Preço": anuncio.preco, "Quantidade Disponível": anuncio.quantidade_disponivel, 
+                "Chave Pix": anuncio.chave_pix, "Pausado": anuncio.pausado
+            }
+        )
+        botao_editar.clicked.connect(lambda: self.handler.editar_anuncio(formulario, anuncio))
+        layout_conteudo.addWidget(formulario)
+        
+        # Scroll area com o título e formulário
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir",
+            acao=lambda: self.handler.excluir_anuncio(anuncio)
+        )
+        layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        return tela
+
+    ###############  TELAS DETALHES  #################
+    def tela_detalhes_anuncio(self, anuncio: Anuncio):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_loja = WidgetHelper.botao(
+            nome="Loja", fonte=15,
+            largura=100,
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_detalhes_loja(anuncio.produto.loja))
+        )
+        layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addLayout(layout_horizontal)
+
+        carrossel = CarrosselImagem(anuncio.produto.imagens, largura=350, altura=350)
+        layout_vertical.addWidget(carrossel, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{anuncio.produto.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+
+        descricao = QLabel(f"<span style='font-size: 20px'>{anuncio.produto.descricao}</span>")
+        descricao.setWordWrap(True)
+        descricao.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(descricao)
+
+        preco = QLabel(f"<span style='font-size: 30px; color: green'>R$ {anuncio.preco:.2f}</span>")
+        preco.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(preco)
+
+        layout_horizontal_2 = QHBoxLayout()
+
+        quantidade = QLabel(f"<span style='font-size: 20px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
+        layout_horizontal_2.addWidget(quantidade, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        comprar = WidgetHelper.botao(
+            nome="Comprar", fonte=30,
+            largura=200, altura=50,
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login())
+        )
+        layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addLayout(layout_horizontal_2)
+
+        return tela
+
+    def tela_detalhes_loja(self, loja: Loja):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        layout_vertical.addLayout(layout_horizontal)
+
+        if loja.imagem:
+            imagem_label = WidgetHelper.imagem(loja.imagem)
+            layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+
+        anuncios = self.tela_lista_anuncios(loja.anuncios)
+        self.atualizar_lista_anuncios(loja.anuncios)
+        layout_vertical.addWidget(anuncios)
+
+        return tela
+    
+    def tela_detalhes_minha_loja(self, loja: Loja):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_editar = WidgetHelper.botao(
+            nome="Editar",
+            acao=lambda e: self.handler.visualizar(
+                self.tela_editar_loja(loja), "loja", loja
+            )
+        )
+        layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addLayout(layout_horizontal)
+        layout_vertical.addSpacing(20)
+
+        imagem_label = WidgetHelper.imagem(loja.imagem)
+        layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout_vertical.addWidget(titulo)
+        layout_vertical.addSpacing(50)
+
+        layout_horizontal2 = QHBoxLayout()
+
+        botao_anuncios = WidgetHelper.botao(
+            nome="Anúncios", fonte=18,
+        )
+        layout_horizontal2.addWidget(botao_anuncios)
+
+        botao_produtos = WidgetHelper.botao(
+            nome="Produtos", fonte=18,
+        )
+        layout_horizontal2.addWidget(botao_produtos)
+
+        botao_pedidos_confirmados = WidgetHelper.botao(
+            nome="Pedidos Confirmados", fonte=18,
+            largura=220,
+        )
+        layout_horizontal2.addWidget(botao_pedidos_confirmados)
+
+        botao_pedidos_em_andamento = WidgetHelper.botao(
+            nome="Pedidos Em Andamento", fonte=18,
+            largura=230
+        )
+        layout_horizontal2.addWidget(botao_pedidos_em_andamento)
+
+        lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
+        lista_produtos = self.tela_lista_produtos(loja, loja.produtos, adicionar=True)
+        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, botao_loja=False)
+        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, botao_confirmar=True, botao_loja=False)
+
+        # Container para trocar os conteúdos
+        container_listas = QStackedWidget()
+        container_listas.addWidget(lista_anuncios)
+        container_listas.addWidget(lista_produtos)
+        container_listas.addWidget(lista_pedidos_confirmados)
+        container_listas.addWidget(lista_pedidos_em_andamento)
+
+        botao_anuncios.clicked.connect(lambda: container_listas.setCurrentWidget(lista_anuncios))
+        botao_produtos.clicked.connect(lambda: container_listas.setCurrentWidget(lista_produtos))
+        botao_pedidos_confirmados.clicked.connect(lambda: container_listas.setCurrentWidget(lista_pedidos_confirmados))
+        botao_pedidos_em_andamento.clicked.connect(lambda: container_listas.setCurrentWidget(lista_pedidos_em_andamento))
+
+        layout_vertical.addLayout(layout_horizontal2)
+        layout_vertical.addSpacing(10)
+        layout_vertical.addWidget(container_listas)
+
+        return tela
+    
+    def tela_detalhes_pedido(self, pedido: Pedido, botao_confirmar = False, botao_loja = True):
+        tela = QWidget()
+        layout_vertical = QVBoxLayout(tela)
+
+        layout_horizontal = QHBoxLayout()
+
+        botao_voltar = WidgetHelper.botao(
+            nome="Voltar",
+            acao=lambda: ViewHelper.voltar_tela(self.stack)
+        )
+        layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        loja_existe = pedido.produto.loja
+
+        botao_loja = WidgetHelper.botao(
+            nome="Loja", fonte=15,
+            acao=lambda e: (
+                self.handler.visualizar(
+                    self.tela_detalhes_loja(pedido.produto.loja), "loja", pedido.produto.loja
+                )
+                if loja_existe
+                else
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self,
+                    backcolor="#FFC107", fontcolor="#000000",
+                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    mensagem="Produto ou Loja excluídos!"
+                )
+            )
+        )
+        if botao_loja:
+            layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addLayout(layout_horizontal)
+
+        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{pedido.produto.nome}</span>")
+        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(titulo)
+
+        carrossel = CarrosselImagem(pedido.produto.imagens, largura=300, altura=300)
+        layout_vertical.addWidget(carrossel, alignment=Qt.AlignmentFlag.AlignHCenter)
+
+        descricao = QLabel(f"<span style='font-size: 30px'>{pedido.produto.descricao}</span>")
+        descricao.setWordWrap(True)
+        descricao.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(descricao)
+
+        preco_total = QLabel(f"<span style='font-size: 35px; color: green'>R${pedido.preco * pedido.quantidade}</span>")
+        preco_total.setWordWrap(True)
+        preco_total.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_vertical.addWidget(preco_total)
+
+        layout_horizontal_2 = QHBoxLayout()
+        quantidade = QLabel(f"<span style='font-size: 30px'>Quantidade: {pedido.quantidade}</span>")
+        quantidade.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_2.addWidget(quantidade)
+
+        preco = QLabel(f"<span style='font-size: 30px; color: green'>R$ {pedido.preco:.2f}</span>")
+        preco.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_2.addWidget(preco)
+        layout_vertical.addLayout(layout_horizontal_2)
+
+        layout_horizontal_3 = QHBoxLayout()
+
+        endereco = QLabel(f"<span style='font-size: 25px;n'>Endereço: {pedido.endereco.__str__()}</span>")
+        endereco.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_3.addWidget(endereco)
+
+        data = QLabel(f"<span style='font-size: 25px;'>Data: {pedido.data.strftime('%d/%m/%Y - %H:%M')}</span>")
+        data.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        layout_horizontal_3.addWidget(data)
+
+        layout_vertical.addLayout(layout_horizontal_3)
+
+        layout_horizontal_4 = QHBoxLayout()
+
+        botao_cancelar = WidgetHelper.botao(
+            nome="Cancelar",
+            acao=lambda: self.handler.cancelar_pedido(pedido)
+        )
+
+        botao_confirmar = WidgetHelper.botao(
+            nome="Confirmar",
+            acao=lambda: self.handler.confirmar_pedido(pedido)
+        )
+
+        if botao_confirmar:
+            layout_horizontal_4.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
+            layout_horizontal_4.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+
+        layout_vertical.addSpacing(10)
+        layout_vertical.addLayout(layout_horizontal_4)
+
+        return tela
+    
+    ############  TELAS LISTA  ##############
+    def tela_lista_anuncios(self, anuncios, editar = False, largura=250, altura=300):
+        scroll, self.grid = WidgetHelper.lista_grid()
+    
+        for i, anuncio in enumerate(anuncios):
+            bloco = self.bloco_anuncio(anuncio, largura, altura, editar)
+            self.grid.addWidget(bloco, i // 5, i % 5)
+
+        return scroll
+    
+    def tela_lista_produtos(self, loja: Loja, produtos, adicionar=False, largura=250, altura=300):
+        scroll, grid = WidgetHelper.lista_grid()
+
+        botao_adicionar = WidgetHelper.botao(
+            nome="+", fonte=80,
+            largura=largura, altura=altura,
+            backcolor='#e0f7fa', fontcolor='#0078d7',
+            border='dashed #0078d7',
+            hover='#b2ebf2', pressed='#80deea',
+            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_produto(loja))
+        )
+
+        index = 0
+        # Adiciona o botão + primeiro, se existir
+        if adicionar:
+            grid.addWidget(botao_adicionar, 0, 0)
+            index = 1
+
+        for i, produto in enumerate(produtos):
+            linha = (i + index) // 5
+            coluna = (i + index) % 5
+            bloco = self.bloco_produto(produto, largura, altura)
+            grid.addWidget(bloco, linha, coluna)
+
+        return scroll
+    
+    def tela_lista_pedidos(self, pedidos, botao_confirmar = False, botao_loja = True, largura=250, altura=220):
+        scroll, grid = WidgetHelper.lista_grid()
+
+        for i, pedido in enumerate(pedidos):
+            bloco = self.bloco_pedido(pedido, largura, altura, botao_confirmar, botao_loja)
+            grid.addWidget(bloco, i // 5, i % 5)
+
+        return scroll
+    
+    def tela_lista_lojas(self, lojas, largura=250, altura=220):
+        scroll, grid = WidgetHelper.lista_grid()
+
+        for i, loja in enumerate(lojas):
+            bloco = self.bloco_loja(loja, largura, altura)
+            grid.addWidget(bloco, i // 5, i % 5)
+
+        return scroll
+    
+    ##########  PARTES DE TELAS  #############
+    def menu_lateral(self):
+        # Crie o menu lateral e esconda no início
+        menu_lateral = QFrame()
+        menu_lateral.setFrameShape(QFrame.Shape.StyledPanel)
+        menu_lateral.setFixedWidth(250)
+        menu_lateral.hide()
+
+        # Layout para a barra lateral
+        menu_layout = QVBoxLayout(menu_lateral)
+        menu_layout.setSpacing(0)  # Definir o espaçamento entre os botões como 0
+        menu_layout.setContentsMargins(0, 0, 0, 0)  # Remove as margens
+
+        botao_perfil = WidgetHelper.botao(
+            nome="Meu Perfil", 
+            backcolor="", hover="#3a3a3a", border="", pressed='#000000',
+            largura=250, altura=100,
+            acao= lambda: ViewHelper.abrir_tela(self.stack, self.tela_editar_perfil())
+        )
+
+        botao_lojas = WidgetHelper.botao(
+            nome="Minhas Lojas", 
+            backcolor="", hover="#3a3a3a", border="", pressed='#000000',
+            largura=250, altura=100,
+            acao= lambda: self.handler.visualizar(
+                self.tela_minhas_lojas(), "minhas_lojas"
+            )
+        )
+
+        botao_pedidos = WidgetHelper.botao(
+            nome="Meus Pedidos", 
+            backcolor="", hover="#3a3a3a", border="", pressed='#000000',
+            largura=250, altura=100,
+            acao= lambda: self.handler.visualizar(
+                self.tela_meus_pedidos(), "meus_pedidos"
+            )
+        )
+    
+        # Adicionando os botões ao layout da barra lateral
+        menu_layout.addWidget(botao_perfil, alignment=Qt.AlignmentFlag.AlignHCenter)
+        menu_layout.addWidget(botao_lojas, alignment=Qt.AlignmentFlag.AlignHCenter)
+        menu_layout.addWidget(botao_pedidos, alignment=Qt.AlignmentFlag.AlignHCenter)
+        menu_layout.addStretch()  # Adiciona um espaçador para empurrar os botões para cima
+
+        return menu_lateral
+    
+    def barra_superior(self):
+        # Barra superior com botões
+        barra_superior = QHBoxLayout()
+
+        botao_menu = WidgetHelper.botao(
+            nome="≡", fonte=40,
+            largura=50, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= self.toggle_menu
+        )
+
+        botao_login = WidgetHelper.botao(
+            nome="Login", fonte=15,
+            largura=100, altura=30,
+            acao= lambda: ViewHelper.abrir_tela(self.stack, self.tela_login())
+        )
+
+        self.input_busca = QLineEdit()
+        self.input_busca.setPlaceholderText("Pesquisar produto...")
+        self.input_busca.setFixedWidth(500)
+        self.input_busca.setFixedHeight(40)
+        self.input_busca.hide()
+
+        self.botao_reset = WidgetHelper.botao(
+            nome="❌", fonte=20,
+            largura=50, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= self.resetar_busca
+        )
+        self.botao_reset.hide()
+
+        btn_pesquisa = WidgetHelper.botao(
+            nome="🔍", fonte=40,
+            largura=100, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= self.mostrar_barra_pesquisa
+        )
+
+        btn_atualizar = WidgetHelper.botao(
+            nome="⟲", fonte=40,
+            largura=100, altura=50,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= lambda: (self.handler.visualizar(None, "anuncios"), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
+        )
+
+        botao_selecionar_arquivo = WidgetHelper.botao(
+            nome="Selecionar arquivo", fonte=10,
+            largura=100, altura=30,
+            backcolor="", hover="#3a3a3a", border="",
+            pressed='#000000',
+            acao= lambda: WidgetHelper.abrir_dialogo_arquivo(self)
+        )
+
+        if self.handler.aplicacao.is_identificado():
+            barra_superior.addWidget(botao_menu)
+        else:
+            barra_superior.addWidget(botao_login)
+
+        barra_superior.addWidget(QLabel("<h2>Produtos disponíveis:</h2>"), alignment=Qt.AlignmentFlag.AlignLeft)
+        barra_superior.addWidget(botao_selecionar_arquivo, alignment=Qt.AlignmentFlag.AlignLeft)
+        barra_superior.addWidget(self.botao_reset)
+        barra_superior.addWidget(self.input_busca)
+        barra_superior.addWidget(btn_pesquisa)
+        barra_superior.addWidget(btn_atualizar)
+
+        return barra_superior
+
+if __name__ == "__main__":
+   app = QApplication(sys.argv)
+   window = MarketplaceUI()
+   window.show()
+   sys.exit(app.exec())

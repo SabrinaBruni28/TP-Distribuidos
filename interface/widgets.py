@@ -1,35 +1,72 @@
-import re, sys, os, shutil
+import sys, os, shutil
 # Adiciona o diretório raiz ao sys.path
 
 CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
-from pybrcode.pix import generate_simple_pix
+from utils import Utils
 
 from PyQt6.QtGui import QPixmap, QMovie
-from PyQt6.QtCore import Qt, QTimer, QThread, QObject, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, QSize
 
 from PyQt6.QtWidgets import (
-   QApplication, QWidget, QLabel, QFileDialog,QHBoxLayout, QPushButton, QVBoxLayout, QDialog
+   QPushButton, QApplication, QWidget, QLabel, QDialog,
+   QVBoxLayout, QHBoxLayout, QFrame, QFileDialog, QScrollArea,
+   QGridLayout
 )
 
-class WorkerGenerico(QObject):
-    terminado = pyqtSignal(object)  # envia resultado
-
-    def __init__(self, func):
-        super().__init__()
-        self.func = func
-
-    def run(self):
-        resultado = self.func()
-        self.terminado.emit(resultado)
-
-
 class WidgetHelper(QWidget):
+    @staticmethod
+    def lista_grid():
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+
+        conteudo = QWidget()
+        vbox = QVBoxLayout(conteudo)
+
+        grid = QGridLayout()
+        vbox.addLayout(grid)
+        vbox.addStretch()
+        scroll.setWidget(conteudo)
+
+        return scroll, grid
+
+    @staticmethod
+    def label_preco(layout, preco_label):
+        preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {preco_label}</span>")
+        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(preco_label)
+
+    @staticmethod
+    def label_b(layout, label, spacing=5, aligment=Qt.AlignmentFlag.AlignCenter):
+        label_b = QLabel(f"<b>{label}</b>")
+        label_b.setAlignment(aligment)
+        layout.addWidget(label_b)
+        layout.addSpacing(spacing)
+
+    @staticmethod
+    def bloco(largura, altura):
+        bloco = QFrame()
+        bloco.setFixedSize(QSize(largura, altura))
+        bloco.setFrameShape(QFrame.Shape.StyledPanel)
+        bloco.setStyleSheet("""
+            QFrame {
+                border: 1px;
+                border-radius: 8px;
+                background-color: #fff;
+                color: #000;
+                font-size: 20px;
+            }
+            QFrame:hover {
+                background-color: #f0f0f0;
+            }
+        """)
+        return bloco
+
     @staticmethod
     def imagem(imagem, pasta = "uploads/", scaled = 200):
         imagem_label = QLabel()
 
-        caminho = WidgetHelper.caminho_imagem(pasta+imagem)
+        caminho = Utils.caminho_imagem(pasta+imagem)
         pixmap = QPixmap(caminho).scaled(
             scaled, scaled, 
             Qt.AspectRatioMode.KeepAspectRatio, 
@@ -38,84 +75,6 @@ class WidgetHelper(QWidget):
         imagem_label.setPixmap(pixmap)
         imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         return imagem_label
-    
-    @staticmethod
-    def caminho_imagem(path):
-        return os.path.join(CAMINHO_BASE, path)
-
-    @staticmethod
-    def carregar_em_thread(funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, passar_resultado=False):
-        thread = QThread()
-        worker = WorkerGenerico(funcao_segundo_plano)
-        worker.moveToThread(thread)
-
-        thread.started.connect(worker.run)
-
-        if passar_resultado:
-            worker.terminado.connect(lambda resultado: WidgetHelper._finalizar_thread(
-                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, tela_loading, resultado
-            ))
-        else:
-            worker.terminado.connect(lambda: WidgetHelper._finalizar_thread(
-                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, tela_loading
-            ))
-
-        thread.start()
-        if abrir_tela and tela_loading:
-            abrir_tela(tela_loading)
-
-    @staticmethod
-    def _finalizar_thread(thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, tela_loading=None, resultado=None):
-        thread.quit()
-        thread.wait()
-        thread.deleteLater()
-        worker.deleteLater()
-
-        if voltar_tela:
-            voltar_tela()
-
-        if abrir_tela and nova_tela_callback:
-            nova_tela = nova_tela_callback()
-            abrir_tela(nova_tela, excluir_anterior=True)
-
-        if quando_terminar:
-            if resultado is not None:
-                quando_terminar(resultado)
-            else:
-                quando_terminar()
-
-    @staticmethod
-    def criar_tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):
-        tela = QWidget()
-        layout = QVBoxLayout(tela)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        # Spinner animado
-        spinner = QLabel()
-        movie = QMovie(WidgetHelper.caminho_imagem(gif_path))
-        spinner.setMovie(movie)
-        movie.start()
-
-        # Mensagem opcional
-        texto = QLabel(f"<span style='font-size: 20px'>{mensagem}</span>")
-        texto.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        layout.addWidget(spinner)
-        layout.addWidget(texto)
-
-        return tela
-
-    @staticmethod
-    def criar_tela_carregando(mensagem="Carregando..."):
-        tela = QWidget()
-        layout = QVBoxLayout(tela)
-        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
-
-        label = QLabel(f"<span style='font-size: 24px'>{mensagem}</span>")
-        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(label)
-
-        return tela
 
     @staticmethod
     def mostrar_alerta_temporario(
@@ -203,100 +162,6 @@ class WidgetHelper(QWidget):
         return botao
     
     @staticmethod
-    def criar_dict_de_atributos(obj, atributos: list):
-        return {attr: getattr(obj, attr, None) for attr in atributos}
-    
-    @staticmethod
-    def check_cpf(cpf: str) -> bool:
-        """
-        Valida um número de CPF (Cadastro de Pessoa Física).
-
-        Parâmetros:
-        - cpf: string com ou sem máscara (ex: '12.345.678-95' ou '12345678000195')
-
-        Retorna:
-        - True se o CPF for válido, False caso contrário.
-        """
-        cpf = re.sub(r'\D', '', cpf)
-        if len(cpf) != 11 or cpf == cpf[0] * 11:
-            return False
-
-        def calc_digit(digs):
-            s = sum(int(d) * i for d, i in zip(digs, range(len(digs) + 1, 1, -1)))
-            r = 11 - s % 11
-            return '0' if r > 9 else str(r)
-
-        d1 = calc_digit(cpf[:9])
-        d2 = calc_digit(cpf[:9] + d1)
-        return cpf.endswith(d1 + d2)
-    
-    @staticmethod
-    def check_email(email: str) -> bool:
-        """
-        Valida se o e-mail fornecido está em um formato válido.
-
-        Parâmetros:
-        - email: string com o e-mail a ser validado
-
-        Retorna:
-        - True se for um e-mail válido, False caso contrário
-        """
-        padrao = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
-        return re.match(padrao, email) is not None
-    
-    @staticmethod
-    def gerar_qrcode_pix(
-        nome: str,
-        chave: str,
-        cidade: str,
-        valor: float,
-        descricao: str = "",
-        pagamento_multiplo: bool = False,
-        salvar_svg: bool = True,
-        salvar_png: bool = True,
-        nome_arquivo: str = "pix_qrcode"
-    ):
-        """
-        Gera um QR Code Pix com base nas informações fornecidas e salva como imagem.
-
-        Parâmetros:
-        - nome: Nome completo do recebedor (máx. 25 caracteres)
-        - chave: Chave Pix (email, CPF, telefone, chave aleatória)
-        - cidade: Cidade do recebedor (máx. 15 caracteres)
-        - valor: Valor do Pix (float)
-        - descricao: Descrição opcional da transação
-        - pagamento_multiplo: True para QR Code reutilizável
-        - salvar_svg: Salvar versão em SVG
-        - salvar_png: Salvar versão em PNG
-        - nome_arquivo: Nome base do arquivo (sem extensão)
-
-        Retorna:
-        - Dicionário com: payload Pix, base64 PNG e SVG string
-        """
-        pix = generate_simple_pix(
-            fullname=nome,
-            key=chave,
-            city=cidade,
-            value=valor,
-            description=descricao,
-            mult_transaction=pagamento_multiplo
-        )
-
-        try:
-            if salvar_svg:
-                pix.imageToPath(destDir=".", filename=nome_arquivo, svg=True)
-            if salvar_png:
-                pix.imageToPath(destDir=".", filename=nome_arquivo, svg=False)
-        except Exception as e:
-            print("Erro ao salvar imagem:", e)
-
-        return {
-            "payload": str(pix),
-            "base64_png": pix.toBase64(),
-            "svg_string": pix.toSVG()
-        }
-    
-    @staticmethod
     def abrir_dialogo_arquivo(parent):
         caminho_arquivo, _ = QFileDialog.getOpenFileName(
             parent,
@@ -314,13 +179,78 @@ class WidgetHelper(QWidget):
 
             # Copia o arquivo para a pasta destino
             shutil.copy(caminho_arquivo, destino)
-    
+
+class ViewHelper(QWidget):
     @staticmethod
-    def excluir_arquivos_pasta(caminho_pasta):
-        for arquivo in os.listdir(caminho_pasta):
-            caminho_arquivo = os.path.join(caminho_pasta, arquivo)
-            if os.path.isfile(caminho_arquivo):
-                os.remove(caminho_arquivo)
+    def set_tela(stack, index):
+        total = stack.count()
+
+        # Converte índice negativo em positivo
+        if index < 0:
+            index = total + index  # Ex: -1 vira total-1
+
+        if index < 0 or index >= total:
+            return
+
+        stack.setCurrentIndex(index)
+
+        # Remove widgets após o índice atual
+        for i in range(total - 1, index, -1):
+            widget = stack.widget(i)
+            stack.removeWidget(widget)
+            widget.deleteLater()
+
+    @staticmethod
+    def voltar_tela(stack):
+        index = stack.currentIndex()
+        stack.setCurrentIndex(index - 1)
+        widget = stack.widget(index)
+        stack.removeWidget(widget)
+        widget.deleteLater()
+
+    @staticmethod
+    def abrir_tela(stack, nova_tela, excluir_anterior = False):
+        if excluir_anterior:
+            index = stack.currentIndex()
+            widget = stack.widget(index)
+            stack.removeWidget(widget)
+            widget.deleteLater()
+
+        stack.addWidget(nova_tela)
+        stack.setCurrentWidget(nova_tela)
+
+    @staticmethod
+    def tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):
+        tela = QWidget()
+        layout = QVBoxLayout(tela)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        # Spinner animado
+        spinner = QLabel()
+        movie = QMovie(WidgetHelper.caminho_imagem(gif_path))
+        spinner.setMovie(movie)
+        movie.start()
+
+        # Mensagem opcional
+        texto = QLabel(f"<span style='font-size: 20px'>{mensagem}</span>")
+        texto.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        layout.addWidget(spinner)
+        layout.addWidget(texto)
+
+        return tela
+
+    @staticmethod
+    def tela_carregando(mensagem="Carregando..."):
+        tela = QWidget()
+        layout = QVBoxLayout(tela)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+
+        label = QLabel(f"<span style='font-size: 24px'>{mensagem}</span>")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+
+        return tela
 
 class CarrosselImagem(QWidget):
     def __init__(self, lista_caminhos_imagem, largura=200, altura=200):
@@ -360,7 +290,7 @@ class CarrosselImagem(QWidget):
             return
         
         pixmap = QPixmap(
-            WidgetHelper.caminho_imagem(
+            Utils.caminho_imagem(
                 f"uploads/{self.imagens[self.index]}"
             )
         )
