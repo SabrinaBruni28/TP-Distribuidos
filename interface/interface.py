@@ -8,9 +8,9 @@ from models.produto import Produto
 from models.anuncio import Anuncio
 from models.endereco import Endereco
 from models.usuario import Usuario_Identificado
-from aplicacao import ClienteAplicacao
+from cliente_aplicacao import ClienteAplicacao
 from forms import Formulario, FormularioOpcoes
-from widgets import CarrosselImagem, WidgetHelper, CaixaConfirmacao, ViewHelper, Threads
+from view_utils import CarrosselImagem, WidgetHelper, CaixaConfirmacao, ViewHelper, Threads
 from utils import Utils
 
 from PyQt6.QtCore import Qt

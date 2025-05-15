@@ -2,7 +2,7 @@ import sys, os
 # Adiciona o diretório raiz ao sys.path
 CAMINHO_BASE = sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from widgets import WidgetHelper
+from view_utils import WidgetHelper
 from utils import Utils
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import (

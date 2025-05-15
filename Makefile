@@ -8,5 +8,5 @@ install_bibliotecas:
 	pip install -r requirements.txt
 	python3 -m pip install --upgrade pip
 
-interface:
-	python3 Interface/interface.py
+app:
+	python3 interface/interface.py
