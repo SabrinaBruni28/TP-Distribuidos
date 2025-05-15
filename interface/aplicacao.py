@@ -1,5 +1,5 @@
 from models.usuario import Usuario, Usuario_Identificado
-from socket import UnixSocketClient
+from cliente_socket import UnixSocketClient
 from models.endereco import Endereco
 from models.anuncio import Anuncio
 from models.produto import Produto
