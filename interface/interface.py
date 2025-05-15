@@ -8,7 +8,7 @@ from models.produto import Produto
 from models.anuncio import Anuncio
 from models.endereco import Endereco
 from models.usuario import Usuario_Identificado
-from controladores.aplicacao import ClienteAplicacao
+from aplicacao import ClienteAplicacao
 from forms import Formulario, FormularioOpcoes
 from widgets import CarrosselImagem, WidgetHelper, CaixaConfirmacao, ViewHelper, Threads
 from utils import Utils
@@ -28,9 +28,10 @@ class MarketplaceUI(QMainWindow):
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
+        self.view = ViewHelper()
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
-        self.handler.visualizar(self.tela_inicial(), "anuncios")
+        self.handler.visualizar(self.tela_inicial, "anuncios")
 
     ##############  AUXILIARES  ################
     def closeEvent(self, event):
@@ -45,10 +46,10 @@ class MarketplaceUI(QMainWindow):
             event.ignore()
 
     def toggle_menu(self):
-        if self.menu_lateral.isVisible():
-            self.menu_lateral.hide()
+        if self.barra_lateral.isVisible():
+            self.barra_lateral.hide()
         else:
-            self.menu_lateral.show()
+            self.barra_lateral.show()
 
     def mostrar_barra_pesquisa(self):
         self.input_busca.show()
@@ -96,7 +97,7 @@ class MarketplaceUI(QMainWindow):
             preco=anuncio.preco,
             endereco=self.handler.aplicacao.usuario.get_endereco(valores["endereço"])
         )
-        ViewHelper.abrir_tela(self.stack, self.tela_pagamento(pedido, anuncio))
+        self.view.abrir_tela(self.stack, self.tela_pagamento(pedido, anuncio))
     
     #############  BLOCOS  #################
     def bloco_anuncio(self, anuncio: Anuncio, largura, altura, editar = False):
@@ -109,20 +110,22 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(imagem_label)
         layout.addSpacing(5)
 
-        WidgetHelper.label_b(layout, anuncio.produto.nome)
-        WidgetHelper.label_preco(layout, anuncio.preco)
-        preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {anuncio.preco}</span>")
-        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(preco_label)
+        label_nome = WidgetHelper.label_b(anuncio.produto.nome)
+        layout.addWidget(label_nome)
+        layout.addSpacing(5)
+
+        label_preco = WidgetHelper.label_preco(anuncio.preco)
+        layout.addWidget(label_preco)
+        layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: (
             self.handler.visualizar(
-                self.tela_editar_anuncio(anuncio), "anuncio", anuncio
+                lambda: self.tela_editar_anuncio(anuncio), "anuncio", anuncio
             )
             if editar
             else
             self.handler.visualizar(
-                self.tela_detalhes_anuncio(anuncio), "anuncio", anuncio
+                lambda: self.tela_detalhes_anuncio(anuncio), "anuncio", anuncio
             )
         )
         return bloco
@@ -137,10 +140,12 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(imagem_label)
         layout.addSpacing(5)
 
-        WidgetHelper.label_b(layout, produto.nome)
+        label_nome = WidgetHelper.label_b(produto.nome)
+        layout.addWidget(label_nome)
+        layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar(
-            self.tela_editar_produto(produto), "produto", produto
+           lambda: self.tela_editar_produto(produto), "produto", produto
         )
         return bloco
     
@@ -150,13 +155,24 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        WidgetHelper.label_b(layout, pedido.data.strftime('%d/%m/%Y - %H:%M'))
-        WidgetHelper.label_b(layout, pedido.produto.nome)
-        WidgetHelper.label_b(layout, pedido.quantidade)
-        WidgetHelper.label_preco(layout, pedido.quantidade * pedido.preco)
+        label_data = WidgetHelper.label_b(pedido.data.strftime('%d/%m/%Y - %H:%M'))
+        layout.addWidget(label_data)
+        layout.addSpacing(5)
+
+        label_nome = WidgetHelper.label_b(pedido.produto.nome)
+        layout.addWidget(label_nome)
+        layout.addSpacing(5)
+
+        label_qnt = WidgetHelper.label_b(pedido.quantidade)
+        layout.addWidget(label_qnt)
+        layout.addSpacing(5)
+
+        label_preco = WidgetHelper.label_preco(pedido.quantidade * pedido.preco)
+        layout.addWidget(label_preco)
+        layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar(
-            self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja), "pedido", pedido
+            lambda: self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja), "pedido", pedido
         )
         return bloco
     
@@ -166,14 +182,16 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = WidgetHelper.imagem(loja.imagem)
+        imagem_label = WidgetHelper.imagem(loja.imagem, scaled=180)
         layout.addWidget(imagem_label)
         layout.addSpacing(5)
 
-        WidgetHelper.label_b(layout, loja.nome)
+        label_nome = WidgetHelper.label_b(loja.nome)
+        layout.addWidget(label_nome)
+        layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar(
-            self.tela_detalhes_minha_loja(loja), "minha_loja", loja
+            lambda: self.tela_detalhes_minha_loja(loja), "minha_loja", loja
         )
         return bloco
     
@@ -185,8 +203,8 @@ class MarketplaceUI(QMainWindow):
         layout_h = QHBoxLayout(tela)
 
         # Adiciona a barra lateral ao layout principal (inicialmente oculta)
-        self.menu_lateral = self.menu_lateral()
-        layout_h.addWidget(self.menu_lateral)
+        self.barra_lateral = self.menu_lateral()
+        layout_h.addWidget(self.barra_lateral)
         
         # Layout vertical para o conteúdo da tela
         layout_conteudo = QVBoxLayout()
@@ -210,7 +228,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -226,7 +244,7 @@ class MarketplaceUI(QMainWindow):
         for end in self.handler.aplicacao.usuario.enderecos:
             formulario.adicionar_opcao(campo="Endereço", opcao=end.__str__())
 
-        formulario.ativar_botao_adicionar(campo="Endereço", acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_endereco()))
+        formulario.ativar_botao_adicionar(campo="Endereço", acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_endereco))
 
         for i in range(anuncio.quantidade_disponivel):
             formulario.adicionar_opcao(campo="Quantidade", opcao=str(i+1))
@@ -249,7 +267,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -308,7 +326,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(50)
@@ -336,7 +354,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(50)
@@ -358,7 +376,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_login = WidgetHelper.botao(
             nome="Login",
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_login())
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_login)
         )
         layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -370,7 +388,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -393,7 +411,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_cadastrar = WidgetHelper.botao(
             nome="Cadastrar",
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_cadastro())
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_cadastro)
         )
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -407,7 +425,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addLayout(layout_horizontal)
@@ -444,7 +462,7 @@ class MarketplaceUI(QMainWindow):
             endereco = usuario.enderecos[i]
             botao = WidgetHelper.botao(
                 nome="Editar",
-                acao=lambda _, endereco=endereco: ViewHelper.abrir_tela(self.stack, self.tela_editar_endereco(endereco))
+                acao=lambda _, endereco=endereco: self.view.abrir_tela(self.stack, self.tela_editar_endereco(endereco))
             )
             botao_editar.append(botao)
             layout_vertical2.addWidget(botao)
@@ -454,7 +472,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_adicionar = WidgetHelper.botao(
                 nome="Adicionar",
-                acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_endereco())
+                acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_endereco)
             )
         layout_conteudo.addStretch()
         layout_conteudo.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -473,13 +491,13 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizintal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_adicionar = WidgetHelper.botao(
             nome="Adicionar",
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_loja())
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_loja)
         )
         layout_horizintal.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizintal)
@@ -509,7 +527,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(40)
@@ -534,7 +552,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -583,7 +601,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -629,7 +647,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -674,7 +692,7 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal = QHBoxLayout()
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -721,7 +739,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -757,7 +775,7 @@ class MarketplaceUI(QMainWindow):
             nome="Meus Endereços",
             largura=180, altura=50,
             acao=lambda: self.handler.visualizar(
-                self.tela_meus_enderecos(), "meus_enderecos"
+                self.tela_meus_enderecos, "meus_enderecos"
             )
         )
         layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
@@ -779,7 +797,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -839,7 +857,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addLayout(layout_horizontal)
@@ -893,7 +911,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -940,7 +958,7 @@ class MarketplaceUI(QMainWindow):
         botao_criar = WidgetHelper.botao(
             nome="Criar Anúncio",
             largura=200,
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_anuncio(produto))
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_anuncio(produto))
         )
         layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal_2)
@@ -956,7 +974,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1013,14 +1031,14 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
             largura=100,
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_detalhes_loja(anuncio.produto.loja))
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_detalhes_loja(anuncio.produto.loja))
         )
         layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1050,7 +1068,7 @@ class MarketplaceUI(QMainWindow):
         comprar = WidgetHelper.botao(
             nome="Comprar", fonte=30,
             largura=200, altura=50,
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login())
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login)
         )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1066,7 +1084,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1081,7 +1099,6 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
 
         anuncios = self.tela_lista_anuncios(loja.anuncios)
-        self.atualizar_lista_anuncios(loja.anuncios)
         layout_vertical.addWidget(anuncios)
 
         return tela
@@ -1094,14 +1111,14 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_editar = WidgetHelper.botao(
             nome="Editar",
             acao=lambda e: self.handler.visualizar(
-                self.tela_editar_loja(loja), "loja", loja
+                lambda: self.tela_editar_loja(loja), "loja", loja
             )
         )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
@@ -1164,7 +1181,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_detalhes_pedido(self, pedido: Pedido, botao_confirmar = False, botao_loja = True):
+    def tela_detalhes_pedido(self, pedido: Pedido, adicionar_botao_confirmar = False, adicionar_botao_loja = True):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1172,7 +1189,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_voltar = WidgetHelper.botao(
             nome="Voltar",
-            acao=lambda: ViewHelper.voltar_tela(self.stack)
+            acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1182,7 +1199,7 @@ class MarketplaceUI(QMainWindow):
             nome="Loja", fonte=15,
             acao=lambda e: (
                 self.handler.visualizar(
-                    self.tela_detalhes_loja(pedido.produto.loja), "loja", pedido.produto.loja
+                    lambda: self.tela_detalhes_loja(pedido.produto.loja), "loja", pedido.produto.loja
                 )
                 if loja_existe
                 else
@@ -1194,7 +1211,7 @@ class MarketplaceUI(QMainWindow):
                 )
             )
         )
-        if botao_loja:
+        if adicionar_botao_loja:
             layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addLayout(layout_horizontal)
@@ -1250,7 +1267,7 @@ class MarketplaceUI(QMainWindow):
             acao=lambda: self.handler.confirmar_pedido(pedido)
         )
 
-        if botao_confirmar:
+        if adicionar_botao_confirmar:
             layout_horizontal_4.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
             layout_horizontal_4.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1278,7 +1295,7 @@ class MarketplaceUI(QMainWindow):
             backcolor='#e0f7fa', fontcolor='#0078d7',
             border='dashed #0078d7',
             hover='#b2ebf2', pressed='#80deea',
-            acao=lambda: ViewHelper.abrir_tela(self.stack, self.tela_criar_produto(loja))
+            acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_produto(loja))
         )
 
         index = 0
@@ -1330,7 +1347,7 @@ class MarketplaceUI(QMainWindow):
             nome="Meu Perfil", 
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
-            acao= lambda: ViewHelper.abrir_tela(self.stack, self.tela_editar_perfil())
+            acao= lambda: self.view.abrir_tela(self.stack, self.tela_editar_perfil)
         )
 
         botao_lojas = WidgetHelper.botao(
@@ -1338,7 +1355,7 @@ class MarketplaceUI(QMainWindow):
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
             acao= lambda: self.handler.visualizar(
-                self.tela_minhas_lojas(), "minhas_lojas"
+                self.tela_minhas_lojas, "minhas_lojas"
             )
         )
 
@@ -1347,7 +1364,7 @@ class MarketplaceUI(QMainWindow):
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
             acao= lambda: self.handler.visualizar(
-                self.tela_meus_pedidos(), "meus_pedidos"
+                self.tela_meus_pedidos, "meus_pedidos"
             )
         )
     
@@ -1374,7 +1391,7 @@ class MarketplaceUI(QMainWindow):
         botao_login = WidgetHelper.botao(
             nome="Login", fonte=15,
             largura=100, altura=30,
-            acao= lambda: ViewHelper.abrir_tela(self.stack, self.tela_login())
+            acao= lambda: self.view.abrir_tela(self.stack, self.tela_login)
         )
 
         self.input_busca = QLineEdit()
@@ -1405,7 +1422,7 @@ class MarketplaceUI(QMainWindow):
             largura=100, altura=50,
             backcolor="", hover="#3a3a3a", border="",
             pressed='#000000',
-            acao= lambda: (self.handler.visualizar(None, "anuncios"), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
+            acao= lambda: (self.handler.visualizar(self.tela_inicial, "anuncios"), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
         )
 
         botao_selecionar_arquivo = WidgetHelper.botao(
@@ -1436,6 +1453,7 @@ class InterfaceHandler:
         self.stack = stack
         self.aplicacao = ClienteAplicacao()
         self.thread = Threads(stack)
+        self.view = ViewHelper()
 
     def visualizar(self, tela, funcao, *args, **kwargs):
         def ao_visualizar(resposta):
@@ -1446,10 +1464,10 @@ class InterfaceHandler:
                     largura=400, altura=50,paddingH=50, paddingV=50,
                     mensagem="Ocorreu um erro inesperado"
                 )
-                ViewHelper.set_tela(self.stack, -2)
+                self.view.set_tela(self.stack, -2)
         # Executa:
         self.thread.executar_tela(
-            tela=lambda: tela,
+            tela=tela,
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs),
             
@@ -1469,7 +1487,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=20, paddingV=20,
                         mensagem="Cadastro realizado com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack, -4)
+                    self.view.set_tela(self.stack, -4)
 
                 elif resposta[1] == "codigo_invalido":
                     formulario.definir_erros_especificos({"Código": "Código de confirmação inválido"})
@@ -1482,7 +1500,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Limite de tentativas excedido!"
                     )
-                    ViewHelper.set_tela(self.stack, -2)
+                    self.view.set_tela(self.stack, -2)
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.email_confirmacao(valores),
@@ -1507,7 +1525,7 @@ class InterfaceHandler:
                     formulario.exibir_erros()
 
                 elif resposta:
-                    ViewHelper.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao)
+                    self.view.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao)
 
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -1541,7 +1559,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Login realizado com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack, -2)
+                    self.view.set_tela(self.stack, -2)
 
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -1566,7 +1584,7 @@ class InterfaceHandler:
                     largura=400, altura=50, paddingH=50, paddingV=50,
                     mensagem="Pedido Criado com Sucesso!"
                 )
-                ViewHelper.set_tela(self.stack,-3)
+                self.view.set_tela(self.stack,-3)
             else:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent, 
@@ -1595,7 +1613,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=50, paddingV=50,
                         mensagem="Loja Criada com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack,-2)
+                    self.view.set_tela(self.stack,-2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -1625,7 +1643,7 @@ class InterfaceHandler:
                         largura=400, altura=50, paddingH=50, paddingV=50,
                         mensagem="Endereço Criado com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack, -2)
+                    self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -1656,7 +1674,7 @@ class InterfaceHandler:
                         largura=400, altura=50, paddingH=50, paddingV=50,
                         mensagem="Produto Criado com Sucesso!"
                     )
-                    ViewHelper.set_tela(-2)
+                    self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -1691,7 +1709,7 @@ class InterfaceHandler:
                         largura=400, altura=50, paddingH=50, paddingV=50,
                         mensagem="Anúncio Criado com Sucesso!"
                     )
-                    ViewHelper.set_tela(-3)
+                    self.view.set_tela(self.stack, -3)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -1938,7 +1956,7 @@ class InterfaceHandler:
 
     def excluir_loja(self, loja: Loja):
         dialogo = CaixaConfirmacao(
-            self, titulo="Confirmar excluir loja",
+            self.parent, titulo="Confirmar excluir loja",
             mensagem=f"Você tem certeza que deseja excluir loja {loja.nome}?",
             largura=420
         )
@@ -1953,7 +1971,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=920, paddingV=920,
                         mensagem="Loja Excluída com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack, -3)
+                    self.view.set_tela(self.stack, -3)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -1972,7 +1990,7 @@ class InterfaceHandler:
 
     def excluir_produto(self, produto: Produto):
         dialogo = CaixaConfirmacao(
-            self, titulo="Confirmar excluir produto",
+            self.parent, titulo="Confirmar excluir produto",
             mensagem=f"Você tem certeza que deseja excluir produto {produto.nome}?",
             largura=420
         )
@@ -1987,7 +2005,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=920, paddingV=100,
                         mensagem="Produto Excluído com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack, -2)
+                    self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2006,7 +2024,7 @@ class InterfaceHandler:
 
     def excluir_anuncio(self, anuncio: Anuncio):
         dialogo = CaixaConfirmacao(
-            self, titulo="Confirmar excluir anúncio",
+            self.parent, titulo="Confirmar excluir anúncio",
             mensagem=f"Você tem certeza que deseja excluir esse anúncio?",
             largura=420
         )
@@ -2021,7 +2039,7 @@ class InterfaceHandler:
                         largura=400, altura=50,paddingH=920, paddingV=100,
                         mensagem="Anúncio Excluído com Sucesso!"
                     )
-                    ViewHelper.set_tela(self.stack, -2)
+                    self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2040,7 +2058,7 @@ class InterfaceHandler:
 
     def excluir_endereco(self, endereco: Endereco):
         dialogo = CaixaConfirmacao(
-            self, titulo="Confirmar excluir endereço",
+            self.parent, titulo="Confirmar excluir endereço",
             mensagem=f"Você tem certeza que deseja excluir esse endereço?",
             largura=420
         )
@@ -2056,7 +2074,7 @@ class InterfaceHandler:
                             largura=400, altura=50,paddingH=920, paddingV=100,
                             mensagem="Endereço Excluído com Sucesso!"
                         )
-                        ViewHelper.set_tela(self.stack, -2)
+                        self.view.set_tela(self.stack, -2)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2075,7 +2093,7 @@ class InterfaceHandler:
 
     def cancelar_pedido(self, pedido: Pedido):
         dialogo = CaixaConfirmacao(
-            self, titulo="Confirmar cancelamento", 
+            self.parent, titulo="Confirmar cancelamento", 
             mensagem=f"Você tem certeza que deseja cancelar pedido {pedido.id}?",
             largura=500
         )
@@ -2091,7 +2109,7 @@ class InterfaceHandler:
                             largura=400, altura=50,paddingV=100, paddingH=950,
                             mensagem="Pedido Cancelado com Sucesso!"
                         )
-                        ViewHelper.set_tela(self.stack, -2)
+                        self.view.set_tela(self.stack, -2)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2110,7 +2128,7 @@ class InterfaceHandler:
 
     def confirmar_pedido(self, pedido: Pedido):
         dialogo = CaixaConfirmacao(
-            self, titulo="Confirmar", 
+            self.parent, titulo="Confirmar", 
             mensagem=f"Você tem certeza que deseja confirmar pedido {pedido.id}?",
             largura=500
         )
@@ -2126,7 +2144,7 @@ class InterfaceHandler:
                             largura=400, altura=50,paddingV=100, paddingH=50,
                             mensagem="Pedido Confirmado com Sucesso!"
                         )
-                        ViewHelper.set_tela(self.stack, -2)
+                        self.view.set_tela(self.stack, -2)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 

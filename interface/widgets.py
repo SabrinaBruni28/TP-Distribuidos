@@ -5,7 +5,7 @@ CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
 from utils import Utils
 
-from PyQt6.QtGui import QPixmap, QMovie
+from PyQt6.QtGui import QPixmap, QMovie, QPainter
 from PyQt6.QtCore import Qt, QTimer, QSize, QThread, QObject, pyqtSignal
 
 from PyQt6.QtWidgets import (
@@ -28,26 +28,22 @@ class WorkerGenerico(QObject):
 class Threads:
     def __init__(self, stack):
         self.stack = stack
+        self.view = ViewHelper()
 
-    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, passar_resultado=False):
+    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None):
         thread = QThread()
         worker = WorkerGenerico(funcao_segundo_plano)
         worker.moveToThread(thread)
 
         thread.started.connect(worker.run)
 
-        if passar_resultado:
-            worker.terminado.connect(lambda resultado: self._finalizar_thread(
-                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, resultado
-            ))
-        else:
-            worker.terminado.connect(lambda: self._finalizar_thread(
-                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback
-            ))
-
+        worker.terminado.connect(lambda resultado: self._finalizar_thread(
+            thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, resultado
+        ))
+        
         thread.start()
         if abrir_tela and tela_loading:
-            abrir_tela(self.stack, tela_loading)
+            self.view.abrir_tela(stack=self.stack, funcao_criadora=tela_loading, salvar_tela=False)
 
     def _finalizar_thread(self, thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, resultado=None):
         thread.quit()
@@ -56,41 +52,38 @@ class Threads:
         worker.deleteLater()
 
         if voltar_tela:
-            voltar_tela()
+            self.view.voltar_tela(self.stack)
 
         if abrir_tela and nova_tela_callback:
-            nova_tela = nova_tela_callback()
-            abrir_tela(self.stack, nova_tela, excluir_anterior=True)
+            self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
 
         if quando_terminar:
             quando_terminar(resultado)
 
     def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ..."):
-        tela_carregando = ViewHelper.tela_carregando_com_spinner(
+        tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
             mensagem, gif_path="imagens/spinner.gif"
         )
 
         self.carregar_em_thread(
             funcao_segundo_plano=requisicao,
             tela_loading=tela_carregando,
-            abrir_tela=ViewHelper.abrir_tela,
+            abrir_tela=True,
             nova_tela_callback=tela,
-            quando_terminar=acao,
-            passar_resultado=True
+            quando_terminar=acao
         )
 
     def executar_mensagem(self, requisicao, acao, mensagem="Salvando ..."):
-        tela_carregando = ViewHelper.tela_carregando_com_spinner(
+        tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
             mensagem, gif_path="imagens/spinner.gif"
         )
 
         self.carregar_em_thread(
             funcao_segundo_plano=requisicao,
             tela_loading=tela_carregando,
-            abrir_tela= ViewHelper.abrir_tela,
-            voltar_tela=ViewHelper.voltar_tela,
-            quando_terminar=acao,
-            passar_resultado=True
+            abrir_tela= True,
+            voltar_tela=True,
+            quando_terminar=acao
         )
 
 class WidgetHelper(QWidget):
@@ -110,17 +103,16 @@ class WidgetHelper(QWidget):
         return scroll, grid
 
     @staticmethod
-    def label_preco(layout, preco_label):
+    def label_preco(preco_label, aligment=Qt.AlignmentFlag.AlignCenter):
         preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {preco_label}</span>")
-        preco_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addWidget(preco_label)
+        preco_label.setAlignment(aligment)
+        return preco_label
 
     @staticmethod
-    def label_b(layout, label, spacing=5, aligment=Qt.AlignmentFlag.AlignCenter):
+    def label_b(label, aligment=Qt.AlignmentFlag.AlignCenter):
         label_b = QLabel(f"<b>{label}</b>")
         label_b.setAlignment(aligment)
-        layout.addWidget(label_b)
-        layout.addSpacing(spacing)
+        return label_b
 
     @staticmethod
     def bloco(largura, altura):
@@ -142,16 +134,34 @@ class WidgetHelper(QWidget):
         return bloco
 
     @staticmethod
-    def imagem(imagem, pasta = "uploads/", scaled = 200):
+    def imagem(imagem, pasta="uploads/", scaled=200):
         imagem_label = QLabel()
+        caminho = Utils.caminho_imagem(pasta + imagem)
 
-        caminho = Utils.caminho_imagem(pasta+imagem)
-        pixmap = QPixmap(caminho).scaled(
-            scaled, scaled, 
-            Qt.AspectRatioMode.KeepAspectRatio, 
+        # Carrega a imagem original
+        original_pixmap = QPixmap(caminho)
+
+        # Redimensiona mantendo a proporção, sem ultrapassar o tamanho definido
+        imagem_redimensionada = original_pixmap.scaled(
+            scaled, scaled,
+            Qt.AspectRatioMode.KeepAspectRatio,
             Qt.TransformationMode.SmoothTransformation
         )
-        imagem_label.setPixmap(pixmap)
+
+        # Cria um pixmap quadrado branco com o tamanho total desejado
+        base_pixmap = QPixmap(scaled, scaled)
+        base_pixmap.fill(Qt.GlobalColor.transparent)
+
+        # Desenha a imagem redimensionada no centro da base
+        painter = QPainter(base_pixmap)
+        x = (scaled - imagem_redimensionada.width()) // 2
+        y = (scaled - imagem_redimensionada.height()) // 2
+        painter.drawPixmap(x, y, imagem_redimensionada)
+        painter.end()
+
+        # Define o pixmap final no label
+        imagem_label.setPixmap(base_pixmap)
+        imagem_label.setFixedSize(scaled, scaled)
         imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         return imagem_label
 
@@ -260,18 +270,25 @@ class WidgetHelper(QWidget):
             shutil.copy(caminho_arquivo, destino)
 
 class ViewHelper(QWidget):
-    @staticmethod
-    def set_tela(stack, index):
+    funcoes_telas = []
+
+    def __init__(self):
+        pass
+
+    def set_tela(self, stack, index):
         total = stack.count()
 
         # Converte índice negativo em positivo
         if index < 0:
-            index = total + index  # Ex: -1 vira total-1
+            index = total + index
 
         if index < 0 or index >= total:
             return
 
-        stack.setCurrentIndex(index)
+        # Chama novamente a função para obter a tela atualizada
+        funcao_criadora = self.__class__.funcoes_telas[index]
+        nova_tela = funcao_criadora()
+        self.sobrescrever_tela(stack, nova_tela, index)
 
         # Remove widgets após o índice atual
         for i in range(total - 1, index, -1):
@@ -279,24 +296,34 @@ class ViewHelper(QWidget):
             stack.removeWidget(widget)
             widget.deleteLater()
 
-    @staticmethod
-    def voltar_tela(stack):
+    def voltar_tela(self, stack):
         index = stack.currentIndex()
         stack.setCurrentIndex(index - 1)
         widget = stack.widget(index)
         stack.removeWidget(widget)
         widget.deleteLater()
 
-    @staticmethod
-    def abrir_tela(stack, nova_tela, excluir_anterior = False):
+    def abrir_tela(self, stack, funcao_criadora, excluir_anterior=False, salvar_tela=True):
+        if salvar_tela:
+            self.__class__.funcoes_telas.append(funcao_criadora)
+
         if excluir_anterior:
             index = stack.currentIndex()
             widget = stack.widget(index)
             stack.removeWidget(widget)
             widget.deleteLater()
 
-        stack.addWidget(nova_tela)
-        stack.setCurrentWidget(nova_tela)
+        tela = funcao_criadora()
+        stack.addWidget(tela)
+        stack.setCurrentWidget(tela)
+
+    def sobrescrever_tela(self, stack, nova_tela: QWidget, index: int = None):
+        if index is None:
+            index = stack.currentIndex()
+
+        if 0 <= index < stack.count():
+            stack.insertWidget(index, nova_tela)
+            stack.setCurrentIndex(index)
 
     @staticmethod
     def tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):

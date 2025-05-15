@@ -1,5 +1,5 @@
 from models.usuario import Usuario, Usuario_Identificado
-from controladores.cliente import UnixSocketClient
+from socket import UnixSocketClient
 from models.endereco import Endereco
 from models.anuncio import Anuncio
 from models.produto import Produto
@@ -96,11 +96,13 @@ class ClienteAplicacao():
         func = getattr(self, nome_funcao, None)
         if func:
             try:
-                func(*args, **kwargs)
+                resposta = func(*args, **kwargs)
+                return resposta
             except TypeError as e:
                 print(f"Erro ao chamar '{nome_funcao}': {e}")
         else:
             print(f"Função '{nome_funcao}' não encontrada.")
+            return False
 
     def divide_mensagem(self, stringMensagem):
         [ws.strip() for ws in stringMensagem.split('|')]
@@ -108,9 +110,21 @@ class ClienteAplicacao():
     def is_identificado(self):
         return isinstance(self.usuario, Usuario_Identificado)
 
-    def atributos_preenchidos(obj):
-        for nome, valor in vars(obj).items():
-            if not valor:  # False para None, "", [], {}, 0, etc.
+    def atributos_preenchidos(self, obj, incluir=None):
+        atributos = vars(obj)
+        for nome, valor in atributos.items():
+            if incluir and nome not in incluir:
+                continue  # ignora atributos que não estão na lista
+            if not valor:
+                return False
+        return True
+
+    def _atributos_preenchidos(self, obj, ignorar=None):
+        atributos = vars(obj)
+        for nome, valor in atributos.items():
+            if ignorar and nome in ignorar:
+                continue  # ignora os atributos da lista
+            if not valor:
                 return False
         return True
 
@@ -178,7 +192,8 @@ class ClienteAplicacao():
         return True
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        #
+        if self._atributos_preenchidos(anuncio, ignorar=["pausado"]):
+            return True
         return True
         mensagem = f"visualizar|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
@@ -192,7 +207,8 @@ class ClienteAplicacao():
         return False
     
     def visualizar_produto(self, produto: Produto):
-        
+        if self.atributos_preenchidos(produto):
+            return True
         return True
         mensagem = f"visualizar|produto|{produto.id}"
         self.socket.send(mensagem)
@@ -206,7 +222,8 @@ class ClienteAplicacao():
         return False
     
     def visualizar_loja(self, loja: Loja):
-        
+        if self.atributos_preenchidos(loja, incluir=['id', 'nome', 'anuncios']):
+            return True
         return True
         mensagem = f"visualizar|loja|{loja.id}"
         self.socket.send(mensagem)
@@ -224,7 +241,8 @@ class ClienteAplicacao():
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
-        
+        if self._atributos_preenchidos(loja, ignorar=["imagem"]):
+            return True
         return True
         mensagem = f"visualizar|minha_loja|{loja.id}"
         self.socket.send(mensagem)
@@ -241,7 +259,6 @@ class ClienteAplicacao():
     def visualizar_minhas_lojas(self):
         if self.usuario.lojas:
             return True
-        
         return True
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -261,7 +278,6 @@ class ClienteAplicacao():
     def visualizar_meus_enderecos(self):
         if self.usuario.enderecos:
             return True
-        
         return True
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -275,7 +291,8 @@ class ClienteAplicacao():
         return True
     
     def visualizar_pedido(self, pedido: Pedido):
-        
+        if self.atributos_preenchidos(pedido):
+            return True
         return True
         mensagem = f"visualizar|pedido|{pedido.id}"
         self.socket.send(mensagem)
@@ -405,7 +422,6 @@ class ClienteAplicacao():
         return False
     
     def criar_loja(self, loja: Loja):
-        
         return True
         mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalisado()}"
         self.socket.send(mensagem)
