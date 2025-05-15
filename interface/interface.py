@@ -25,10 +25,12 @@ class MarketplaceUI(QMainWindow):
         super().__init__()
         self.setWindowTitle("Caldeirão")
         self.setGeometry(100, 100, 1000, 600)
+        self.showMaximized()
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
         self.view = ViewHelper()
+        self.grid = None
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
         self.handler.visualizar(self.tela_inicial, "anuncios")
@@ -97,7 +99,7 @@ class MarketplaceUI(QMainWindow):
             preco=anuncio.preco,
             endereco=self.handler.aplicacao.usuario.get_endereco(valores["endereço"])
         )
-        self.view.abrir_tela(self.stack, self.tela_pagamento(pedido, anuncio))
+        self.view.abrir_tela(self.stack, lambda: self.tela_pagamento(pedido, anuncio))
     
     #############  BLOCOS  #################
     def bloco_anuncio(self, anuncio: Anuncio, largura, altura, editar = False):
@@ -212,7 +214,7 @@ class MarketplaceUI(QMainWindow):
         barra_superior = self.barra_superior()
         layout_conteudo.addLayout(barra_superior)
 
-        tela_lista = self.tela_lista_anuncios(self.handler.aplicacao.anuncios)
+        tela_lista = self.tela_lista_anuncios_gerais(self.handler.aplicacao.anuncios)
         layout_conteudo.addWidget(tela_lista)
 
         # Agora adiciona o conteúdo principal no layout horizontal
@@ -462,7 +464,7 @@ class MarketplaceUI(QMainWindow):
             endereco = usuario.enderecos[i]
             botao = WidgetHelper.botao(
                 nome="Editar",
-                acao=lambda _, endereco=endereco: self.view.abrir_tela(self.stack, self.tela_editar_endereco(endereco))
+                acao=lambda _, endereco=endereco: self.view.abrir_tela(self.stack, lambda: self.tela_editar_endereco(endereco))
             )
             botao_editar.append(botao)
             layout_vertical2.addWidget(botao)
@@ -958,7 +960,7 @@ class MarketplaceUI(QMainWindow):
         botao_criar = WidgetHelper.botao(
             nome="Criar Anúncio",
             largura=200,
-            acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_anuncio(produto))
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_criar_anuncio(produto))
         )
         layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal_2)
@@ -1038,7 +1040,7 @@ class MarketplaceUI(QMainWindow):
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
             largura=100,
-            acao=lambda: self.view.abrir_tela(self.stack, self.tela_detalhes_loja(anuncio.produto.loja))
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_detalhes_loja(anuncio.produto.loja))
         )
         layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1068,7 +1070,7 @@ class MarketplaceUI(QMainWindow):
         comprar = WidgetHelper.botao(
             nome="Comprar", fonte=30,
             largura=200, altura=50,
-            acao=lambda: self.view.abrir_tela(self.stack, self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login)
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login)
         )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1122,9 +1124,7 @@ class MarketplaceUI(QMainWindow):
             )
         )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
-
         layout_vertical.addLayout(layout_horizontal)
-        layout_vertical.addSpacing(20)
 
         imagem_label = WidgetHelper.imagem(loja.imagem)
         layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1132,7 +1132,7 @@ class MarketplaceUI(QMainWindow):
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(50)
+        layout_vertical.addSpacing(20)
 
         layout_horizontal2 = QHBoxLayout()
 
@@ -1277,16 +1277,25 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     ############  TELAS LISTA  ##############
-    def tela_lista_anuncios(self, anuncios, editar = False, largura=250, altura=300):
+    def tela_lista_anuncios_gerais(self, anuncios, editar = False, largura=250, altura=280):
         scroll, self.grid = WidgetHelper.lista_grid()
-    
+
         for i, anuncio in enumerate(anuncios):
             bloco = self.bloco_anuncio(anuncio, largura, altura, editar)
             self.grid.addWidget(bloco, i // 5, i % 5)
 
         return scroll
     
-    def tela_lista_produtos(self, loja: Loja, produtos, adicionar=False, largura=250, altura=300):
+    def tela_lista_anuncios(self, anuncios, editar = False, largura=250, altura=280):
+        scroll, grid = WidgetHelper.lista_grid()
+
+        for i, anuncio in enumerate(anuncios):
+            bloco = self.bloco_anuncio(anuncio, largura, altura, editar)
+            grid.addWidget(bloco, i // 5, i % 5)
+
+        return scroll
+    
+    def tela_lista_produtos(self, loja: Loja, produtos, adicionar=False, largura=250, altura=280):
         scroll, grid = WidgetHelper.lista_grid()
 
         botao_adicionar = WidgetHelper.botao(
@@ -1295,7 +1304,7 @@ class MarketplaceUI(QMainWindow):
             backcolor='#e0f7fa', fontcolor='#0078d7',
             border='dashed #0078d7',
             hover='#b2ebf2', pressed='#80deea',
-            acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_produto(loja))
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_criar_produto(loja))
         )
 
         index = 0
