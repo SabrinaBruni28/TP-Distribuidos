@@ -6,13 +6,92 @@ sys.path.append(CAMINHO_BASE)
 from utils import Utils
 
 from PyQt6.QtGui import QPixmap, QMovie
-from PyQt6.QtCore import Qt, QTimer, QSize
+from PyQt6.QtCore import Qt, QTimer, QSize, QThread, QObject, pyqtSignal
 
 from PyQt6.QtWidgets import (
    QPushButton, QApplication, QWidget, QLabel, QDialog,
    QVBoxLayout, QHBoxLayout, QFrame, QFileDialog, QScrollArea,
    QGridLayout
 )
+
+class WorkerGenerico(QObject):
+    terminado = pyqtSignal(object)  # envia resultado
+
+    def __init__(self, func):
+        super().__init__()
+        self.func = func
+
+    def run(self):
+        resultado = self.func()
+        self.terminado.emit(resultado)
+
+class Threads:
+    def __init__(self, stack):
+        self.stack = stack
+
+    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, passar_resultado=False):
+        thread = QThread()
+        worker = WorkerGenerico(funcao_segundo_plano)
+        worker.moveToThread(thread)
+
+        thread.started.connect(worker.run)
+
+        if passar_resultado:
+            worker.terminado.connect(lambda resultado: self._finalizar_thread(
+                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, resultado
+            ))
+        else:
+            worker.terminado.connect(lambda: self._finalizar_thread(
+                thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback
+            ))
+
+        thread.start()
+        if abrir_tela and tela_loading:
+            abrir_tela(self.stack, tela_loading)
+
+    def _finalizar_thread(self, thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, resultado=None):
+        thread.quit()
+        thread.wait()
+        thread.deleteLater()
+        worker.deleteLater()
+
+        if voltar_tela:
+            voltar_tela()
+
+        if abrir_tela and nova_tela_callback:
+            nova_tela = nova_tela_callback()
+            abrir_tela(self.stack, nova_tela, excluir_anterior=True)
+
+        if quando_terminar:
+            quando_terminar(resultado)
+
+    def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ..."):
+        tela_carregando = ViewHelper.tela_carregando_com_spinner(
+            mensagem, gif_path="imagens/spinner.gif"
+        )
+
+        self.carregar_em_thread(
+            funcao_segundo_plano=requisicao,
+            tela_loading=tela_carregando,
+            abrir_tela=ViewHelper.abrir_tela,
+            nova_tela_callback=tela,
+            quando_terminar=acao,
+            passar_resultado=True
+        )
+
+    def executar_mensagem(self, requisicao, acao, mensagem="Salvando ..."):
+        tela_carregando = ViewHelper.tela_carregando_com_spinner(
+            mensagem, gif_path="imagens/spinner.gif"
+        )
+
+        self.carregar_em_thread(
+            funcao_segundo_plano=requisicao,
+            tela_loading=tela_carregando,
+            abrir_tela= ViewHelper.abrir_tela,
+            voltar_tela=ViewHelper.voltar_tela,
+            quando_terminar=acao,
+            passar_resultado=True
+        )
 
 class WidgetHelper(QWidget):
     @staticmethod
@@ -227,7 +306,7 @@ class ViewHelper(QWidget):
 
         # Spinner animado
         spinner = QLabel()
-        movie = QMovie(WidgetHelper.caminho_imagem(gif_path))
+        movie = QMovie(Utils.caminho_imagem(gif_path))
         spinner.setMovie(movie)
         movie.start()
 

@@ -161,7 +161,7 @@ class ClienteAplicacao():
 
     def visualizar_anuncios(self):
         self.anuncios = self.criar_lista_anuncios()
-        return
+        return True
         mensagem = f"visualizar|todos_anuncios"
         self.socket.send(mensagem)
 
