@@ -2,8 +2,16 @@ import socket
 import threading
 import logging
 from Operacoes import server_operation as op
-from Operacoes import Login, Cadastramento, Visualizar, Editar, Criar, Excluir, Pedido
-from Estruturas import *
+from Operacoes.login import Login
+from Operacoes.cadastramento import Cadastramento
+from Operacoes.visualizar import Visualizar
+from Operacoes.editar import Editar
+from Operacoes.criar import Criar
+from Operacoes.excluir import Excluir
+from Operacoes.pedido import Pedido
+from Operacoes.codigo import Codigo
+from Estruturas.fila_de_mensagens import FilaDeMensagens
+from Estruturas.mensagem import Mensagem
 from queue import Queue, Empty
 
 
@@ -30,7 +38,9 @@ class ClientHandler(threading.Thread):
         try:
             while self.ativo:
                 # Recebe a mensagem do cliente e separa seus campos
-                mensagemCliente = Mensagem.receptorMensagem(self.socketCliente)
+                print("[Servidor] Recebe mensagem nova do cliente...")
+                mensagemCliente = Mensagem.receptorMensagemETamanho(self.socketCliente)
+                print(f"[Servidor][ClientHandler] Mensagem recebida: {mensagemCliente.stringMensagem}")
                 
                 # Se o cliente fechou a conexão
                 if not mensagemCliente or mensagemCliente.camposMensagem[0] == "":
@@ -41,6 +51,7 @@ class ClientHandler(threading.Thread):
 
                 # Comando de encerramento explícito
                 if mensagemCliente.camposMensagem[0] == "fim":
+                    print(f"[Servidor] Encerra a conexão com o cliente {self.enderecoCliente}.")
                     self.socketCliente.sendall("closed".encode("utf-8")[:2048])
                     self.socketCliente.close()
                     self.ativo = False
@@ -57,6 +68,7 @@ class ClientHandler(threading.Thread):
 
 
     def decisor(self, mensagem: Mensagem):
+        print("[Servidor][ClientHandler] Entrou em decisor().")
         cabecalhoTipoMensagem = mensagem.camposMensagem[0]
 
         match cabecalhoTipoMensagem:
@@ -80,6 +92,9 @@ class ClientHandler(threading.Thread):
 
             case "pedido":
                 Pedido(mensagem, self.socketCliente, self.filaDeMensagem).start()
+
+            case "codigo":
+                Codigo(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case _:
                 logging.info("Comando inválido")

@@ -8,8 +8,8 @@ from Estruturas import Mensagem
 Algumas operações que o servidor usa. Estão aqui separadas para maior universalismo
 e para melhor organização.
 '''
-def codifica(mensagem):
-    return mensagem.encode("utf-8").lower()
+def codifica(mensagemEmString: str):
+    return mensagemEmString.encode("utf-8").lower()
 
 def carrega(resposta):
     return resposta.decode("utf-8")
@@ -23,9 +23,8 @@ def fazMensagemServidor(string):
 
 def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
     try:
-        socket.sendall(codifica(str(mensagem.tamanho)))
-        print("enviando: " + mensagem.stringMensagem)
-        socket.sendall(codifica(mensagem.stringMensagem))
+        socket.sendall(mensagem.bytesTamanho)
+        socket.sendall(mensagem.bytesMensagem)
         return True
     
     except Exception as e:
@@ -40,9 +39,9 @@ def recebeMensagemTamanho(socket_cliente):
     tamanho = int.from_bytes(tamanhoEmBytes, "big")
     return tamanho
 
-def decodifica(socket_cliente, tamanho_entrada=2048):
-    mensagemCliente = socket_cliente.recv(tamanho_entrada)
-    return mensagemCliente.decode("utf-8").lower()
+
+def decodifica(mensagem_em_bytes):
+    return mensagem_em_bytes.decode("utf-8").lower()
 
 def respostaAoCliente(resposta, socket_cliente):
     try:
@@ -52,11 +51,18 @@ def respostaAoCliente(resposta, socket_cliente):
     except Exception as e:
         print(f"[Servidor] Erro ao enviar resposta ao cliente: {e}")
 
-            
+
+def cadastramentoCallback(resposta_banco, socket_cliente, socket_servidor):
+        resposta = [ws.strip() for ws in resposta_banco.split('|')]
+        dados = json.loads(resposta[1])
+        dadosJson = (dados)
+
+        cadastramento.Cadastramento.signupHandler(dados, dadosJson, resposta, socket_cliente, socket_servidor)
+
 
 # [Login] O calback do login é simples. É a comunicação do Banco com o Cliente.
 
-
+'''
 def cadastramentoCallback(resposta_banco, socket_cliente, socket_servidor):
     respostaBD = [ws.strip() for ws in resposta_banco.split('|')]
     dados = respostaBD[1]
@@ -92,3 +98,5 @@ def signupHandler(dados, dados_json, resposta_banco, cliente, servidor):
         mensagemAoCliente = codifica("erro | " + str(resposta_banco[1]))
         print("[Servidor] Reportando erro de cadastro...")
         cliente.sendall(mensagemAoCliente)
+
+'''

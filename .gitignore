@@ -4,3 +4,4 @@ Servidor_Dados/
 Cliente/
 docker-compose.yml
 .idea/
+Servidor_Aplicacao/Estruturas/__pycache__/

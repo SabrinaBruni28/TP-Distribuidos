@@ -1,7 +1,9 @@
 import socket
 import threading
 from Operacoes import server_operation as op
+from Operacoes import callback as cb
 from Operacoes import operacao
+from Estruturas.mensagem import Mensagem
 
 class Visualizar(operacao.Operacao):
     def __init__(self, mensagem, socket_cliente, fila_mensagens):
@@ -21,8 +23,14 @@ class Visualizar(operacao.Operacao):
         operacao = self.mensagemCliente.camposMensagem[1]
 
         match operacao:
+            case "todos_anuncios":
+                self.todosAnuncios()
+
             case "anuncio":
                 self.anuncio()
+
+            case "produto":
+                self.produto()
 
             case "loja":
                 self.loja()
@@ -43,49 +51,63 @@ class Visualizar(operacao.Operacao):
                 print("[Servidor] Mensagem inválida.")
 
     def todosAnuncios(self):
-        mensagemServidor = op.codifica("retornar | anuncios")
+        mensagemServidor = Mensagem.produtorMensagem("retornar | anuncios")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarTodosAnunciosCallback, "visualizar", self.conexaoCliente)
 
     def anuncio(self):
         idAnuncio = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | anuncio |" + str(idAnuncio))
+        mensagemServidor = Mensagem.produtorMensagem(f"retornar | anuncio | {str(idAnuncio)}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarAnuncioCallback, "visualizar",  self.conexaoCliente)
+
+    def produto(self):
+        idProduto = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"retornar | produto | {str(idProduto)}")
+
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.visualizarProdutoCallback, "visualizar",  self.conexaoCliente)
 
     def loja(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | loja | " + str(idLoja))
+        mensagemServidor = Mensagem.produtorMensagem("retornar | loja | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarLojaCallback, "visualizar",  self.conexaoCliente)
 
     def minhaLoja(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | minha_loja | " + str(idLoja))
+        mensagemServidor = Mensagem.produtorMensagem("retornar | minha_loja | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarLojaUsuarioCallback, "visualizar",  self.conexaoCliente)
 
     def minhasListaLojas(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | minhas_lojas | " + str(idUsuario))
+        mensagemServidor = Mensagem.produtorMensagem("retornar | minhas_lojas | " + str(idUsuario))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarListaLojasUsuarioCallback, "visualizar",  self.conexaoCliente)
 
-    def pedidos(self):
+    def pedido(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | pedido | " + str(idLoja))
+        mensagemServidor = Mensagem.produtorMensagem("retornar | pedido | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarPedidoCallback, "visualizar",  self.conexaoCliente)
 
     def meusPedidos(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica("retornar | meus_pedidos | " + str(idUsuario))
+        mensagemServidor = Mensagem.produtorMensagem("retornar | meus_pedidos | " + str(idUsuario))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarListaPedidosUsuarioCallback, "visualizar",  self.conexaoCliente)
+
+    def meusEnderecos(self):
+        idUsuario = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"retornar | meus_enderecos | {str(idUsuario)}")
+
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.visualizarEnderecosUsuarioCallback, "visualizar", self.conexaoCliente)

@@ -2,10 +2,11 @@ import socket
 import threading
 import logging
 from Estruturas.mensagem import Mensagem
+from Estruturas.dados_confirmacao import DadosTemporariosConfirmacao
 from Operacoes import server_operation as op
-from Operacoes import *
-from Operacoes.login import Login
 from queue import Queue, Empty
+#from Operacoes.login import Login
+from Operacoes import callback as cb
 
 
 
@@ -19,13 +20,14 @@ class FilaDeMensagens(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
         self._fila = Queue()
+        self.dadosTemp = DadosTemporariosConfirmacao()
         self.socketBD = None
 
     # A fila guarda a mensagem (como é o seu propósito),
     # Um callback (uma função que vai direcionar a mensagem do banco de dados para o cliente)
     # O socket do cliente -conexao-, que vai ser usado no callback para o retorno do banco ao cliente
-    def enfileira(self, mensagem: Mensagem, callback, conexao, tipo=None, servidor=None):
-        self._fila.put((mensagem, callback, conexao, tipo, servidor))
+    def enfileira(self, mensagem: Mensagem, callback, conexao, tipo=None, servidor=None, fila=None, imagem=None):
+        self._fila.put((mensagem, callback, conexao, tipo, servidor, fila, imagem))
 
 
     def desenfileira(self):
@@ -33,14 +35,6 @@ class FilaDeMensagens(threading.Thread):
             return self._fila.get()
         except Empty:
             return None
-        
-        
-    def vazia(self):
-        return self._fila.empty()
-    
-
-    def tamanho(self):
-        return self._fila.qsize()
     
     # Função que faz a conexão com o servidor de banco de dados, cria seu socket
     def conectaBanco(self):
@@ -55,7 +49,7 @@ class FilaDeMensagens(threading.Thread):
     # Após uma mensagem ser desenfileirada, essa função é responsável por fazer
     # a parte da comunicação servidor de aplicação - servidor de banco de dados
     def enviaAoBanco(self, mensagem: Mensagem):
-        print("[Fila de Mensagens] Passou daqui, tá?")
+        print("[Fila de Mensagens] Entrou em enviaAoBanco().")
         try:
             # Se não há conexão com o banco de dados, cria seu socket e estabelece comunicação
             if self.socketBD is None:
@@ -63,18 +57,32 @@ class FilaDeMensagens(threading.Thread):
 
             # Envia a mensagem e retorna a resposta do banco
             if self.socketBD:
-                self.socketBD.sendall(mensagem.tamanho.to_bytes(4, "big"))
+                # Envia o tamanho da mensagem para o Banco
+                print(f"[Servidor] Enviando o tamanho da mensagem para o BD: {mensagem.tamanho}")
+                self.socketBD.sendall(mensagem.bytesTamanho)
+
+                # Envia a mensagem para o Banco
+                print(f"[Servidor] Enviando mensagem para o BD: {mensagem.stringMensagem}")
                 self.socketBD.sendall(mensagem.bytesMensagem)
-                resposta = self.socketBD.recv(2048)
-                return op.carrega(resposta)
+
+                # Recebe o tamanho da resposta do Banco
+                tamRespostaBytes = self.socketBD.recv(4)
+                tamResposta = int.from_bytes(tamRespostaBytes, "big")
+                print(f"[Servidor] Tamanho da mensagem a receber do BD: {tamResposta}")
+
+                # Recebe a mensagem de resposta do Banco
+                resposta = self.socketBD.recv(tamResposta)
+                print(f"[Servidor] Resposta recebida do BD: {resposta}")
+                
+                return op.decodifica(resposta)
             
             else:
-                return "[Erro] Conexão com Banco de Dados não estabelecida"
+                return "[Fila de Mensagens][Erro] Conexão com Banco de Dados não estabelecida"
 
         except Exception as e:
             logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
-            return f"[Erro] Falha ao enviar ao banco: {e}"
+            return f"[Fila de Mensagens][Erro] Falha ao enviar ao banco: {e}"
         
 
     def run(self):
@@ -82,27 +90,62 @@ class FilaDeMensagens(threading.Thread):
         # Se a fila estiver vazia, nada acontece.
         while True:
             try:
-                mensagem, callback, connect, tipo, serverSocket = self.desenfileira()
+                mensagem, callback, connect, tipo, serverSocket, fila = self.desenfileira()
             except ValueError:
                 logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
                 continue
 
             if mensagem and callback and connect:
-                self.decisor(mensagem, callback, connect, tipo, serverSocket)
+                self.decisor(mensagem, callback, connect, tipo, serverSocket, fila)
 
             else:
                 logging.info("[Fila de mensagens] Erro ao obter mensagem, callback ou connect.")
 
 
-    def decisor(self, mensagem, callback, connect, tipo, serverSocket):
+    def decisor(self, mensagem, callback, connect, tipo, serverSocket, fila):
+        from Operacoes.cadastramento import Cadastramento
         logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
         resposta = self.enviaAoBanco(mensagem)
 
         if callback is op.respostaAoCliente:
             callback(resposta, connect)
 
-        elif callback is Login.loginCallback:
+        elif tipo == "visualizar":
+            self.decisorVisualizar(resposta, connect, self.socketBD)
+
+        elif callback is cb.loginCallback:
+            print(f"[Fila de Mensagens] Login callback...")
             callback(resposta, connect)
 
-        elif callback is op.cadastramentoCallback:
-            callback(resposta, connect, serverSocket)
+        elif tipo == "editar":
+            self.decisorEditar()
+
+        elif callback is cb.cadastramentoCallback:
+            print(f"[Fila de Mensagens] Cadastramento callback...")
+            callback(resposta, connect, serverSocket, fila)
+
+    def decisorVisualizar(resposta, connect, callback, socket_banco):
+        match resposta[0]:
+            case "anuncios":
+                callback(resposta, connect, socket_banco)
+
+            case "anuncio":
+                callback(resposta, connect, socket_banco)
+
+            case "produto":
+                callback(resposta, connect, socket_banco)
+
+            case "pedido":
+                callback(resposta, connect, socket_banco)
+
+            case "loja":
+                callback(resposta, connect, socket_banco)
+
+            case "minha_loja":
+                callback(resposta, connect, socket_banco)
+
+            case "meus_enderecos":
+                callback(resposta, connect, socket_banco)
+
+            case "meus_pedidos":
+                callback(resposta, connect, socket_banco)

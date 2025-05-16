@@ -2,6 +2,7 @@ import socket
 import threading
 from Operacoes import server_operation as op
 from Operacoes import operacao
+from Estruturas.mensagem import Mensagem
 
 class Editar(operacao.Operacao):
     def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens):
@@ -39,7 +40,7 @@ class Editar(operacao.Operacao):
     def anuncio(self):
         idAnuncio = self.mensagemCliente.camposMensagem[2]
         dados = self.mensagemCliente.camposMensagem[3]
-        mensagemServidor = op.codifica(f"editar | anuncio | {idAnuncio} | {dados}")
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {idAnuncio} | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
