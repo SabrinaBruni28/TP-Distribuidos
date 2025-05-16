@@ -1,5 +1,4 @@
 import sys, os
-
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from models.loja import Loja
@@ -31,11 +30,37 @@ class MarketplaceUI(QMainWindow):
         self.setCentralWidget(self.stack)
         self.view = ViewHelper()
         self.grid = None
+        self.imagem = None
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
         self.handler.visualizar(self.tela_inicial, "anuncios")
 
     ##############  AUXILIARES  ################
+    def substituir_imagem(self):
+        nome_imagem = WidgetHelper.abrir_dialogo_arquivo(self)
+        if nome_imagem:
+            self.imagem = nome_imagem
+            return True
+
+        self.imagem = None
+        return False
+
+    def excluir_imagem(self, obj):
+        dialogo = CaixaConfirmacao(
+            self, titulo="Confirmar",
+            mensagem=f"Você tem certeza que deseja excluir a imagem {obj}?",
+            largura=500
+        )
+        escolha = dialogo.exec()
+
+        if escolha == QDialog.DialogCode.Accepted:
+            self.imagem = ""
+            return True
+
+        self.imagem = None
+        dialogo.close()
+        return False
+
     def closeEvent(self, event):
         dialogo = CaixaConfirmacao(self, titulo="Confirmar saída", mensagem="Você tem certeza que deseja sair?")
         resposta = dialogo.exec()
@@ -625,12 +650,54 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addSpacing(40)
 
         formulario = Formulario(
-            campos=["Nome", "Imagem"],
+            campos=["Nome"],
             largura=600,
             altura=50
         )
-        botao_confirmar.clicked.connect(lambda: self.handler.criar_loja(formulario))
         layout_conteudo.addWidget(formulario)
+
+        layout_horizontal_2 = QHBoxLayout()
+        layout_horizontal_2.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        imagem = ""
+        label_imagem = QLabel()
+        layout_horizontal_2.addWidget(label_imagem)
+
+        botao_substituir = WidgetHelper.botao(
+            nome="Adicionar imagem", 
+            fonte=10, largura=100, altura=30,
+            acao= lambda: (self.substituir_imagem(), atualiza_imagem())
+        )
+        layout_horizontal_2.addWidget(botao_substituir)
+
+        botao_excluir_img = WidgetHelper.botao(
+            nome="Excluir imagem", fonte=10,
+            largura=100, altura=30,
+            acao= lambda: (self.excluir_imagem(imagem), atualiza_imagem())
+        )
+        layout_horizontal_2.addWidget(botao_excluir_img)
+        botao_excluir_img.hide()
+
+        layout_conteudo.addLayout(layout_horizontal_2)
+
+        def atualiza_imagem():
+            from PyQt6.QtGui import QPixmap
+            nonlocal imagem, label_imagem, botao_excluir_img, botao_substituir
+            if self.imagem:
+                imagem = self.imagem
+                label_imagem.show()
+                botao_substituir.setText("Substituir imagem")
+                botao_excluir_img.show()
+                label_imagem.setPixmap(QPixmap(f"uploads/{imagem}").scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+
+            elif self.imagem == "":
+                imagem = self.imagem
+                label_imagem.clear()
+                label_imagem.hide()
+                botao_substituir.setText("Adicionar imagem")
+                botao_excluir_img.hide()
+
+        botao_confirmar.clicked.connect(lambda: self.handler.criar_loja(formulario, imagem))
         
         # Scroll area com o título e formulário
         scroll_area = QScrollArea()
@@ -862,7 +929,6 @@ class MarketplaceUI(QMainWindow):
             acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
-        layout_vertical.addLayout(layout_horizontal)
 
         botao_editar = WidgetHelper.botao(nome="Editar")
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
@@ -879,17 +945,53 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
-        formulario = Formulario(
-            campos=["Nome", "Imagem"],
-            largura=600,
-            altura=50
-        )
-
-        formulario.preencher_campos({"Nome": loja.nome, "Imagem": loja.imagem})
-
-        botao_editar.clicked.connect(lambda: self.handler.editar_loja(formulario, loja))
+        formulario = Formulario(campos=["Nome"], largura=600, altura=50)
+        formulario.preencher_campos({"Nome": loja.nome})
         layout_conteudo.addWidget(formulario)
+
+        layout_horizontal_2 = QHBoxLayout()
+        layout_horizontal_2.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+
+        label_imagem = WidgetHelper.imagem(loja.imagem)
+        layout_horizontal_2.addWidget(label_imagem)
+
+        botao_substituir = WidgetHelper.botao(
+            nome=("Substituir imagem" if loja.imagem else "Adicionar imagem"), 
+            fonte=10, largura=100, altura=30,
+            acao= lambda: (self.substituir_imagem(), atualiza_imagem())
+        )
+        layout_horizontal_2.addWidget(botao_substituir)
+
+        botao_excluir_img = WidgetHelper.botao(
+            nome="Excluir imagem", fonte=10,
+            largura=100, altura=30,
+            acao= lambda: (self.excluir_imagem(loja.imagem), atualiza_imagem())
+        )
+        layout_horizontal_2.addWidget(botao_excluir_img)
+        botao_excluir_img.hide() if not loja.imagem else None
+
+        layout_conteudo.addLayout(layout_horizontal_2)
+
+        imagem = loja.imagem
+
+        def atualiza_imagem():
+            from PyQt6.QtGui import QPixmap
+            nonlocal loja, imagem, label_imagem, botao_excluir_img, botao_substituir
+            if self.imagem:
+                imagem = self.imagem
+                label_imagem.show()
+                botao_substituir.setText("Substituir imagem")
+                botao_excluir_img.show()
+                label_imagem.setPixmap(QPixmap(f"uploads/{imagem}").scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+
+            elif self.imagem == "":
+                imagem = self.imagem
+                label_imagem.clear()
+                label_imagem.hide()
+                botao_substituir.setText("Adicionar imagem")
+                botao_excluir_img.hide()
         
+        botao_editar.clicked.connect(lambda: self.handler.editar_loja(formulario, loja, imagem))
         # Scroll area com o título e formulário
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
@@ -1434,21 +1536,12 @@ class MarketplaceUI(QMainWindow):
             acao= lambda: (self.handler.visualizar(self.tela_inicial, "anuncios"), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
         )
 
-        botao_selecionar_arquivo = WidgetHelper.botao(
-            nome="Selecionar arquivo", fonte=10,
-            largura=100, altura=30,
-            backcolor="", hover="#3a3a3a", border="",
-            pressed='#000000',
-            acao= lambda: WidgetHelper.abrir_dialogo_arquivo(self)
-        )
-
         if self.handler.aplicacao.is_identificado():
             barra_superior.addWidget(botao_menu)
         else:
             barra_superior.addWidget(botao_login)
 
         barra_superior.addWidget(QLabel("<h2>Produtos disponíveis:</h2>"), alignment=Qt.AlignmentFlag.AlignLeft)
-        barra_superior.addWidget(botao_selecionar_arquivo, alignment=Qt.AlignmentFlag.AlignLeft)
         barra_superior.addWidget(self.botao_reset)
         barra_superior.addWidget(self.input_busca)
         barra_superior.addWidget(btn_pesquisa)
@@ -1608,12 +1701,15 @@ class InterfaceHandler:
             acao=ao_criar_pedido
         )
     
-    def criar_loja(self, formulario: Formulario):
+    def criar_loja(self, formulario: Formulario, imagem):
         erro = formulario.validar_tipos({"Nome": str})
         if erro:
             formulario.exibir_erros()
         else:
             loja = Loja.from_dict(formulario.obter_valores())  
+            if imagem:
+                loja.imagem = imagem
+
             def ao_criar_loja(resposta):
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -1777,17 +1873,16 @@ class InterfaceHandler:
                     mensagem="Nenhuma alteração realizada"
                 )
 
-    def editar_loja(self, formulario: Formulario, loja: Loja):
+    def editar_loja(self, formulario: Formulario, loja: Loja, imagem):
         erro =  formulario.validar_tipos({ "Nome": str})
 
         if erro:
             formulario.exibir_erros()
         else:
-            valores_alterados = formulario.obter_valores_alterados(
-                {
-                    "Nome": loja.nome, "Imagem": loja.imagem
-                }
-            )
+            valores_alterados = formulario.obter_valores_alterados({"Nome": loja.nome})
+            if imagem != loja.imagem:
+                valores_alterados['imagem'] = imagem
+
             if valores_alterados:
                 def ao_editar_loja(resposta):
                     if resposta:
@@ -1806,7 +1901,6 @@ class InterfaceHandler:
                         )
                 # Executa:
                 self.thread.executar_mensagem(
-                    
                     requisicao=lambda: self.aplicacao.editar_loja(loja, valores_alterados),
                     acao=ao_editar_loja
                 )

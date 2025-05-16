@@ -268,6 +268,7 @@ class WidgetHelper(QWidget):
 
             # Copia o arquivo para a pasta destino
             shutil.copy(caminho_arquivo, destino)
+            return nome_arquivo
 
 class ViewHelper(QWidget):
     funcoes_telas = []
@@ -292,9 +293,7 @@ class ViewHelper(QWidget):
 
         # Remove widgets após o índice atual
         for i in range(total - 1, index, -1):
-            widget = stack.widget(i)
-            stack.removeWidget(widget)
-            widget.deleteLater()
+            self.excluir_tela(stack, i)
 
     def voltar_tela(self, stack):
         index = stack.currentIndex()
@@ -302,6 +301,7 @@ class ViewHelper(QWidget):
         widget = stack.widget(index)
         stack.removeWidget(widget)
         widget.deleteLater()
+        self.atualiza_tela(stack)
 
     def abrir_tela(self, stack, funcao_criadora, excluir_anterior=False, salvar_tela=True):
         if salvar_tela:
@@ -309,13 +309,16 @@ class ViewHelper(QWidget):
 
         if excluir_anterior:
             index = stack.currentIndex()
-            widget = stack.widget(index)
-            stack.removeWidget(widget)
-            widget.deleteLater()
+            self.excluir_tela(stack, index)
 
         tela = funcao_criadora()
         stack.addWidget(tela)
         stack.setCurrentWidget(tela)
+
+    def excluir_tela(self, stack, index):
+        widget = stack.widget(index)
+        stack.removeWidget(widget)
+        widget.deleteLater()
 
     def sobrescrever_tela(self, stack, nova_tela: QWidget, index: int = None):
         if index is None:
@@ -324,6 +327,14 @@ class ViewHelper(QWidget):
         if 0 <= index < stack.count():
             stack.insertWidget(index, nova_tela)
             stack.setCurrentIndex(index)
+
+    def atualiza_tela(self, stack):
+        index = stack.currentIndex()
+        funcao_criadora = self.__class__.funcoes_telas[index]
+        tela = funcao_criadora()
+        stack.insertWidget(index, tela)
+        stack.setCurrentIndex(index)
+        self.excluir_tela(stack, index+1)
 
     @staticmethod
     def tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):
