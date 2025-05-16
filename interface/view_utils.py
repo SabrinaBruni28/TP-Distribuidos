@@ -52,7 +52,7 @@ class Threads:
         worker.deleteLater()
 
         if voltar_tela:
-            self.view.voltar_tela(self.stack)
+            self.view.voltar_tela(self.stack, excluir_funcao=False)
 
         if abrir_tela and nova_tela_callback:
             self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
@@ -288,19 +288,20 @@ class ViewHelper(QWidget):
 
         # Chama novamente a função para obter a tela atualizada
         funcao_criadora = self.__class__.funcoes_telas[index]
-        nova_tela = funcao_criadora()
-        self.sobrescrever_tela(stack, nova_tela, index)
+        self.sobrescrever_tela(stack, funcao_criadora, index)
 
-        # Remove widgets após o índice atual
-        for i in range(total - 1, index, -1):
-            self.excluir_tela(stack, i)
+        # Remove widgets e funções após o índice atual
+        for i in range(len(self.__class__.funcoes_telas) - 1, index, -1):
+            if i < stack.count():
+                self.excluir_tela(stack, i, excluir_funcao=True)
+            else:
+                # Só remove da lista de funções, caso não exista mais o widget
+                del self.__class__.funcoes_telas[i]
 
-    def voltar_tela(self, stack):
+    def voltar_tela(self, stack, excluir_funcao = True):
         index = stack.currentIndex()
         stack.setCurrentIndex(index - 1)
-        widget = stack.widget(index)
-        stack.removeWidget(widget)
-        widget.deleteLater()
+        self.excluir_tela(stack, index, excluir_funcao)
         self.atualiza_tela(stack)
 
     def abrir_tela(self, stack, funcao_criadora, excluir_anterior=False, salvar_tela=True):
@@ -309,32 +310,37 @@ class ViewHelper(QWidget):
 
         if excluir_anterior:
             index = stack.currentIndex()
-            self.excluir_tela(stack, index)
+            self.excluir_tela(stack, index, excluir_funcao=False)
 
         tela = funcao_criadora()
         stack.addWidget(tela)
         stack.setCurrentWidget(tela)
 
-    def excluir_tela(self, stack, index):
+    def excluir_tela(self, stack, index, excluir_funcao = True):
         widget = stack.widget(index)
         stack.removeWidget(widget)
         widget.deleteLater()
+        if excluir_funcao:
+            del self.__class__.funcoes_telas[index]
 
-    def sobrescrever_tela(self, stack, nova_tela: QWidget, index: int = None):
+    def sobrescrever_tela(self, stack, funcao_criadora: QWidget, index: int = None):
         if index is None:
             index = stack.currentIndex()
 
         if 0 <= index < stack.count():
-            stack.insertWidget(index, nova_tela)
+            self.excluir_tela(stack, index, excluir_funcao=False)
+            tela = funcao_criadora()
+            stack.insertWidget(index, tela)
             stack.setCurrentIndex(index)
+            if index < len(self.__class__.funcoes_telas):
+                self.__class__.funcoes_telas[index] = funcao_criadora
+            else:
+                self.__class__.funcoes_telas.insert(index, funcao_criadora)
 
     def atualiza_tela(self, stack):
         index = stack.currentIndex()
         funcao_criadora = self.__class__.funcoes_telas[index]
-        tela = funcao_criadora()
-        stack.insertWidget(index, tela)
-        stack.setCurrentIndex(index)
-        self.excluir_tela(stack, index+1)
+        self.sobrescrever_tela(stack, funcao_criadora, index)
 
     @staticmethod
     def tela_carregando_com_spinner(mensagem="Carregando...", gif_path="spinner.gif"):
