@@ -20,7 +20,7 @@ class UnixSocketClient:
             raise RuntimeError("Socket not connected")
         data_byte = data.encode()
         tamanho = len(data_byte)
-        self.receive_size(tamanho)
+        self.send_size(tamanho)
         self.socket.sendall(data_byte)
 
     def receive(self):

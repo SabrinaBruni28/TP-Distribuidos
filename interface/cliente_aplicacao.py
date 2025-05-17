@@ -21,10 +21,10 @@ class ClienteAplicacao():
         p6 = Produto(id=6, nome="Webcam Full HD", descricao="ifediejide", imagens=["notebook.png"])
 
         # Anúncios
-        a1 = Anuncio(id=1, produto=p1)
+        a1 = Anuncio(id=1, produto=p1, quantidade_disponivel=10, pausado=True)
         a2 = Anuncio(id=2, produto=p2)
-        a3 = Anuncio(id=3, produto=p3)
-        a4 = Anuncio(id=4, produto=p6)
+        a3 = Anuncio(id=3, produto=p3, quantidade_disponivel=10, pausado=False)
+        a4 = Anuncio(id=4, produto=p6, quantidade_disponivel=10, pausado=False)
 
         # Pedidos
         pedido1 = Pedido(id=1, produto=p1, preco=3620.0)
@@ -109,6 +109,20 @@ class ClienteAplicacao():
     
     def is_identificado(self):
         return isinstance(self.usuario, Usuario_Identificado)
+
+    def atualiza_anuncios(self):
+        anuncios =[]
+        for anuncio in self.anuncios:
+            if anuncio.quantidade_disponivel:
+                anuncios.append(anuncio)
+        self.anuncios = anuncios 
+
+    def atualiza_anuncios_loja(self, loja: Loja):
+        anuncios =[]
+        for anuncio in loja.anuncios:
+            if anuncio.quantidade_disponivel:
+                anuncios.append(anuncio)
+        loja.anuncios = anuncios 
 
     def atributos_preenchidos(self, obj, incluir=None):
         atributos = vars(obj)
@@ -234,8 +248,8 @@ class ClienteAplicacao():
             if loja.imagem:
                 self.socket.receive_image(path=f"uploads/{loja.imagem}")
 
-            for produto in loja.produtos:
-                for imagem in produto.imagens:
+            for anuncio in loja.anuncios:
+                for imagem in anuncio.produto.imagens:
                     self.socket.receive_image(path=f"uploads/{imagem}")
             return True
         return False
@@ -402,7 +416,7 @@ class ClienteAplicacao():
         return False
     
     def criar_produto(self, produto: Produto):
-        
+        produto.loja.criar_produto(produto)
         return True
         mensagem = f"criar|produto|{produto.to_dict_personalisado()}"
         self.socket.send(mensagem)
@@ -462,7 +476,7 @@ class ClienteAplicacao():
         return False
 
     def criar_imagem(self, produto: Produto, imagem):
-        
+        produto.criar_imagem(imagem)
         return True
         mensagem = f"criar|imagem|{produto.id}"
         self.socket.send(mensagem)
@@ -524,7 +538,7 @@ class ClienteAplicacao():
         return False
     
     def excluir_imagem(self, produto: Produto, imagem):
-        
+        produto.apagar_imagem(imagem)
         return True
         mensagem = f"excluir|imagem|{imagem}"
         self.socket.send(mensagem)
@@ -562,33 +576,38 @@ class ClienteAplicacao():
 
 
     def criar_lista_anuncios(self):
-        return [
+        produto1=Produto(
+            nome="Notebook", 
+            descricao="Notebook potente com 16GB RAM",
+            imagens=["notebook.png", "smartphone.png", "notebook.png"],
+            loja=Loja(
+                nome="Ferramentas", 
+                imagem="tablet.png"
+            )
+        )
+        produto2=Produto(
+            nome="Tablet", 
+            descricao="Notebook potente com 16GB RAM",
+            imagens=["tablet.png"],
+            loja=Loja(
+                nome="Ferramentas", 
+                imagem="tablet.png"
+            )
+        )
+        anuncios = [
             Anuncio(
-                produto=Produto(
-                    nome="Notebook", 
-                    descricao="Notebook potente com 16GB RAM",
-                    imagens=["notebook.png", "smartphone.png", "notebook.png"],
-                    loja=Loja(
-                        nome="Ferramentas", 
-                        imagem="tablet.png"
-                    )
-                ),
+                produto=produto1,
                 preco=10.90,
                 quantidade_disponivel=10,
                 chave_pix="13668995630"
             ),
             Anuncio(
-                produto=Produto(
-                    nome="Tablet", 
-                    descricao="Notebook potente com 16GB RAM",
-                    imagens=["tablet.png"],
-                    loja=Loja(
-                        nome="Ferramentas", 
-                        imagem="tablet.png"
-                    )
-                ),
+                produto=produto2,
                 preco=100.90,
                 quantidade_disponivel=20,
                 chave_pix="13668995630"
             ),
-        ] * 20
+        ]
+        produto1.loja.anuncios = anuncios
+        produto2.loja.anuncios = anuncios
+        return anuncios * 20

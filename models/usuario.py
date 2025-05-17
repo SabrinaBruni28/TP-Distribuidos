@@ -71,8 +71,9 @@ class Usuario_Identificado(Usuario):
     
     def get_endereco(self, endereco: str) -> Endereco:
         for end in self.enderecos:
-            if end.__str__() == endereco:
-                end
+            string = end.__str__() 
+            if string == endereco:
+                return end
         return None
     
     def to_dict(self):

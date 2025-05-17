@@ -46,4 +46,4 @@ class Pedido:
         return cls(id, produto, quantidade, preco, endereco, data)
     
     def __str__(self):
-        return f"Pedido(id={self.id}, data={self.data}, produto={self.produto.nome}, quantidade={self.quantidade}, preco={self.preco}, endereco={self.endereco.rua})"
+        return f"Pedido(id={self.id}, data={self.data}, produto={self.produto.nome}, quantidade={self.quantidade}, preco={self.preco}, endereco={self.endereco})"

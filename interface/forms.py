@@ -63,6 +63,20 @@ class FormularioOpcoes(QWidget):
         if acao:
             botao.clicked.connect(acao)
         botao.show()
+    
+    def preencher_campos(self, valores: dict):
+        for chave, valor in valores.items():
+            if chave in self.inputs:
+                combo = self.inputs[chave]
+
+                index = combo.findText(valor, Qt.MatchFlag.MatchFixedString)
+
+                if index >= 0:
+                    combo.setCurrentIndex(index)
+                else:
+                    # Se não estiver na lista, adiciona como nova opção
+                    combo.addItem(valor)
+                    combo.setCurrentText(valor)
 
     def adicionar_opcao(self, campo, opcao="Nova opção"):
         combo = self.inputs[campo]
@@ -76,6 +90,35 @@ class FormularioOpcoes(QWidget):
         for nome, combo in self.inputs.items():
             valores[str(nome).lower()] = combo.currentText()
         return valores
+    
+    def obter_valores_alterados(self, valores_iniciais: dict) -> dict:
+        """
+        Compara os valores atuais do formulário com os valores iniciais fornecidos e retorna
+        um dicionário contendo apenas os campos que foram alterados.
+        
+        :param valores_iniciais: Dicionário com os valores iniciais, por exemplo:
+                                  {"Nome": "Ana", "Email": "ana@email.com"}
+        :return: Dicionário contendo os campos alterados, por exemplo:
+                 {"Nome": "Maria"}
+        """
+        valores_alterados = {}
+        for nome, entrada in self.inputs.items():
+            valor_atual = entrada.currentText()
+            valor_inicial = str(valores_iniciais.get(nome, "")).strip()
+
+            if valor_atual.lower() in ["sim", "não", "nao"]:
+                if valor_atual == 'sim':
+                    valor_comp = True
+                else:
+                    valor_comp = False
+            else:
+                valor_comp = valor_atual
+
+            # Se o valor atual for diferente do inicial, armazene no dicionário
+            if valor_comp != valor_inicial:
+                valores_alterados[str(nome).lower()] = valor_comp
+        
+        return valores_alterados
 
 class Formulario(QWidget):
     def __init__(self, campos=[], largura=300, altura=30):
@@ -120,11 +163,7 @@ class Formulario(QWidget):
     def preencher_campos(self, valores: dict):
         for chave, valor in valores.items():
             if chave in self.inputs:
-                if isinstance(valor, bool):
-                    texto = "sim" if valor else "não"
-                else:
-                    texto = str(valor)
-                self.inputs[chave].setText(texto)
+                self.inputs[chave].setText(str(valor))
                 self.inputs[chave].setCursorPosition(0)  # <-- move o cursor para o início
 
     def validar_tipos(self, campos_tipos: dict):
@@ -170,8 +209,8 @@ class Formulario(QWidget):
                 self.erros[nome].setText(str(""))
 
             elif tipo_esperado == bool:
-                if texto.lower() not in ["sim", "não", "nao"]:
-                    erro = "Digite 'Sim' ou 'Não'."
+                if texto.lower() not in ["true", "false"]:
+                    erro = "Digite 'true' ou 'false'."
                     self.erros[nome].setText(str(erro))
                     has_error = True
                     continue
@@ -243,16 +282,8 @@ class Formulario(QWidget):
             valor_atual = entrada.text().strip()
             valor_inicial = str(valores_iniciais.get(nome, "")).strip()
 
-            if valor_atual.lower() in ["sim", "não", "nao"]:
-                if valor_atual == 'sim':
-                    valor_comp = True
-                else:
-                    valor_comp = False
-            else:
-                valor_comp = valor_atual
-
             # Se o valor atual for diferente do inicial, armazene no dicionário
-            if valor_comp != valor_inicial:
+            if valor_atual != valor_inicial:
                 valores_alterados[str(nome).lower()] = valor_atual
         
         return valores_alterados
