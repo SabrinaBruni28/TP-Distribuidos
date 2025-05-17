@@ -10,6 +10,7 @@ from Operacoes.criar import Criar
 from Operacoes.excluir import Excluir
 from Operacoes.pedido import Pedido
 from Operacoes.codigo import Codigo
+from Operacoes.imagem import Imagem
 from Estruturas.fila_de_mensagens import FilaDeMensagens
 from Estruturas.mensagem import Mensagem
 from queue import Queue, Empty
@@ -82,10 +83,16 @@ class ClientHandler(threading.Thread):
                 Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case "editar":
-                Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).start()
+                imagem = []
+                if mensagem.camposMensagem[1] == "loja":
+                    imagem = Imagem(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem, imagem).start()
 
             case "criar":
-                Criar(mensagem, self.socketCliente, self.filaDeMensagem).start()
+                imagem = []
+                if mensagem.camposMensagem[1] != "anuncio" or mensagem.camposMensagem[1] != "pedido" or mensagem.camposMensagem[1] != "endereco":
+                    imagem = Imagem(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                Criar(mensagem, self.socketCliente, self.filaDeMensagem, imagem).start()
             
             case "excluir":
                 Excluir(mensagem, self.socketCliente, self.filaDeMensagem).start()

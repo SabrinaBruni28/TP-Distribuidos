@@ -6,7 +6,7 @@ class Mensagem():
     def __init__(self, mensagem, tamanho: int, tipoDivisao=None):
         self.stringMensagem = mensagem
         self.tamanho = tamanho
-        self.bytesTamanho = tamanho.to_bytes(4, "big")
+        self.bytesTamanho = tamanho.to_bytes(8, "big")
         self.bytesMensagem = op.codifica(str(mensagem))
         self.camposMensagem = self._divideString if tipoDivisao == None else self._divideStringImg
         self.quantidadeCampos = len(self.camposMensagem)

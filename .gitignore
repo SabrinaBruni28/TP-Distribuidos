@@ -5,3 +5,4 @@ Cliente/
 docker-compose.yml
 .idea/
 Servidor_Aplicacao/Estruturas/__pycache__/
+uploads/

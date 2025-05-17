@@ -8,6 +8,15 @@ from Estruturas import Mensagem
 Algumas operações que o servidor usa. Estão aqui separadas para maior universalismo
 e para melhor organização.
 '''
+def recebeQuantidade(stringDados: str, campo: str):
+    dadosJson = json.loads(stringDados)
+
+    quantidade = len(dadosJson.get(campo))
+    return quantidade
+
+
+
+
 def codifica(mensagemEmString: str):
     return mensagemEmString.encode("utf-8").lower()
 

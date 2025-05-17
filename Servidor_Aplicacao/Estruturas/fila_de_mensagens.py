@@ -66,7 +66,7 @@ class FilaDeMensagens(threading.Thread):
                 self.socketBD.sendall(mensagem.bytesMensagem)
 
                 # Recebe o tamanho da resposta do Banco
-                tamRespostaBytes = self.socketBD.recv(4)
+                tamRespostaBytes = self.socketBD.recv(8)
                 tamResposta = int.from_bytes(tamRespostaBytes, "big")
                 print(f"[Servidor] Tamanho da mensagem a receber do BD: {tamResposta}")
 
@@ -90,35 +90,44 @@ class FilaDeMensagens(threading.Thread):
         # Se a fila estiver vazia, nada acontece.
         while True:
             try:
-                mensagem, callback, connect, tipo, serverSocket, fila = self.desenfileira()
+                mensagem, callback, connect, tipo, serverSocket, fila, imagens = self.desenfileira()
             except ValueError:
                 logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
                 continue
 
             if mensagem and callback and connect:
-                self.decisor(mensagem, callback, connect, tipo, serverSocket, fila)
+                self.decisor(mensagem, callback, connect, tipo, serverSocket, fila, imagens)
 
             else:
                 logging.info("[Fila de mensagens] Erro ao obter mensagem, callback ou connect.")
 
 
-    def decisor(self, mensagem, callback, connect, tipo, serverSocket, fila):
+    def decisor(self, mensagem, callback, connect, tipo, serverSocket, fila, imagens):
         from Operacoes.cadastramento import Cadastramento
         logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
-        resposta = self.enviaAoBanco(mensagem)
+        if fila == None:
+            resposta = self.enviaAoBanco(mensagem)
+
+        else:
+            resposta = self.mensagemProBancoCriar(mensagem, imagens)
 
         if callback is op.respostaAoCliente:
             callback(resposta, connect)
 
         elif tipo == "visualizar":
+            #resposta = self.enviaAoBanco(mensagem)
             self.decisorVisualizar(resposta, connect, self.socketBD)
 
         elif callback is cb.loginCallback:
             print(f"[Fila de Mensagens] Login callback...")
+            #resposta = self.enviaAoBanco(mensagem)
             callback(resposta, connect)
 
         elif tipo == "editar":
-            self.decisorEditar()
+            self.decisorEditar(resposta, connect, self.socketBD, imagens)
+
+        elif tipo == "criar":
+            self.decisorCriar(resposta, connect, callback, imagens)
 
         elif callback is cb.cadastramentoCallback:
             print(f"[Fila de Mensagens] Cadastramento callback...")
@@ -149,3 +158,75 @@ class FilaDeMensagens(threading.Thread):
 
             case "meus_pedidos":
                 callback(resposta, connect, socket_banco)
+
+    def decisorEditar(resposta, connect, callback, socket_banco, imagens: list):
+        match resposta[0]:
+            case "loja":
+                mensagemImagemProBanco = Mensagem.produtorMensagem(imagens[0])
+                op.enviaMensagem(socket_banco, mensagemImagemProBanco)
+                callback(resposta, connect, imagens)
+
+            case "anuncio":
+                callback(resposta, connect)
+
+            case "produto":
+                callback(resposta, connect)
+
+            case "endereco":
+                callback(resposta, connect)
+
+            case "usuario":
+                callback(resposta, connect)
+
+    def decisorCriar(self, resposta: list, connect: socket.socket, callback, imagens: list):
+        match resposta[0]:
+            case "produto":
+                callback(resposta, connect, imagens)
+
+            case "loja":
+                callback(resposta, connect, imagens)
+
+    def mensagemProBancoCriar(self, mensagem: Mensagem, imagens: list):
+        try:
+            # Se não há conexão com o banco de dados, cria seu socket e estabelece comunicação
+            if self.socketBD is None:
+                self.conectaBanco()
+
+            # Envia o tamanho da mensagem para o Banco
+                print(f"[Servidor] Enviando o tamanho da mensagem para o BD: {mensagem.tamanho}")
+                self.socketBD.sendall(mensagem.bytesTamanho)
+                # Envia a mensagem para o Banco
+                print(f"[Servidor] Enviando mensagem para o BD: {mensagem.stringMensagem}")
+                self.socketBD.sendall(mensagem.bytesMensagem)
+                
+            if self.socketBD:
+                for imagem in imagens:
+                    mensagemImagem = Mensagem.produtorMensagem(imagem)
+                    # Envia o tamanho da mensagem para o Banco
+                    print(f"[Servidor] Enviando o tamanho da mensagem para o BD: {mensagemImagem.tamanho}")
+                    self.socketBD.sendall(mensagemImagem.bytesTamanho)
+
+                    # Envia a mensagem para o Banco
+                    print(f"[Servidor] Enviando mensagem para o BD: {mensagemImagem.stringMensagem}")
+                    self.socketBD.sendall(mensagemImagem.bytesMensagem)
+                
+
+                # Recebe o tamanho da resposta do Banco
+                tamRespostaBytes = self.socketBD.recv(8)
+                tamResposta = int.from_bytes(tamRespostaBytes, "big")
+                print(f"[Servidor] Tamanho da mensagem a receber do BD: {tamResposta}")
+
+                # Recebe a mensagem de resposta do Banco
+                resposta = self.socketBD.recv(tamResposta)
+                print(f"[Servidor] Resposta recebida do BD: {resposta}")
+                
+                return op.decodifica(resposta)
+            
+            else:
+                return "[Fila de Mensagens][Erro] Conexão com Banco de Dados não estabelecida"
+
+        except Exception as e:
+            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            self.socketBD = None
+            return f"[Fila de Mensagens][Erro] Falha ao enviar ao banco: {e}"
+        

@@ -302,12 +302,19 @@ def enviaSequenciaPedidos(socket_cliente, pedidos):
         op.enviaMensagem(socket_cliente, mensagemPedido)
 
 def editarAnuncioCallback(resposta, socket_cliente):
-    mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta[1]}")
+    mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
 def editarProdutoCallback(resposta, socket_cliente):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def editarLojaCallback(resposta, socket_cliente, imagem: list):
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    mensagemImagem = Mensagem.produtorMensagem(f"{imagem[0]}")
+    op.enviaMensagem(socket_cliente, mensagemImagem)
 
 def editarEnderecoCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
@@ -322,4 +329,32 @@ def editarUsuarioCallback(resposta, socket_cliente):
 
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
-def editarLojaCallback(resposta, socket_cliente)
+def criarProdutoCallback(resposta, socket_cliente: socket.socket, imagens: list):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"pedido | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    enviaSequencialmenteImagens(socket_cliente, imagens)
+
+def criarLojaCallback(resposta, socket_cliente: socket.socket, imagens: list):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    enviaSequencialmenteImagens(socket_cliente, imagens)
+
+def criarImagemCallback(resposta, socket_cliente: socket.socket, imagens: list):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"imagem | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    enviaSequencialmenteImagens(socket_cliente, imagens)
+
+def criarAnuncioCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
+    op.enviaMensagem(mensagemAoCliente)
+
+def criarPedidoCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"pedido | {resposta[1]}")
+    op.enviaMensagem(mensagemAoCliente)
+
+def criarEnderecoCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
+    op.enviaMensagem(mensagemAoCliente)

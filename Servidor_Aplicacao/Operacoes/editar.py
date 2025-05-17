@@ -5,9 +5,10 @@ from Operacoes import operacao
 from Estruturas.mensagem import Mensagem
 
 class Editar(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens):
+    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens, imagens=None):
         super().__init__(mensagem, socket_cliente, fila_mensagens)
         self.conexaoServidor = socket_servidor
+        self.imagem = imagens
 
     def run(self):
         self.getOperacao()
@@ -59,7 +60,7 @@ class Editar(operacao.Operacao):
         mensagemServidor = op.codifica(f"editar | loja | {idLoja} | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente, imagem=self.imagem)
 
     def endereco(self):
         idEndereco = self.mensagemCliente.camposMensagem[2]

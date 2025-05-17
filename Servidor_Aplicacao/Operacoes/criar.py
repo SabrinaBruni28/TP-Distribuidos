@@ -2,10 +2,11 @@ import socket
 import threading
 from Operacoes import server_operation as op
 from Operacoes import operacao
+from Estruturas import Mensagem
 
 class Criar(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
+    def __init__(self, mensagem, socket_cliente, fila_mensagens, imagens: list = None):
+        super().__init__(mensagem, socket_cliente, fila_mensagens, imagens)
 
     def run(self):
         self.getOperacao()
@@ -44,10 +45,10 @@ class Criar(operacao.Operacao):
 
     def produto(self):
         dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica(f"criar | produto | " + str(dados))
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | produto | " + str(dados))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente, tipo="produto", imagem=self.imagens)
 
     def loja(self):
         dados = self.mensagemCliente.camposMensagem[2]
