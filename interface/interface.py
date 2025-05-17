@@ -1706,12 +1706,11 @@ class InterfaceHandler:
         def ao_visualizar(resposta):
             if not resposta:
                 WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent, 
+                    parent_widget=self.parent,
                     backcolor="#f44336",
                     largura=400, altura=50,paddingH=50, paddingV=50,
-                    mensagem="Ocorreu um erro inesperado"
+                    mensagem=f"Erro ao visualizar {funcao}!"
                 )
-                self.view.set_tela(self.stack, -2)
         # Executa:
         self.thread.executar_tela(
             tela=tela,
@@ -2178,7 +2177,6 @@ class InterfaceHandler:
                         )
                 # Executa:
                 self.thread.executar_mensagem(
-                    
                     requisicao=lambda: self.aplicacao.editar_anuncio(anuncio, valores_alterados),
                     acao=ao_editar_anuncio
                 )

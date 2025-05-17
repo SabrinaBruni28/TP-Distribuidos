@@ -25,9 +25,13 @@ class UnixSocketClient:
 
     def receive(self):
         if not self.socket:
-            raise RuntimeError("Socket not connected")
-        tamanho = self.receive_size()
-        return self.socket.recv(tamanho).decode()
+            return None
+        try:
+            self.socket.timeout(10)
+            tamanho = self.receive_size()
+            return self.socket.recv(tamanho).decode()
+        except socket.timeout:
+            return False
     
     def send_image(self, image_path: str):
         if not self.socket:

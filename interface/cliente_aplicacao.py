@@ -159,14 +159,14 @@ class ClienteAplicacao():
         
     def email_confirmacao(self, codigo):
         
-        return True, ""
+        return [True]
         mensagem = f"codigo|{codigo}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "ok":
             self.usuario = Usuario_Identificado.from_dict(resposta[1])
-            return True, "sucesso"
+            return [True]
         
         elif resposta[0] == "erro":
             return False, resposta[1]
@@ -361,7 +361,7 @@ class ClienteAplicacao():
     
     def editar_loja(self, loja: Loja, novos_dados):
         
-        return True
+        return False
         mensagem = f"editar|loja|{loja.id}|{novos_dados}"
         self.socket.send(mensagem)
         if novos_dados["imagem"]:
@@ -432,7 +432,6 @@ class ClienteAplicacao():
                 self.socket.receive_image(path=f"uploads/{imagem}")
 
             return True
-        
         return False
     
     def criar_loja(self, loja: Loja):

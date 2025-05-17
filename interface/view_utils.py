@@ -55,7 +55,10 @@ class Threads:
             self.view.voltar_tela(self.stack, excluir_funcao=False)
 
         if abrir_tela and nova_tela_callback:
-            self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
+            if resultado:
+                self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
+            else:
+                self.view.voltar_tela(self.stack, excluir_funcao=False)
 
         if quando_terminar:
             quando_terminar(resultado)
