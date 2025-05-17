@@ -4,27 +4,31 @@ from Operacoes import thread_email as correio
 from Estruturas.mensagem import Mensagem
 from Operacoes import server_operation as op
 
+# Callback da requisição de Login. O servidor deve retornar dois tipos de resposta ao cliente nesse caso:
+# ok | dados do cliente     -> Em caso do login ser confirmado no banco de dados.
+# erro | dados incorretos   -> Em caso dos dados de login não terem sido encontrados no banco de dados.
 def loginCallback(respostaBD, socket_cliente):
     resposta = [ws.strip() for ws in respostaBD.split('|')]
-    print(resposta)
+    
     if resposta[0] == "ok":
         mensagemAoCliente = Mensagem.produtorMensagem(f"ok | {resposta[1]}")
         print("[Servidor] Confirmando login do cliente...")
-        op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
     else:
         mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
-    
         print("[Servidor] Reportando erro de login ao cliente...")
-        op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
 def cadastramentoCallback(resposta_banco, socket_cliente, socket_servidor, fila):
         resposta = [ws.strip() for ws in resposta_banco.split('|')]
         dados = json.loads(resposta[1])
         dadosJson = (dados)
 
-        signupHandler(dados, dadosJson, resposta, socket_cliente, socket_servidor, fila)
+        signupHandler(dadosJson, resposta, socket_cliente, fila)
 
-def signupHandler(dados, dadosJson, resposta, cliente: socket.socket, servidor: socket.socket, fila):
+def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
         if resposta[0] == "ok":
             emailCliente = dadosJson.get("email")
             print(f"[SignupHandler] Email: {emailCliente}")
@@ -35,14 +39,14 @@ def signupHandler(dados, dadosJson, resposta, cliente: socket.socket, servidor: 
 
             fila.dadosTemp.armazenar(cliente, codigoConfirmacao, dadosJson)
 
-            confirma = Mensagem.produtorMensagem(f"email_confirmacao")
+            mensagemAoCliente = Mensagem.produtorMensagem(f"email_confirmacao")
             print("[Servidor] Esperando confirmação de email do cliente...")
-            op.enviaMensagem(cliente, confirma)
 
         else:
             mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
             print("[Servidor] Reportando erro de cadastro...")
-            op.enviaMensagem(cliente, mensagemAoCliente)
+
+        op.enviaMensagem(cliente, mensagemAoCliente)
 
 def visualizarTodosAnunciosCallback(resposta_banco, socket_cliente, socket_banco):
     quantidadeAnuncios = int(resposta_banco[1])
@@ -349,12 +353,40 @@ def criarImagemCallback(resposta, socket_cliente: socket.socket, imagens: list):
 
 def criarAnuncioCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
-    op.enviaMensagem(mensagemAoCliente)
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
 def criarPedidoCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"pedido | {resposta[1]}")
-    op.enviaMensagem(mensagemAoCliente)
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
 def criarEnderecoCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
-    op.enviaMensagem(mensagemAoCliente)
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def excluirAnuncioCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def excluirProdutoCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def excluirLojaCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def excluirEnderecoCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def excluirImagemCallback(resposta, socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"imagem | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def pedidoConfirmadoCallback(socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"ok | confirmado")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def pedidoCanceladoCallback(socket_cliente: socket.socket):
+    mensagemAoCliente = Mensagem.produtorMensagem(f"ok | cancelado")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)

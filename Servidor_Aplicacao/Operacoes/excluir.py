@@ -1,7 +1,9 @@
 import socket
 import threading
 from Operacoes import server_operation as op
+from Operacoes import callback as cb
 from Operacoes import operacao
+from Estruturas import Mensagem
 
 class Excluir(operacao.Operacao):
     def __init__(self, mensagem, socket_cliente, fila_mensagens):
@@ -34,28 +36,29 @@ class Excluir(operacao.Operacao):
 
     def anuncio(self):
         idAnuncio = self.mensagemCliente.campoosMensagem[2]
-        mensagemServidor = op.codificar(f"excluir | anuncio | {idAnuncio}")
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | anuncio | {idAnuncio}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.excluirAnuncioCallback, self.conexaoCliente, "excluir")
 
     def produto(self):
         idProduto = self.mensagemCliente.campoosMensagem[2]
-        mensagemServidor = op.codificar(f"excluir | produto | {idProduto}")
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | produto | {idProduto}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.excluirProdutoCallback, self.conexaoCliente, "excluir")
 
     def loja(self):
         idLoja = self.mensagemCliente.campoosMensagem[2]
-        mensagemServidor = op.codificar(f"excluir | loja | {idLoja}")
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | loja | {idLoja}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.excluirLojaCallback, self.conexaoCliente, "excluir")
 
     def endereco(self):
         idEndereco = self.mensagemCliente.campoosMensagem[2]
-        mensagemServidor = op.codificar(f"excluir | endereco | {idEndereco}")
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | endereco | {idEndereco}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.excluirEnderecoCallback, self.conexaoCliente, "excluir")
+

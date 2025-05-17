@@ -39,7 +39,7 @@ class ClientHandler(threading.Thread):
         try:
             while self.ativo:
                 # Recebe a mensagem do cliente e separa seus campos
-                print("[Servidor] Recebe mensagem nova do cliente...")
+                print("[Servidor][ClientHandler] Recebendo mensagem nova do cliente...")
                 mensagemCliente = Mensagem.receptorMensagemETamanho(self.socketCliente)
                 print(f"[Servidor][ClientHandler] Mensagem recebida: {mensagemCliente.stringMensagem}")
                 
@@ -69,7 +69,7 @@ class ClientHandler(threading.Thread):
 
 
     def decisor(self, mensagem: Mensagem):
-        print("[Servidor][ClientHandler] Entrou em decisor().")
+        print("[Servidor][ClientHandler] Entrou em decisor.")
         cabecalhoTipoMensagem = mensagem.camposMensagem[0]
 
         match cabecalhoTipoMensagem:
@@ -84,14 +84,14 @@ class ClientHandler(threading.Thread):
 
             case "editar":
                 imagem = []
-                if mensagem.camposMensagem[1] == "loja":
-                    imagem = Imagem(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                dados = mensagem.camposMensagem[3]
+                imagem = Imagem(dados, self.socketCliente, self.filaDeMensagem, mensagem.camposMensagem[1], "imagem").run()
                 Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem, imagem).start()
 
             case "criar":
                 imagem = []
-                if mensagem.camposMensagem[1] != "anuncio" or mensagem.camposMensagem[1] != "pedido" or mensagem.camposMensagem[1] != "endereco":
-                    imagem = Imagem(mensagem, self.socketCliente, self.filaDeMensagem).run()
+                dados = mensagem.camposMensagem[2]
+                imagem = Imagem(mensagem, self.socketCliente, self.filaDeMensagem, mensagem.camposMensagem[1]).run()
                 Criar(mensagem, self.socketCliente, self.filaDeMensagem, imagem).start()
             
             case "excluir":

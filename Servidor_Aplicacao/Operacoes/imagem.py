@@ -1,17 +1,18 @@
 import threading
+import json
 from Estruturas.mensagem import Mensagem
 from Operacoes import server_operation as op
 
 class Imagem():
-    def __init__(self, mensagem_cliente: Mensagem, socket_cliente, fila_mensagens):
-        self.mensagem_cliente = mensagem_cliente
+    def __init__(self, dados, socket_cliente, tipo: str, campo: str = ""):
+        self.dados_cliente = dados
         self.cliente = socket_cliente
         self.quantidade = 0
+        self.tipo = tipo
+        self.campo = campo
     
     def run(self):
-        tipo = self.mensagem_cliente.camposMensagem[1]
-
-        return self.decisor(tipo)
+        return self.decisor(self.tipo)
 
 
     def decisor(self, tipo: str):
@@ -21,9 +22,16 @@ class Imagem():
 
             case "produto":
                 return self.produto()
+            
+            case "imagem":
+                return self.imagem()
 
 
     def loja(self):
+        dadosJson = json.loads(self.dados)
+        if dadosJson.get(self.campo) == "":
+            return None
+        
         mensagemImagemLoja = Mensagem.receptorMensagemETamanho(self.cliente)
 
         imagens = []
@@ -40,3 +48,12 @@ class Imagem():
             imagensProduto.append(imagemProduto.stringMensagem)
 
         return imagensProduto
+    
+    def imagem(self):
+        mensagemImagemLoja = Mensagem.receptorMensagemETamanho(self.cliente)
+
+        imagens = []
+        imagens.append(mensagemImagemLoja.stringMensagem)
+
+        return imagens
+    

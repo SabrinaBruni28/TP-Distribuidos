@@ -8,8 +8,8 @@ class Mensagem():
         self.tamanho = tamanho
         self.bytesTamanho = tamanho.to_bytes(8, "big")
         self.bytesMensagem = op.codifica(str(mensagem))
-        self.camposMensagem = self._divideString if tipoDivisao == None else self._divideStringImg
-        self.quantidadeCampos = len(self.camposMensagem)
+        self.camposMensagem = self._divideString()
+        #self.quantidadeCampos = len(self.camposMensagem)
 
     # Função para dividir os campos da mensagem
     # o strip limpa os expaços extras das mensagens,
@@ -51,7 +51,7 @@ class Mensagem():
     @staticmethod
     def _recebeTamanhoDaMensagem(socket_cliente: socket.socket):
         print(f"[Servidor] Entrou em _recebeMensagemTamanho() e vai receber o tamanho da mensagem.")
-        tamanhoEmBytes = socket_cliente.recv(4)
+        tamanhoEmBytes = socket_cliente.recv(8)
         tamanho = int.from_bytes(tamanhoEmBytes, "big")
         return tamanho
     

@@ -1,7 +1,9 @@
 import socket
 import threading
 from Operacoes import server_operation as op
+from Operacoes import callback as cb
 from Operacoes import operacao
+from Estruturas import Mensagem
 
 class Pedido(operacao.Operacao):
     def __init__(self, mensagem, socket_cliente, fila_mensagens):
@@ -28,14 +30,14 @@ class Pedido(operacao.Operacao):
 
     def confirmar(self):
         idPedido = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica(f"pedido | confirmar | {idPedido}")
+        mensagemServidor = Mensagem.produtorMensagem(f"pedido | confirmar | {idPedido}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.pedidoConfirmadoCallback, self.conexaoCliente, "pedido")
 
     def cancelar(self):
         idPedido = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = op.codifica(f"excluir | pedido | {idPedido}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, op.respostaAoCliente, self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.pedidoCanceladoCallback, self.conexaoCliente, "pedido")

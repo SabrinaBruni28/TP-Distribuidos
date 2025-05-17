@@ -54,60 +54,60 @@ class Visualizar(operacao.Operacao):
         mensagemServidor = Mensagem.produtorMensagem("retornar | anuncios")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarTodosAnunciosCallback, "visualizar", self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarTodosAnunciosCallback, self.conexaoCliente, "visualizar")
 
     def anuncio(self):
         idAnuncio = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"retornar | anuncio | {str(idAnuncio)}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarAnuncioCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarAnuncioCallback, self.conexaoCliente, "visualizar")
 
     def produto(self):
         idProduto = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"retornar | produto | {str(idProduto)}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarProdutoCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarProdutoCallback, self.conexaoCliente, "visualizar")
 
     def loja(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | loja | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarLojaCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarLojaCallback, self.conexaoCliente, "visualizar")
 
     def minhaLoja(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | minha_loja | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarLojaUsuarioCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarLojaUsuarioCallback,  self.conexaoCliente, "visualizar")
 
     def minhasListaLojas(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | minhas_lojas | " + str(idUsuario))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarListaLojasUsuarioCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarListaLojasUsuarioCallback,  self.conexaoCliente, "visualizar")
 
     def pedido(self):
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | pedido | " + str(idLoja))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarPedidoCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarPedidoCallback,  self.conexaoCliente, "visualizar")
 
     def meusPedidos(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | meus_pedidos | " + str(idUsuario))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarListaPedidosUsuarioCallback, "visualizar",  self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarListaPedidosUsuarioCallback,  self.conexaoCliente, "visualizar")
 
     def meusEnderecos(self):
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"retornar | meus_enderecos | {str(idUsuario)}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarEnderecosUsuarioCallback, "visualizar", self.conexaoCliente)
+        self.fila.enfileira(mensagemServidor, cb.visualizarEnderecosUsuarioCallback, self.conexaoCliente, "visualizar")
