@@ -304,7 +304,7 @@ class MarketplaceUI(QMainWindow):
 
         dados = Utils.gerar_qrcode_pix(
             nome=anuncio.produto.loja.nome,
-            chave="136.689.956-30",
+            chave=anuncio.chave_pix,
             cidade="Florestal",
             valor=pedido.calcular_total(),
             descricao="Pagamento de pedido",

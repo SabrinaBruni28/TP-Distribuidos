@@ -2,13 +2,14 @@ import socket
 
 class UnixSocketClient:
     def __init__(self, ip, port):
+        self.socket = None
         try:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
-        except Exception as e:
-            print(e)
-            self.socket = None
-        self.socket = s
+            self.socket = s  # só define se conectou com sucesso
+        except Exception:
+            pass  # falha silenciosa
+        print("Socket:", self.socket)
 
     def close(self):
         if self.socket:
@@ -17,7 +18,7 @@ class UnixSocketClient:
 
     def send(self, data: str):
         if not self.socket:
-            raise RuntimeError("Socket not connected")
+            return None
         data_byte = data.encode()
         tamanho = len(data_byte)
         self.send_size(tamanho)
@@ -35,7 +36,7 @@ class UnixSocketClient:
     
     def send_image(self, image_path: str):
         if not self.socket:
-            raise RuntimeError("Socket not connected")
+            return None
         with open(image_path, 'rb') as f:
             data = f.read()
             tamanho = len(data)
@@ -45,7 +46,7 @@ class UnixSocketClient:
 
     def receive_image(self, buffer_size=4096, path='received_image.png'):
         if not self.socket:
-            raise RuntimeError("Socket not connected")
+            return None
         tamanho_total = self.receive_size()
         with open(path, 'wb') as f:
             data = b''
@@ -58,9 +59,13 @@ class UnixSocketClient:
         return data, path
 
     def send_size(self, tamanho: int):
+        if not self.socket:
+            return None 
         self.socket.sendall(tamanho.to_bytes(8, 'big'))
 
     def receive_size(self):
+        if not self.socket:
+            return None
         tamanho_bytes = self.socket.recv(8)
         tamanho_total = int.from_bytes(tamanho_bytes, 'big')
         return tamanho_total
