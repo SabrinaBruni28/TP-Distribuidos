@@ -475,7 +475,6 @@ class ClienteAplicacao():
         return False
 
     def criar_imagem(self, produto: Produto, imagem):
-        produto.criar_imagem(imagem)
         return True
         mensagem = f"criar|imagem|{produto.id}"
         self.socket.send(mensagem)

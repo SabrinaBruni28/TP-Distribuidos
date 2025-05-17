@@ -1978,6 +1978,21 @@ class InterfaceHandler:
                 acao=ao_criar_anuncio
             )
 
+    def criar_imagem(self, produto: Produto, imagem):
+        def ao_criar_imagem(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Ocorreu um erro inesperado"
+                )
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_criar_imagem,
+            requisicao=lambda: self.aplicacao.criar_imagem(produto, imagem),
+        )
+
     def editar_produto(self, formulario: Formulario, produto: Produto):
         erro = formulario.validar_tipos({"Nome": str, "Descrição": str})
         if erro:
@@ -2324,7 +2339,30 @@ class InterfaceHandler:
             )
 
         else:
-            dialogo.close()  
+            dialogo.close()
+
+    def excluir_imagem(self, produto: Produto, imagem):
+        def ao_excluir_imagem(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    mensagem="Ocorreu um erro inesperado"
+                )
+        if len(produto.imagens) == 1:
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent, fontcolor="#000000",
+                backcolor="#FFC107",
+                largura=450, altura=50,paddingH=50, paddingV=50,
+                mensagem="O produto não pode ficar sem imagem"
+            )
+        else:
+            # Executa:
+            self.thread.executar_mensagem(
+                acao=ao_excluir_imagem,
+                requisicao=lambda: self.aplicacao.excluir_imagem(produto, imagem),
+            )
 
     def cancelar_pedido(self, pedido: Pedido):
         dialogo = CaixaConfirmacao(
@@ -2395,44 +2433,6 @@ class InterfaceHandler:
 
         else:
             dialogo.close()
-
-    def criar_imagem(self, produto: Produto, imagem):
-        def ao_criar_imagem(resposta):
-            if not resposta:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent, 
-                    backcolor="#f44336",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
-                    mensagem="Ocorreu um erro inesperado"
-                )
-        # Executa:
-        self.thread.executar_mensagem(
-            acao=ao_criar_imagem,
-            requisicao=lambda: self.aplicacao.criar_imagem(produto, imagem),
-        )
-    
-    def excluir_imagem(self, produto: Produto, imagem):
-        def ao_excluir_imagem(resposta):
-            if not resposta:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent, 
-                    backcolor="#f44336",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
-                    mensagem="Ocorreu um erro inesperado"
-                )
-        if len(produto.imagens) == 1:
-            WidgetHelper.mostrar_alerta_temporario(
-                parent_widget=self.parent, fontcolor="#000000",
-                backcolor="#FFC107",
-                largura=450, altura=50,paddingH=50, paddingV=50,
-                mensagem="O produto não pode ficar sem imagem"
-            )
-        else:
-            # Executa:
-            self.thread.executar_mensagem(
-                acao=ao_excluir_imagem,
-                requisicao=lambda: self.aplicacao.excluir_imagem(produto, imagem),
-            )
 
 if __name__ == "__main__":
    app = QApplication(sys.argv)
