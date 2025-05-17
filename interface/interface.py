@@ -66,8 +66,8 @@ class MarketplaceUI(QMainWindow):
         resposta = dialogo.exec()
 
         if resposta == QDialog.DialogCode.Accepted:
-            #self.handler.aplicacao.socket.close()
-            #Utils.excluir_arquivos_pasta("uploads")
+            self.handler.aplicacao.socket.close()
+            Utils.excluir_arquivos_pasta("uploads")
             event.accept()
         else:
             event.ignore()
@@ -428,7 +428,7 @@ class MarketplaceUI(QMainWindow):
         botao_login = WidgetHelper.botao(
             nome="Entrar", fonte=30,
             largura=200, altura=50,
-            acao=lambda: self.login(formulario)
+            acao=lambda: self.handler.login(formulario)
         )
         layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1715,8 +1715,7 @@ class InterfaceHandler:
         self.thread.executar_tela(
             tela=tela,
             acao=ao_visualizar,
-            requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs),
-            
+            requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs)
         ) 
 
     def confirmar_codigo(self, formulario: Formulario):

@@ -55,7 +55,7 @@ class Threads:
             self.view.voltar_tela(self.stack, excluir_funcao=False)
 
         if abrir_tela and nova_tela_callback:
-            if resultado:
+            if resultado or self.stack.count() == 1:
                 self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
             else:
                 self.view.voltar_tela(self.stack, excluir_funcao=False)

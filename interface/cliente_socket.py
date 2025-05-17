@@ -18,7 +18,7 @@ class UnixSocketClient:
 
     def send(self, data: str):
         if not self.socket:
-            return None
+            return False
         data_byte = data.encode()
         tamanho = len(data_byte)
         self.send_size(tamanho)
@@ -26,7 +26,7 @@ class UnixSocketClient:
 
     def receive(self):
         if not self.socket:
-            return None
+            return False
         try:
             self.socket.timeout(10)
             tamanho = self.receive_size()
@@ -36,7 +36,7 @@ class UnixSocketClient:
     
     def send_image(self, image_path: str):
         if not self.socket:
-            return None
+            return False
         with open(image_path, 'rb') as f:
             data = f.read()
             tamanho = len(data)
@@ -46,7 +46,7 @@ class UnixSocketClient:
 
     def receive_image(self, buffer_size=4096, path='received_image.png'):
         if not self.socket:
-            return None
+            return False
         tamanho_total = self.receive_size()
         with open(path, 'wb') as f:
             data = b''
@@ -60,12 +60,12 @@ class UnixSocketClient:
 
     def send_size(self, tamanho: int):
         if not self.socket:
-            return None 
+            return False 
         self.socket.sendall(tamanho.to_bytes(8, 'big'))
 
     def receive_size(self):
         if not self.socket:
-            return None
+            return False
         tamanho_bytes = self.socket.recv(8)
         tamanho_total = int.from_bytes(tamanho_bytes, 'big')
         return tamanho_total

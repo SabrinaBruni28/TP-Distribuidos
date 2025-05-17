@@ -11,7 +11,7 @@ class ClienteAplicacao():
     def __init__(self):
         self.anuncios = []
         self.usuario = Usuario()
-        self.socket = UnixSocketClient(ip="192.168.1.102", port=5000)
+        self.socket = UnixSocketClient(ip="192.168.1.17", port=5000)
 
     def chamar(self, obj, *args, **kwargs):
         nome_funcao = f"visualizar_{obj}"
@@ -27,7 +27,9 @@ class ClienteAplicacao():
             return False
 
     def divide_mensagem(self, stringMensagem):
-        [ws.strip() for ws in stringMensagem.split('|')]
+        if isinstance(stringMensagem, bool) :
+            return [stringMensagem]
+        return [ws.strip() for ws in stringMensagem.split('|')]
     
     def is_identificado(self):
         return isinstance(self.usuario, Usuario_Identificado)
@@ -108,16 +110,18 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         quantidade = self.socket.receive_size()
-        for i in range(quantidade):
-            resposta = self.divide_mensagem(self.socket.receive())
-            if resposta[0] == "anuncios":
-                anuncio = Anuncio.from_dict(resposta[1])
-                self.anuncios.append(anuncio)
-                for imagem in anuncio.produto.imagens:
-                    self.socket.receive_image(path=f"uploads/{imagem}")
-            else:
-                return False
-        return True
+        if quantidade:
+            for i in range(quantidade):
+                resposta = self.divide_mensagem(self.socket.receive())
+                if resposta[0] == "anuncios":
+                    anuncio = Anuncio.from_dict(resposta[1])
+                    self.anuncios.append(anuncio)
+                    for imagem in anuncio.produto.imagens:
+                        self.socket.receive_image(path=f"uploads/{imagem}")
+                else:
+                    return False
+            return True
+        return False   
     
     def visualizar_anuncio(self, anuncio: Anuncio):
         if self._atributos_preenchidos(anuncio, ignorar=["pausado"]):
