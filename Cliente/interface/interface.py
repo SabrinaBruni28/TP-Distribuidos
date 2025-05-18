@@ -119,9 +119,9 @@ class MarketplaceUI(QMainWindow):
         valores = formularioOp.obter_valores()
         pedido = Pedido(
             produto=anuncio.produto, 
-            quantidade=int(valores["quantidade"]),
+            quantidade=int(valores["Quantidade"]),
             preco=anuncio.preco,
-            endereco=self.handler.aplicacao.usuario.get_endereco(valores["endereço"])
+            endereco=self.handler.aplicacao.usuario.get_endereco(valores["Endereço"])
         )
         self.view.abrir_tela(self.stack, lambda: self.tela_pagamento(pedido, anuncio))
     
@@ -306,19 +306,23 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(20)
 
-        dados = Utils.gerar_qrcode_pix(
-            nome=anuncio.produto.loja.nome,
-            chave=anuncio.chave_pix,
-            cidade="Florestal",
-            valor=pedido.calcular_total(),
-            descricao="Pagamento de pedido",
-            pagamento_multiplo=False,
-            nome_arquivo="imagens/qrcode",
-            salvar_png = True,
-            salvar_svg = False
-        )
+        try:
+            dados = Utils.gerar_qrcode_pix(
+                nome=anuncio.produto.loja.nome,
+                chave=anuncio.chave_pix,
+                cidade="Florestal",
+                valor=pedido.calcular_total(),
+                descricao="Pagamento de pedido",
+                pagamento_multiplo=False,
+                nome_arquivo="images/qrcode",
+                salvar_png = True,
+                salvar_svg = False
+            )
+        except Exception:
+            self.view.set_tela(-1)
+            return None
 
-        imagem_label = WidgetHelper.imagem(pasta="imagens/",imagem="qrcode.png", scaled=300)
+        imagem_label = WidgetHelper.imagem(pasta="images/",imagem="qrcode.png", scaled=300)
         layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addSpacing(10)
 
@@ -1756,6 +1760,14 @@ class InterfaceHandler:
                         mensagem="Limite de tempo excedido!"
                     )
                     self.view.set_tela(self.stack, -2)
+
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        mensagem="Erro ao confirmar código!"
+                    )
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.email_confirmacao(valores["Código"]),
@@ -1768,7 +1780,9 @@ class InterfaceHandler:
         if erro:
             formulario.exibir_erros()
         else:
-            usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
+            valores = formulario.obter_valores()
+            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+            usuario = Usuario_Identificado.from_dict(valores)
             def ao_cadastrar(resposta):
                 if resposta[0]:
                     self.view.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao)
@@ -1801,7 +1815,9 @@ class InterfaceHandler:
         if erro:
             formulario.exibir_erros()
         else:
-            usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
+            valores = formulario.obter_valores()
+            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+            usuario = Usuario_Identificado.from_dict(valores)
             def ao_login(resposta):
                 if resposta[0]:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -1860,7 +1876,9 @@ class InterfaceHandler:
         if erro:
             formulario.exibir_erros()
         else:
-            loja = Loja.from_dict(formulario.obter_valores())  
+            valores = formulario.obter_valores()
+            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+            loja = Loja.from_dict(valores)  
             if imagem:
                 loja.imagem = imagem
 
@@ -1893,8 +1911,9 @@ class InterfaceHandler:
         if erro:
             formulario.exibir_erros()
         else:
-            endereco = Endereco.from_dict(formulario.obter_valores())  
-            print(endereco)
+            valores = formulario.obter_valores()
+            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+            endereco = Endereco.from_dict(valores)
             def ao_criar_endereco(resposta):
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -1929,7 +1948,9 @@ class InterfaceHandler:
                 mensagem="O produto não pode ficar sem imagem"
             )
         else:
-            produto = Produto.from_dict(formulario.obter_valores())
+            valores = formulario.obter_valores()
+            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+            produto = Produto.from_dict(valores)
             produto.loja = loja  
             produto.imagens = imagens
             def ao_criar_produto(resposta):
@@ -1962,10 +1983,18 @@ class InterfaceHandler:
                 "Chave Pix": str, "Pausado": bool
             }
         )
+        valores = formulario.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+
         if erro:
             formulario.exibir_erros()
+
+        elif not Utils.validar_chave_pix(valores["chave_pix"]):
+            formulario.definir_erros_especificos({"Chave Pix": "Chave pix inválida!"})
+            formulario.exibir_erros()
+
         else:
-            anuncio = Anuncio.from_dict(formulario.obter_valores())
+            anuncio = Anuncio.from_dict(valores)
             anuncio.produto = produto
             def ao_criar_anuncio(resposta):
                 if resposta:
@@ -2010,6 +2039,7 @@ class InterfaceHandler:
             formulario.exibir_erros()
         else:
             valores_alterados = formulario.obter_valores_alterados({"Nome": produto.nome, "Descrição": produto.descricao})
+            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
             if valores_alterados:
                 valores_alterados["id"] = produto.id
                 def ao_editar_produto(resposta):
@@ -2084,18 +2114,19 @@ class InterfaceHandler:
 
     def editar_endereco(self, formulario: Formulario, endereco: Endereco):
         erro = formulario.validar_tipos(
-            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+            {"Rua": str, "Numero": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
         if erro:
             formulario.exibir_erros()
         else:
             valores_alterados = formulario.obter_valores_alterados(
                 {
-                    "Rua": endereco.rua, "N°": endereco.numero, 
+                    "Rua": endereco.rua, "Numero": endereco.numero, 
                     "Bairro": endereco.bairro, "Cidade": endereco.cidade, 
                     "Estado": endereco.estado, "Complemento": endereco.complemento
                 }
             )
+            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
             if valores_alterados:
                 valores_alterados["id"] = endereco.id
                 def ao_editar_endereco(resposta):
@@ -2136,20 +2167,13 @@ class InterfaceHandler:
         else:
             usuario = self.aplicacao.usuario
             valores_alterados = formulario.obter_valores_alterados(
-                {
-                    "Nome": usuario.nome, "CPF": usuario.cpf, 
-                    "Email": usuario.email, "Senha": "*"*len(usuario.senha),
-                }
+                {"Nome": usuario.nome, "CPF": usuario.cpf, "Email": usuario.email, "Senha": "*"*len(usuario.senha)}
             )
+            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
             if valores_alterados:
                 valores_alterados["id"] = usuario.id
                 def ao_editar_perfil(resposta):
-                    if isinstance(resposta, dict):
-                        capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
-                        formulario.definir_erros_especificos(capitalizado)
-                        formulario.exibir_erros()
-                    
-                    elif resposta:
+                    if resposta[0]:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
@@ -2157,6 +2181,17 @@ class InterfaceHandler:
                             mensagem="Perfil Editado com Sucesso!"
                         )
                         self.view.atualiza_tela(self.stack)
+
+                    elif resposta[1]:
+                        erros = {}
+                        if "cpf" in resposta[1]:
+                            erros["CPF"] = "CPF já cadastrado!"
+                        if "email" in resposta[1]:
+                            erros["Email"] = "Email já cadastrado!"
+                        if erros:
+                            formulario.definir_erros_especificos(erros)
+                            formulario.exibir_erros()
+
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2189,6 +2224,7 @@ class InterfaceHandler:
                 {"Preço": anuncio.preco, "Quantidade Disponível": anuncio.quantidade_disponivel, "Chave Pix": anuncio.chave_pix}
             )
             valores_alterados = valores_alterados | formularioOp.obter_valores_alterados({"Pausado": anuncio.pausado})
+            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
 
             if valores_alterados:
                 valores_alterados["id"] = anuncio.id

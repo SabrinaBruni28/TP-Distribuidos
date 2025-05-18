@@ -46,7 +46,7 @@ class Endereco:
         cidade = data.get("cidade", "")
         estado = data.get("estado", "")
 
-        return cls(id, rua, numero, complemento, bairro, cidade, estado)
+        return cls(id, rua, numero, bairro, cidade, estado, complemento)
 
 
     def __str__(self):

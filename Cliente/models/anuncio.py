@@ -63,7 +63,7 @@ class Anuncio:
         chave_pix = data.get("chave_pix", "")
         pausado = data.get("pausado", False)
         
-        return cls(id, produto, preco, quantidade_disponivel, chave_pix, pausado)
+        return cls(id, preco, quantidade_disponivel, chave_pix, pausado, produto)
     
     def __str__(self):
         return f"Anuncio(id={self.id}, produto={self.produto.__str__()}, preco={self.preco}, quantidade_disponivel={self.quantidade_disponivel}, chave_pix={self.chave_pix}, pausado={self.pausado})"

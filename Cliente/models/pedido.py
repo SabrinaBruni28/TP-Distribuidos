@@ -48,7 +48,7 @@ class Pedido:
         preco = data.get("preco", 0)
         endereco = Endereco.from_dict(data["endereco"]) if "endereco" in data else []
 
-        return cls(id, produto, quantidade, preco, endereco, data)
+        return cls(id, quantidade, preco, data, produto, endereco)
     
     def __str__(self):
         return f"Pedido(id={self.id}, data={self.data}, produto={self.produto.nome}, quantidade={self.quantidade}, preco={self.preco}, endereco={self.endereco})"

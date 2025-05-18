@@ -3,7 +3,7 @@ CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
 
 from pybrcode.pix import generate_simple_pix
-import re
+import re, uuid, unicodedata
 
 class Utils:
     @staticmethod
@@ -110,6 +110,35 @@ class Utils:
         }
 
     @staticmethod
+    def validar_chave_pix(chave: str) -> bool:
+        chave = chave.strip()
+
+        # CPF: 11 dígitos numéricos
+        if re.fullmatch(r"\d{11}", chave):
+            return True
+
+        # CNPJ: 14 dígitos numéricos
+        if re.fullmatch(r"\d{14}", chave):
+            return True
+
+        # Email: verificação básica
+        if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", chave):
+            return True
+
+        # Telefone no formato E.164 (ex: +5511999999999)
+        if re.fullmatch(r"\+[1-9]\d{1,14}$", chave):
+            return True
+
+        # Chave aleatória (UUID v4)
+        try:
+            uuid_obj = uuid.UUID(chave, version=4)
+            return str(uuid_obj) == chave.lower()
+        except ValueError:
+            pass
+
+        return False
+
+    @staticmethod
     def excluir_arquivos_pasta(caminho_pasta):
         # Caminho absoluto da pasta que você quer limpar
         caminho_pasta = os.path.join(CAMINHO_BASE, caminho_pasta)
@@ -119,3 +148,20 @@ class Utils:
             caminho_arquivo = os.path.join(caminho_pasta, arquivo)
             if os.path.isfile(caminho_arquivo):
                 os.remove(caminho_arquivo)
+
+    @staticmethod
+    def normalizar_chave(chave: str) -> str:
+        """
+        Normaliza a string:
+        - Converte para minúsculas
+        - Remove acentos
+        - Substitui espaços por underscores
+        """
+        # Remove acentos
+        chave_sem_acento = unicodedata.normalize('NFKD', chave)
+        chave_sem_acento = ''.join(c for c in chave_sem_acento if not unicodedata.combining(c))
+
+        # Substitui espaços por underscores e converte para minúsculas
+        chave_normalizada = re.sub(r"\s+", "_", chave_sem_acento).lower()
+
+        return chave_normalizada

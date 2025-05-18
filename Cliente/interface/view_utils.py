@@ -62,7 +62,7 @@ class Threads:
 
     def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ...", atualizar_tela=True):
         tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
-            mensagem, gif_path="imagens/spinner.gif"
+            mensagem, gif_path="images/spinner.gif"
         )
 
         self.carregar_em_thread(
@@ -76,7 +76,7 @@ class Threads:
 
     def executar_mensagem(self, requisicao, acao, mensagem="Salvando ...", atualizar_tela=True):
         tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
-            mensagem, gif_path="imagens/spinner.gif"
+            mensagem, gif_path="images/spinner.gif"
         )
 
         self.carregar_em_thread(
@@ -258,7 +258,7 @@ class WidgetHelper(QWidget):
             parent,
             "Escolher arquivo",
             "",
-            "Todos os arquivos (*.*);;Imagens (*.png *.jpg *.jpeg);;Textos (*.txt)"
+            "Imagens (*.png *.jpg *.jpeg)"
         )
         if caminho_arquivo:
             # Caminho de destino onde o arquivo será salvo (pode mudar para o que quiser)
@@ -308,6 +308,10 @@ class ViewHelper(QWidget):
             self.atualiza_tela(stack)
 
     def abrir_tela(self, stack, funcao_criadora, excluir_anterior=False, salvar_tela=True):
+        tela = funcao_criadora()
+        if not tela:
+            return None
+        
         if salvar_tela:
             self.__class__.funcoes_telas.append(funcao_criadora)
 
@@ -315,7 +319,6 @@ class ViewHelper(QWidget):
             index = stack.currentIndex()
             self.excluir_tela(stack, index, excluir_funcao=False)
 
-        tela = funcao_criadora()
         stack.addWidget(tela)
         stack.setCurrentWidget(tela)
 

@@ -87,7 +87,7 @@ class FormularioOpcoes(QWidget):
         """
         valores = {}
         for nome, combo in self.inputs.items():
-            valores[str(nome).lower()] = combo.currentText()
+            valores[nome] = combo.currentText()
         return valores
     
     def obter_valores_alterados(self, valores_iniciais: dict) -> dict:
@@ -262,7 +262,7 @@ class Formulario(QWidget):
         """
         valores = {}
         for nome, campo in self.inputs.items():
-            valores[str(nome).lower()] = campo.text().strip()
+            valores[nome] = campo.text().strip()
         return valores
     
     def obter_valores_alterados(self, valores_iniciais: dict) -> dict:
@@ -282,7 +282,7 @@ class Formulario(QWidget):
 
             # Se o valor atual for diferente do inicial, armazene no dicionário
             if valor_atual != valor_inicial:
-                valores_alterados[str(nome).lower()] = valor_atual
+                valores_alterados[nome] = valor_atual
         
         return valores_alterados
     

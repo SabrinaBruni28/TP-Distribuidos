@@ -95,6 +95,8 @@ class ClienteAplicacao():
         elif resposta[0] == "erro":
             return False, resposta[1]
         
+        return False, ""
+        
     def login(self, usuario: Usuario_Identificado):
         mensagem = f"login|{usuario.to_dict_login()}"
         self.socket.send(mensagem)
@@ -119,6 +121,7 @@ class ClienteAplicacao():
                 resposta = self.divide_mensagem(self.socket.receive())
                 if resposta[0] == "anuncios":
                     anuncio = Anuncio.from_dict(resposta[1])
+                    print(anuncio)
                     self.anuncios.append(anuncio)
                     for imagem in anuncio.produto.imagens:
                         self.socket.receive_image(path=f"uploads/{imagem}")
@@ -218,13 +221,15 @@ class ClienteAplicacao():
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
         quantidade = self.socket.receive_size()
-        for i in range(quantidade):
-            resposta = self.divide_mensagem(self.socket.receive())
-            if resposta[0] == "meus_enderecos":
-                self.usuario.enderecos.append(Endereco.from_dict(resposta[1]))
-            else:
-                return False
-        return True
+        if quantidade:
+            for i in range(quantidade):
+                resposta = self.divide_mensagem(self.socket.receive())
+                if resposta[0] == "meus_enderecos":
+                    self.usuario.enderecos.append(Endereco.from_dict(resposta[1]))
+                else:
+                    return False
+            return True
+        return False
     
     def visualizar_pedido(self, pedido: Pedido):
         if self.atributos_preenchidos(pedido):
@@ -297,12 +302,12 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "usuario":
             self.usuario = Usuario_Identificado.from_dict(resposta[1])
-            return True
+            return [True]
         
         elif resposta[0] == "erro":
-            return resposta[1]
+            return False, resposta[1]
         
-        return False
+        return False, ""
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
         mensagem = f"editar|endereco|{json.dumps(novos_dados)}"
@@ -367,7 +372,6 @@ class ClienteAplicacao():
         return False
     
     def criar_endereco(self, endereco: Endereco):
-        print(endereco)
         mensagem = f"criar|endereco|{self.usuario.id}|{endereco.to_dict_personalizado()}"
         self.socket.send(mensagem)
 
