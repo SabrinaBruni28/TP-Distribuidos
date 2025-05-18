@@ -605,7 +605,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addSpacing(40)
 
         formulario = Formulario(
-            campos=["Rua", "Numero", "Bairro", "Cidade", "Estado", "Complemento"],
+            campos=["Rua", "Número", "Bairro", "Cidade", "Estado", "Complemento"],
             largura=600,
             altura=50
         )
@@ -1906,7 +1906,7 @@ class InterfaceHandler:
 
     def criar_endereco(self, formulario: Formulario):
         erro = formulario.validar_tipos(
-            {"Rua": str, "Numero": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+            {"Rua": str, "Número": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
         if erro:
             formulario.exibir_erros()
@@ -2114,14 +2114,14 @@ class InterfaceHandler:
 
     def editar_endereco(self, formulario: Formulario, endereco: Endereco):
         erro = formulario.validar_tipos(
-            {"Rua": str, "Numero": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+            {"Rua": str, "Número": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
         if erro:
             formulario.exibir_erros()
         else:
             valores_alterados = formulario.obter_valores_alterados(
                 {
-                    "Rua": endereco.rua, "Numero": endereco.numero, 
+                    "Rua": endereco.rua, "Número": endereco.numero,
                     "Bairro": endereco.bairro, "Cidade": endereco.cidade, 
                     "Estado": endereco.estado, "Complemento": endereco.complemento
                 }

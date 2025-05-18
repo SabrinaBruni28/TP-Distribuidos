@@ -86,9 +86,3 @@ class UnixSocketClient:
             return tamanho_total
         except socket.timeout:
             return False
-
-if __name__ == "__main__":
-    socket_c = UnixSocketClient(ip="192.168.1.17", port=5000)
-    print("Socket:", socket_c)
-    socket_c.receive_image(path="imagem.jpg")
-    print("imagem recebida")
