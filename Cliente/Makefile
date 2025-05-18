@@ -8,6 +8,9 @@ criar_ambiente:
 ativar_ambiente:
 	source .venv/bin/activate
 
+desativar_ambiente:
+	deactivate
+
 salvar_bibliotecas:
 	pip freeze > requirements.txt
 
