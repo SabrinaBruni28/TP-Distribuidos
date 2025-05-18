@@ -71,6 +71,7 @@ class ClientHandler(threading.Thread):
     def decisor(self, mensagem: Mensagem):
         print("[Servidor][ClientHandler] Entrou em decisor.")
         cabecalhoTipoMensagem = mensagem.camposMensagem[0]
+        print(f"[Servidor] Cabeçalho sob avaliação: ${cabecalhoTipoMensagem}$")
 
         match cabecalhoTipoMensagem:
             case "login":
@@ -84,8 +85,8 @@ class ClientHandler(threading.Thread):
 
             case "editar":
                 imagem = []
-                dados = mensagem.camposMensagem[3]
-                imagem = Imagem(dados, self.socketCliente, self.filaDeMensagem, mensagem.camposMensagem[1], "imagem").run()
+                dados = mensagem.camposMensagem[2]
+                imagem = Imagem(dados, self.socketCliente, mensagem.camposMensagem[1], "imagem").run()
                 Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem, imagem).start()
 
             case "criar":
@@ -156,5 +157,29 @@ def rodarServidor(endereco_ip, porta, fila):
 filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
+def rodarServidorT(endereco_ip, porta, fila):
+    # O terminal do servidor ficará aberto para receber comandos, assim é possível encerrar o
+    # servidor pelo terminal do servidor sem necessitar do ctrl+c.
+    flagEncerramento = threading.Event()
+    threading.Thread(target=terminalServidor, args=(flagEncerramento, ), daemon=True).start()
+
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
+        servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        # Vinculação do socket servidor ao endereço e porta
+        servidor.bind((endereco_ip, porta))
+
+        # Listen para conexões
+        servidor.listen()
+        logging.info(f"Ouvindo em {endereco_ip}:{porta}")
+
+        servidor.settimeout(0.2)
+
+
+
+        # Enquanto o servidor não fecha, aceita novas conexões e cria novas thread para elas
+        #while not flagEncerramento.is_set():
+        #    conectaNovoCliente(servidor, fila)
+
 # Inicialização do socket servidor
-rodarServidor('localhost', 5000, filaDeMensagem)
+#rodarServidor('localhost', 5000, filaDeMensagem)
+rodarServidor('192.168.1.17', 5000, filaDeMensagem)

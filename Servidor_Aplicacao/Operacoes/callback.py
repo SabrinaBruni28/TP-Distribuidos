@@ -49,13 +49,21 @@ def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
         op.enviaMensagem(cliente, mensagemAoCliente)
 
 def visualizarTodosAnunciosCallback(resposta_banco, socket_cliente, socket_banco):
+    # resposta_banco tem [anuncios | quantidade]
     quantidadeAnuncios = int(resposta_banco[1])
+    print(f"[Servidor] {quantidadeAnuncios}")
     anuncios = []
 
     for i in range(quantidadeAnuncios):
         try:
             mensagemNovoAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
-            mensagemImagemNovoAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
+
+            print(f"[Servidor][Vizualizar blá blá blá] Anúncio: {mensagemNovoAnuncio.stringMensagem}")
+
+            #mensagemImagemNovoAnuncio, path = op.receive_image()
+            mensagemImagemNovoAnuncio = Mensagem.receptorImagem(socket_banco)
+
+            #print(f"[Servidor][Vizualizar blá blá blá] imagem{mensagemImagemNovoAnuncio.stringMensagem}")
 
             dicioAnuncioImg = {
                 "anuncio": mensagemNovoAnuncio,
@@ -68,14 +76,19 @@ def visualizarTodosAnunciosCallback(resposta_banco, socket_cliente, socket_banco
              print(f"[Servidor][Visualizar] Problema ao ler anuncio do servidor: {e}")
              break
         
+    quantidadeCliente = Mensagem.produtorMensagem(f"{str(quantidadeAnuncios)}")
+    print(f"[Servidor] Quantidade definitiva: {quantidadeCliente.stringMensagem}")
+
+    byteQ = quantidadeAnuncios.to_bytes(8, 'big')
+    socket_cliente.sendall(byteQ)
+        
     enviaSequenciaAnuncios(socket_cliente, anuncios)
         
 def enviaSequenciaAnuncios(socket_cliente, anuncios):
     for anuncio in anuncios:
-        mensagemAnuncio = Mensagem.produtorMensagem(anuncio.get("anuncio"))
-        mensagemImagem = Mensagem.produtorMensagem(anuncio.get("imagem"))
+        mensagemAnuncio = Mensagem.produtorMensagem(f'anuncios | {(anuncio.get("anuncio")).stringMensagem}')
         op.enviaMensagem(socket_cliente, mensagemAnuncio)
-        op.enviaMensagem(socket_cliente, mensagemImagem)
+        op.enviaImagem(socket_cliente, anuncio.get("imagem"))
 
 def visualizarAnuncioCallback(resposta_banco, socket_cliente, socket_banco):
     imagens = []

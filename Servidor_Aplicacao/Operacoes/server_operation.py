@@ -14,11 +14,8 @@ def recebeQuantidade(stringDados: str, campo: str):
     quantidade = len(dadosJson.get(campo))
     return quantidade
 
-
-
-
 def codifica(mensagemEmString: str):
-    return mensagemEmString.encode("utf-8").lower()
+    return mensagemEmString.encode("utf-8")
 
 def carrega(resposta):
     return resposta.decode("utf-8")
@@ -39,6 +36,44 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
     except Exception as e:
         print(f"[Erro] {e}\nFalha no envio da mensagem: {mensagem.stringMensagem}")
         return False
+    
+def receive_image(self, buffer_size=4096, path='received_image.png'):
+        if not self.socket:
+            raise RuntimeError("Socket not connected")
+        tamanho_total = self.receive_size()
+        with open(path, 'wb') as f:
+            data = b''
+            while len(data) < tamanho_total:
+                chunk = self.socket.recv(buffer_size)
+                if not chunk:
+                    break
+                data += chunk
+            f.write(data)
+        return data, path
+
+
+def enviaImagem(socket: socket.socket, mensagem: Mensagem):
+    try:
+        # Assume que mensagem.stringMensagem contém os dados binários da imagem
+        if isinstance(mensagem.stringMensagem, bytes):
+            dados = mensagem.stringMensagem
+        elif isinstance(mensagem.stringMensagem, str):
+            # Caso tenha sido acidentalmente convertido em string, tenta reverter
+            dados = mensagem.stringMensagem.encode("latin1")  # cuidado: pode corromper se não for essa a origem
+        else:
+            raise ValueError("stringMensagem não contém dados binários válidos.")
+
+        tamanho = len(dados)
+        print(f"[Envio] Enviando imagem com {tamanho} bytes.")
+
+        socket.sendall(tamanho.to_bytes(8, "big"))
+        socket.sendall(dados)
+        return True
+
+    except Exception as e:
+        print(f"[Erro] {e}\nFalha no envio da imagem.")
+        return False
+
 
 def messageHandler(socket_cliente):
     return None

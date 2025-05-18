@@ -39,8 +39,9 @@ class FilaDeMensagens(threading.Thread):
     # Função que faz a conexão com o servidor de banco de dados, cria seu socket
     def conectaBanco(self):
         try:
-            self.socketBD = socket.create_connection(('localhost', 6001))
-            logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [localhost:6000].")
+            #self.socketBD = socket.create_connection(('localhost', 6001))
+            self.socketBD = socket.create_connection(('192.168.1.15', 6000))
+            logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
             logging.info(f"[Fila de Mensagens] Erro ao conectar ao Banco de Dados: {e}")
@@ -109,6 +110,7 @@ class FilaDeMensagens(threading.Thread):
     # DecisorFilaDeMensages() é o método onde as mensagens do servidor são envidas ao banco de dados e o retorno ao cliente é processado.
     def decisorFilaDeMensagens(self, mensagem, callback, connect, tipo, serverSocket, fila, imagens):
         from Operacoes.cadastramento import Cadastramento
+
         logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
 
         if imagens == None:
@@ -118,25 +120,34 @@ class FilaDeMensagens(threading.Thread):
 
         match tipo:
             case "visualizar":
-                self.decisorVisualizar(resposta, connect, self.socketBD)
+                self.decisorVisualizar(resposta, connect, callback, self.socketBD)
+
             case "login":
                 callback(resposta, connect)
+
             case "pedido":
                 self.decisorPedido(resposta, connect, callback, mensagem)
+
             case "editar":
                 self.decisorEditar(resposta, connect, self.socketBD, imagens)
+
             case "criar":
                 self.decisorCriar(resposta, connect, callback, imagens)
+
             case "excluir":
                 self.decisorExcluir(resposta, connect, callback)
+
             case "cadastramento":
                 callback(resposta, connect, serverSocket, fila)
+                
             case _:
                 print("[Fila de Mensagens] Resposta do Banco de Dados não tratada.")
                 return
                         
 
-    def decisorVisualizar(resposta, connect, callback, socket_banco):
+    @staticmethod
+    def decisorVisualizar(respostaO, connect, callback, socket_banco):
+        resposta = [ws.strip() for ws in respostaO.split('|')]
         match resposta[0]:
             case "anuncios":
                 callback(resposta, connect, socket_banco)
@@ -162,6 +173,7 @@ class FilaDeMensagens(threading.Thread):
             case "meus_pedidos":
                 callback(resposta, connect, socket_banco)
 
+    @staticmethod
     def decisorEditar(resposta, connect, callback, socket_banco, imagens: list):
         match resposta[0]:
             case "loja":
