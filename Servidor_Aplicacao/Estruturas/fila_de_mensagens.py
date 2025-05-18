@@ -35,6 +35,66 @@ class FilaDeMensagens(threading.Thread):
             return self._fila.get()
         except Empty:
             return None
+        
+    # DecisorFilaDeMensages() é o método onde as mensagens do servidor são envidas ao banco de dados e o retorno ao cliente é processado.
+    def decisorFilaDeMensagens(self, mensagem, callback, connect, tipo, serverSocket, fila, imagens):
+        from Operacoes.cadastramento import Cadastramento
+
+        logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
+
+        respostao = self.enviaAoBanco(mensagem)
+        resposta = [ws.strip() for ws in respostao.split('|')]
+        '''
+        if imagens == None:
+            respostao = self.enviaAoBanco(mensagem)
+            resposta = [ws.strip() for ws in respostao.split('|')]
+        else:
+            resposta = self.mensagemProBancoCriar(mensagem, imagens)
+            resposta = [ws.strip() for ws in respostao.split('|')]
+        '''
+
+        match tipo:
+            case "visualizar":
+                self.decisorVisualizar(resposta, connect, callback, self.socketBD)
+
+            case "login":
+                callback(resposta, connect)
+
+            case "pedido":
+                self.decisorPedido(resposta, connect, callback, mensagem)
+
+            case "editar":
+                print("[Retorno][Edição]")
+                self.decisorEditar(resposta, connect, self.socketBD, callback, imagens=imagens)
+
+            case "criar":
+                self.decisorCriar(resposta, connect, callback, imagens)
+
+            case "excluir":
+                self.decisorExcluir(resposta, connect, callback)
+
+            case "cadastramento":
+                callback(resposta, connect, serverSocket, fila)
+                
+            case _:
+                print("[Fila de Mensagens] Resposta do Banco de Dados não tratada.")
+                return
+
+    def run(self):
+        # Enquanto o servidor estiver ativo, a fila vai desempilhando e transmitindo as mensagens ao banco de dados.
+        # Se a fila estiver vazia, nada acontece.
+        while True:
+            try:
+                mensagem, callback, connect, tipo, serverSocket, fila, imagens = self.desenfileira()
+            except ValueError:
+                logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
+                continue
+
+            if mensagem and callback and connect:
+                self.decisorFilaDeMensagens(mensagem, callback, connect, tipo, serverSocket, fila, imagens)
+
+            else:
+                logging.info("[Fila de mensagens] Erro ao obter mensagem, callback ou connect.")
     
     # Função que faz a conexão com o servidor de banco de dados, cria seu socket
     def conectaBanco(self):
@@ -90,64 +150,9 @@ class FilaDeMensagens(threading.Thread):
             return f"[Fila de Mensagens][Erro] Falha ao enviar ao banco: {e}"
         
 
-    def run(self):
-        # Enquanto o servidor estiver ativo, a fila vai desempilhando e transmitindo as mensagens ao banco de dados.
-        # Se a fila estiver vazia, nada acontece.
-        while True:
-            try:
-                mensagem, callback, connect, tipo, serverSocket, fila, imagens = self.desenfileira()
-            except ValueError:
-                logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
-                continue
-
-            if mensagem and callback and connect:
-                self.decisorFilaDeMensagens(mensagem, callback, connect, tipo, serverSocket, fila, imagens)
-
-            else:
-                logging.info("[Fila de mensagens] Erro ao obter mensagem, callback ou connect.")
-
-
-    # DecisorFilaDeMensages() é o método onde as mensagens do servidor são envidas ao banco de dados e o retorno ao cliente é processado.
-    def decisorFilaDeMensagens(self, mensagem, callback, connect, tipo, serverSocket, fila, imagens):
-        from Operacoes.cadastramento import Cadastramento
-
-        logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
-
-        if imagens == None:
-            resposta = self.enviaAoBanco(mensagem)
-        else:
-            resposta = self.mensagemProBancoCriar(mensagem, imagens)
-
-        match tipo:
-            case "visualizar":
-                self.decisorVisualizar(resposta, connect, callback, self.socketBD)
-
-            case "login":
-                callback(resposta, connect)
-
-            case "pedido":
-                self.decisorPedido(resposta, connect, callback, mensagem)
-
-            case "editar":
-                self.decisorEditar(resposta, connect, self.socketBD, imagens)
-
-            case "criar":
-                self.decisorCriar(resposta, connect, callback, imagens)
-
-            case "excluir":
-                self.decisorExcluir(resposta, connect, callback)
-
-            case "cadastramento":
-                callback(resposta, connect, serverSocket, fila)
-                
-            case _:
-                print("[Fila de Mensagens] Resposta do Banco de Dados não tratada.")
-                return
-                        
-
     @staticmethod
-    def decisorVisualizar(respostaO, connect, callback, socket_banco):
-        resposta = [ws.strip() for ws in respostaO.split('|')]
+    def decisorVisualizar(resposta, connect, callback, socket_banco):
+        #resposta = [ws.strip() for ws in respostaO.split('|')]
         match resposta[0]:
             case "anuncios":
                 callback(resposta, connect, socket_banco)
@@ -174,23 +179,29 @@ class FilaDeMensagens(threading.Thread):
                 callback(resposta, connect, socket_banco)
 
     @staticmethod
-    def decisorEditar(resposta, connect, callback, socket_banco, imagens: list):
+    def decisorEditar(resposta, connect, socket_banco, callback, imagens: list):
+        print(f"[Decisor Editar] Resposta: $ {resposta[0]} $")
         match resposta[0]:
             case "loja":
+                print("[Decisor Editar][Editar Loja]")
                 mensagemImagemProBanco = Mensagem.produtorMensagem(imagens[0])
                 op.enviaMensagem(socket_banco, mensagemImagemProBanco)
                 callback(resposta, connect, imagens)
 
             case "anuncio":
+                print("[Decisor Editar][Editar Anúncio]")
                 callback(resposta, connect)
 
             case "produto":
+                print("[Decisor Editar][Editar Produto]")
                 callback(resposta, connect)
 
             case "endereco":
+                print("[Decisor Editar][Editar Endereco]")
                 callback(resposta, connect)
 
-            case "usuario":
+            case _:
+                print("[Decisor Editar][Editar Usuário]")
                 callback(resposta, connect)
 
     def decisorCriar(self, resposta: list, connect: socket.socket, callback, imagens: list):

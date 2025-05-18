@@ -31,6 +31,7 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
     try:
         socket.sendall(mensagem.bytesTamanho)
         socket.sendall(mensagem.bytesMensagem)
+        print(f"[Servidor][Envia Mensagem] Enviado: {mensagem.stringMensagem}")
         return True
     
     except Exception as e:
@@ -85,7 +86,7 @@ def recebeMensagemTamanho(socket_cliente):
 
 
 def decodifica(mensagem_em_bytes):
-    return mensagem_em_bytes.decode("utf-8").lower()
+    return mensagem_em_bytes.decode("utf-8")
 
 def respostaAoCliente(resposta, socket_cliente):
     try:

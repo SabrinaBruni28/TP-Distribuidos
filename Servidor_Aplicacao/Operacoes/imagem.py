@@ -25,6 +25,9 @@ class Imagem():
             
             case "imagem":
                 return self.imagem()
+            
+            case _:
+                return None
 
 
     def loja(self):

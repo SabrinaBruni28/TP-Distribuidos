@@ -18,7 +18,7 @@ class Editar(operacao.Operacao):
         self.decisor()
 
     def decisor(self):
-        operacao = self.mensagemCliente.campoosMensagem[1]
+        operacao = self.mensagemCliente.camposMensagem[1]
 
         match operacao:
             case "anuncio":
@@ -40,41 +40,36 @@ class Editar(operacao.Operacao):
                 print("[Servidor] Mensagem inválida.")
 
     def anuncio(self):
-        idAnuncio = self.mensagemCliente.camposMensagem[2]
-        dados = self.mensagemCliente.camposMensagem[3]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {idAnuncio} | {dados}")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.editarAnuncioCallback, self.conexaoCliente, "editar")
 
     def produto(self):
-        idProduto = self.mensagemCliente.camposMensagem[2]
-        dados = self.mensagemCliente.camposMensagem[3]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {idProduto} | {dados}")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar")
 
     def loja(self):
-        idLoja = self.mensagemCliente.camposMensagem[2]
-        dados = self.mensagemCliente.camposMensagem[3]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | loja | {idLoja} | {dados}")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | loja | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar", imagem=self.imagem)
 
     def endereco(self):
-        idEndereco = self.mensagemCliente.camposMensagem[2]
-        dados = self.mensagemCliente.camposMensagem[3]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | endereco | {idEndereco} | {dados}")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | endereco | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.editarEnderecoCallback, self.conexaoCliente, "editar")
 
     def usuario(self):
-        idUsuario = self.mensagemCliente.camposMensagem[2]
-        dados = self.mensagemCliente.camposMensagem[3]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | usuario | {idUsuario} | {dados}")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | usuario | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.editarUsuarioCallback, self.conexaoServidor, "editar")
