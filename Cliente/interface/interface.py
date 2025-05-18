@@ -117,6 +117,15 @@ class MarketplaceUI(QMainWindow):
 
     def comprar(self, anuncio: Anuncio, formularioOp: FormularioOpcoes):
         valores = formularioOp.obter_valores()
+        if not valores["Endereço"]:
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self,
+                backcolor="#FFC107", fontcolor="#000000",
+                largura=400, altura=50,paddingH=50, paddingV=50,
+                mensagem="Adicione um endereço"
+            )
+            return
+
         pedido = Pedido(
             produto=anuncio.produto, 
             quantidade=int(valores["Quantidade"]),
@@ -318,8 +327,14 @@ class MarketplaceUI(QMainWindow):
                 salvar_png = True,
                 salvar_svg = False
             )
-        except Exception:
-            self.view.set_tela(-1)
+        except (Exception, AttributeError):
+            self.view.set_tela(self.stack, -1)
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self,
+                backcolor="#f44336",
+                largura=400, altura=50, paddingH=50, paddingV=50,
+                mensagem="Erro ao gerar qrcode!"
+            )
             return None
 
         imagem_label = WidgetHelper.imagem(pasta="images/",imagem="qrcode.png", scaled=300)
