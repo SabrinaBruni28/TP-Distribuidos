@@ -19,6 +19,7 @@ class UnixSocketClient:
     def send(self, data: str):
         if not self.socket:
             return False
+        print("Mensagem:", data)
         data_byte = data.encode()
         tamanho = len(data_byte)
         self.send_size(tamanho)
@@ -30,7 +31,9 @@ class UnixSocketClient:
         try:
             self.socket.settimeout(10)
             tamanho = self.receive_size()
-            return self.socket.recv(tamanho).decode()
+            resposta = self.socket.recv(tamanho).decode()
+            print("Resposta:", resposta)
+            return resposta
         except socket.timeout:
             return False
 

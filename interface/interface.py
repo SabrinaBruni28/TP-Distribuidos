@@ -597,12 +597,9 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addSpacing(40)
 
         formulario = Formulario(
-            campos=["Rua", "N°", "Bairro", "Cidade", "Estado", "Complemento"],
+            campos=["Rua", "Numero", "Bairro", "Cidade", "Estado", "Complemento"],
             largura=600,
             altura=50
-        )
-        formulario.validar_tipos(
-            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
         botao_confirmar.clicked.connect(lambda: self.handler.criar_endereco(formulario))
         layout_conteudo.addWidget(formulario)
@@ -1758,7 +1755,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.email_confirmacao(valores["Código"]),
-                acao=ao_confirmar_codigo
+                acao=ao_confirmar_codigo,
+                atualizar_tela=False
             )
 
     def cadastrar(self, formulario: Formulario):
@@ -1791,7 +1789,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.cadastrar(usuario),
-                acao=ao_cadastrar
+                acao=ao_cadastrar,
+                atualizar_tela=False
             )
 
     def login(self, formulario: Formulario):
@@ -1801,7 +1800,6 @@ class InterfaceHandler:
         else:
             usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
             def ao_login(resposta):
-                print(resposta)
                 if resposta[0]:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
@@ -1812,9 +1810,7 @@ class InterfaceHandler:
                     self.view.set_tela(self.stack, -2)
                 
                 elif resposta[1] == "dados_incorretos":
-                    print(resposta[1])
                     formulario.definir_erros_especificos({"Email": "Credenciais inválidas", "Senha": "Credenciais inválidas"})
-                    print(formulario.erros)
                     formulario.exibir_erros()
 
                 else:
@@ -1889,12 +1885,13 @@ class InterfaceHandler:
 
     def criar_endereco(self, formulario: Formulario):
         erro = formulario.validar_tipos(
-            {"Rua": str, "N°": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
+            {"Rua": str, "Numero": int, "Bairro": str, "Cidade": str, "Estado": str, "Complemento": str}
         )
         if erro:
             formulario.exibir_erros()
         else:
             endereco = Endereco.from_dict(formulario.obter_valores())  
+            print(endereco)
             def ao_criar_endereco(resposta):
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -2115,7 +2112,6 @@ class InterfaceHandler:
                         )
                 # Executa:
                 self.thread.executar_mensagem(
-                    
                     requisicao=lambda: self.aplicacao.editar_endereco(endereco, valores_alterados),
                     acao=ao_editar_endereco
                 )
@@ -2157,6 +2153,7 @@ class InterfaceHandler:
                             largura=400, altura=50,paddingH=50, paddingV=50,
                             mensagem="Perfil Editado com Sucesso!"
                         )
+                        self.view.atualiza_tela(self.stack)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2164,11 +2161,12 @@ class InterfaceHandler:
                             largura=400, altura=50,paddingH=50, paddingV=50,
                             mensagem="Erro ao editar perfil!"
                         )
+                        self.view.atualiza_tela(self.stack)
                 # Executa:
                 self.thread.executar_mensagem(
-                    
                     requisicao=lambda: self.aplicacao.editar_usuario(valores_alterados),
-                    acao=ao_editar_perfil
+                    acao=ao_editar_perfil,
+                    atualizar_tela=False
                 )
 
             else:

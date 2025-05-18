@@ -107,7 +107,7 @@ class Usuario_Identificado(Usuario):
     def from_dict(cls, data):
         if isinstance(data, str):
             data = json.loads(data)
-        id = data.get("id_usuario", 0)
+        id = data.get("id", 0)
         nome = data.get("nome", "")
         cpf = data.get("cpf", "")
         email = data.get("email", "")
