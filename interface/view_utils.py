@@ -30,7 +30,7 @@ class Threads:
         self.stack = stack
         self.view = ViewHelper()
 
-    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None):
+    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, atualizar=True):
         thread = QThread()
         worker = WorkerGenerico(funcao_segundo_plano)
         worker.moveToThread(thread)
@@ -38,32 +38,32 @@ class Threads:
         thread.started.connect(worker.run)
 
         worker.terminado.connect(lambda resultado: self._finalizar_thread(
-            thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, resultado
+            thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, resultado, atualizar
         ))
         
         thread.start()
         if abrir_tela and tela_loading:
             self.view.abrir_tela(stack=self.stack, funcao_criadora=tela_loading, salvar_tela=False)
 
-    def _finalizar_thread(self, thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, resultado=None):
+    def _finalizar_thread(self, thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, resultado=None, atualizar=True):
         thread.quit()
         thread.wait()
         thread.deleteLater()
         worker.deleteLater()
 
         if voltar_tela:
-            self.view.voltar_tela(self.stack, excluir_funcao=False)
+            self.view.voltar_tela(self.stack, excluir_funcao=False, atualizar_tela=atualizar)
 
         if abrir_tela and nova_tela_callback:
             if resultado or self.stack.count() == 1:
                 self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
             else:
-                self.view.voltar_tela(self.stack, excluir_funcao=False)
+                self.view.voltar_tela(self.stack, excluir_funcao=False, atualizar_tela=atualizar)
 
         if quando_terminar:
             quando_terminar(resultado)
 
-    def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ..."):
+    def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ...", atualizar_tela=True):
         tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
             mensagem, gif_path="imagens/spinner.gif"
         )
@@ -73,10 +73,11 @@ class Threads:
             tela_loading=tela_carregando,
             abrir_tela=True,
             nova_tela_callback=tela,
-            quando_terminar=acao
+            quando_terminar=acao,
+            atualizar=atualizar_tela
         )
 
-    def executar_mensagem(self, requisicao, acao, mensagem="Salvando ..."):
+    def executar_mensagem(self, requisicao, acao, mensagem="Salvando ...", atualizar_tela=True):
         tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
             mensagem, gif_path="imagens/spinner.gif"
         )
@@ -86,7 +87,8 @@ class Threads:
             tela_loading=tela_carregando,
             abrir_tela= True,
             voltar_tela=True,
-            quando_terminar=acao
+            quando_terminar=acao,
+            atualizar=atualizar_tela
         )
 
 class WidgetHelper(QWidget):
@@ -301,11 +303,12 @@ class ViewHelper(QWidget):
                 # Só remove da lista de funções, caso não exista mais o widget
                 del self.__class__.funcoes_telas[i]
 
-    def voltar_tela(self, stack, excluir_funcao = True):
+    def voltar_tela(self, stack, excluir_funcao = True, atualizar_tela=True):
         index = stack.currentIndex()
         stack.setCurrentIndex(index - 1)
         self.excluir_tela(stack, index, excluir_funcao)
-        self.atualiza_tela(stack)
+        if atualizar_tela:
+            self.atualiza_tela(stack)
 
     def abrir_tela(self, stack, funcao_criadora, excluir_anterior=False, salvar_tela=True):
         if salvar_tela:

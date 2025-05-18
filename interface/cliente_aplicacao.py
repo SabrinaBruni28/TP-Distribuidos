@@ -98,14 +98,15 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
+        print(resposta)
         if resposta[0] == "ok":
             self.usuario = Usuario_Identificado.from_dict(resposta[1])
-            return True
+            return [True]
         
         elif resposta[0] == "erro":
-            return resposta[1]
+            return False, resposta[1]
         
-        return False
+        return [False]
 
     def visualizar_anuncios(self):
         mensagem = f"visualizar|todos_anuncios"

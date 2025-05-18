@@ -243,6 +243,7 @@ class Formulario(QWidget):
         for nome, erro in self.erros.items():
             texto = erro.text()
             if texto:
+                print(nome)
                 erro.setVisible(True)
             else:
                 erro.setVisible(False)
@@ -256,7 +257,6 @@ class Formulario(QWidget):
         for nome, mensagem in erros.items():
             if nome in self.erros:
                 self.erros[nome].setText(mensagem)
-                self.erros[nome].setVisible(bool(mensagem))
 
     def obter_valores(self) -> dict:
         """

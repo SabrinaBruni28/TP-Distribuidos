@@ -1746,9 +1746,18 @@ class InterfaceHandler:
                         mensagem="Limite de tentativas excedido!"
                     )
                     self.view.set_tela(self.stack, -2)
+
+                elif resposta[1] == "tempo_excedido":
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        mensagem="Limite de tempo excedido!"
+                    )
+                    self.view.set_tela(self.stack, -2)
             # Executa:
             self.thread.executar_mensagem(
-                requisicao=lambda: self.aplicacao.email_confirmacao(valores),
+                requisicao=lambda: self.aplicacao.email_confirmacao(valores["Código"]),
                 acao=ao_confirmar_codigo
             )
 
@@ -1792,12 +1801,8 @@ class InterfaceHandler:
         else:
             usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
             def ao_login(resposta):
-                if isinstance(resposta, dict):
-                    capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
-                    formulario.definir_erros_especificos(capitalizado)
-                    formulario.exibir_erros()
-
-                elif resposta:
+                print(resposta)
+                if resposta[0]:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#4CAF50",
@@ -1805,6 +1810,12 @@ class InterfaceHandler:
                         mensagem="Login realizado com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -2)
+                
+                elif resposta[1] == "dados_incorretos":
+                    print(resposta[1])
+                    formulario.definir_erros_especificos({"Email": "Credenciais inválidas", "Senha": "Credenciais inválidas"})
+                    print(formulario.erros)
+                    formulario.exibir_erros()
 
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -1816,7 +1827,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.login(usuario),
-                acao=ao_login
+                acao=ao_login,
+                atualizar_tela=False
             )
 
     def criar_pedido(self, pedido: Pedido, anuncio: Anuncio):   
