@@ -19,8 +19,8 @@ from PyQt6.QtWidgets import (
    QVBoxLayout, QHBoxLayout, QScrollArea, QFrame, QStackedWidget
 )
 
-IP = "localhost"
-PORTA = 5000
+ip = "localhost"
+porta = 5000
 
 class MarketplaceUI(QMainWindow):
     def __init__(self):
@@ -1699,7 +1699,7 @@ class InterfaceHandler:
     def __init__(self, parent, stack):
         self.parent = parent
         self.stack = stack
-        self.aplicacao = ClienteAplicacao(IP, PORTA)
+        self.aplicacao = ClienteAplicacao(ip, porta)
         self.thread = Threads(stack)
         self.view = ViewHelper()
 
@@ -2454,8 +2454,8 @@ class InterfaceHandler:
 
 if __name__ == "__main__":
    if len(sys.argv) > 1:
-        IP = sys.argv[1]
-        PORTA = sys.argv[2]
+        ip = sys.argv[1]
+        porta = int(sys.argv[2])
 
    app = QApplication(sys.argv)
    window = MarketplaceUI()

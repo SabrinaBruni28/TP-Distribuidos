@@ -111,6 +111,10 @@ class Utils:
 
     @staticmethod
     def excluir_arquivos_pasta(caminho_pasta):
+        # Caminho absoluto da pasta que você quer limpar
+        caminho_pasta = os.path.join(CAMINHO_BASE, caminho_pasta)
+
+        # Remove arquivos
         for arquivo in os.listdir(caminho_pasta):
             caminho_arquivo = os.path.join(caminho_pasta, arquivo)
             if os.path.isfile(caminho_arquivo):

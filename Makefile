@@ -14,7 +14,7 @@ instalar_bibliotecas:
 	python3 -m pip install --upgrade pip
 
 cliente:
-	$(MAKE) --no-print-directory -C Cliente cliente IP=$(IP) PORTA=$(PORTA)
+	$(MAKE) --no-print-directory -C Cliente cliente $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
 servidorAp:
 	$(MAKE) --no-print-directory -C ServidorAp cliente

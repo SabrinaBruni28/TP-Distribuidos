@@ -9,7 +9,8 @@ class UnixSocketClient:
             s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             s.connect((ip, port))
             self.socket = s  # só define se conectou com sucesso
-        except Exception:
+        except Exception as e:
+            print(e)
             pass  # falha silenciosa
         print("Socket:", self.socket)
 
@@ -21,11 +22,11 @@ class UnixSocketClient:
     def send(self, data: str):
         if not self.socket:
             return False
-        print("Mensagem:", data)
         data_byte = data.encode()
         tamanho = len(data_byte)
         self.send_size(tamanho)
         self.socket.sendall(data_byte)
+        print("Mensagem:", data)
 
     def receive(self):
         if not self.socket:

@@ -39,7 +39,7 @@
    ```bash
    make cliente IP="ip" PORTA=porta
    ```
-   > Por padrão: IP = `localhost` e PORTA = `5000`
+   > Por padrão: IP = `"localhost"` e PORTA = `5000`
 
 ---
 
