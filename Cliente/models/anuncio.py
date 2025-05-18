@@ -43,7 +43,7 @@ class Anuncio:
             "pausado": self.pausado
         })
     
-    def to_dict_personalisado(self):
+    def to_dict_personalizado(self):
         return json.dumps({
             "produto": "{" + f"id: {self.produto.id if self.produto else None}" +"}",
             "preco": self.preco,

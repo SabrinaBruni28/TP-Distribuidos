@@ -1764,25 +1764,24 @@ class InterfaceHandler:
             )
 
     def cadastrar(self, formulario: Formulario):
-        erro = formulario.validar_tipos(
-            {
-                "Nome": str, "CPF": str, 
-                "Email": str, "Senha": str
-            }
-        )
+        erro = formulario.validar_tipos({"Nome": str, "CPF": str, "Email": str, "Senha": str})
         if erro:
             formulario.exibir_erros()
         else:
             usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
             def ao_cadastrar(resposta):
-                if isinstance(resposta, dict):
-                    capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
-                    formulario.definir_erros_especificos(capitalizado)
-                    formulario.exibir_erros()
-
-                elif resposta:
+                if resposta[0]:
                     self.view.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao)
 
+                elif resposta[1]:
+                    erros = {}
+                    if "cpf" in resposta[1]:
+                        erros["CPF"] = "CPF já cadastrado!"
+                    if "email" in resposta[1]:
+                        erros["Email"] = "Email já cadastrado!"
+                    if erros:
+                        formulario.definir_erros_especificos(erros)
+                        formulario.exibir_erros()
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,

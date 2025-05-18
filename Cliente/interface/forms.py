@@ -242,7 +242,6 @@ class Formulario(QWidget):
         for nome, erro in self.erros.items():
             texto = erro.text()
             if texto:
-                print(nome)
                 erro.setVisible(True)
             else:
                 erro.setVisible(False)

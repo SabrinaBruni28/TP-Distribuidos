@@ -76,12 +76,12 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "email_confirmacao":
-            return True
+            return [True]
         
         elif resposta[0] == "erro":
-            return resposta[1]
+            return False, resposta[1]
 
-        return False
+        return False, ""
         
     def email_confirmacao(self, codigo):
         mensagem = f"codigo|{codigo}"
@@ -107,7 +107,7 @@ class ClienteAplicacao():
         elif resposta[0] == "erro":
             return False, resposta[1]
         
-        return [False]
+        return False, ""
 
     def visualizar_anuncios(self):
         mensagem = f"visualizar|todos_anuncios"
@@ -315,7 +315,7 @@ class ClienteAplicacao():
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):
-        mensagem = f"criar|anuncio|{anuncio.to_dict_personalisado()}"
+        mensagem = f"criar|anuncio|{anuncio.to_dict_personalizado()}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
@@ -325,7 +325,7 @@ class ClienteAplicacao():
         return False
     
     def criar_produto(self, produto: Produto):
-        mensagem = f"criar|produto|{produto.to_dict_personalisado()}"
+        mensagem = f"criar|produto|{produto.to_dict_personalizado()}"
         self.socket.send(mensagem)
 
         for imagem in produto.imagens:
@@ -342,7 +342,7 @@ class ClienteAplicacao():
         return False
     
     def criar_loja(self, loja: Loja):
-        mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalisado()}"
+        mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalizado()}"
         self.socket.send(mensagem)
         if loja.imagem:
             self.socket.send_image(loja.imagem)
@@ -357,7 +357,7 @@ class ClienteAplicacao():
         return False
     
     def criar_pedido(self, pedido: Pedido):
-        mensagem = f"criar|pedido|{self.usuario.id}|{pedido.to_dict_personalisado()}"
+        mensagem = f"criar|pedido|{self.usuario.id}|{pedido.to_dict_personalizado()}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
@@ -368,7 +368,7 @@ class ClienteAplicacao():
     
     def criar_endereco(self, endereco: Endereco):
         print(endereco)
-        mensagem = f"criar|endereco|{self.usuario.id}|{endereco.to_dict_personalisado()}"
+        mensagem = f"criar|endereco|{self.usuario.id}|{endereco.to_dict_personalizado()}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())

@@ -24,7 +24,7 @@ class Endereco:
             "estado": self.estado
         })
     
-    def to_dict_personalisado(self):
+    def to_dict_personalizado(self):
         return json.dumps({
             "rua": self.rua,
             "numero": self.numero,

@@ -83,7 +83,7 @@ class Loja:
             "pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento] if self.pedidos_em_andamento else [],
         }) 
     
-    def to_dict_personalisado(self):
+    def to_dict_personalizado(self):
         return json.dumps({
             "nome": self.nome,
             "imagem": self.imagem if self.imagem else "",

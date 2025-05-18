@@ -27,7 +27,7 @@ class Produto:
             "loja": self.loja.to_dict() if self.loja else None,
         })
     
-    def to_dict_personalisado(self):
+    def to_dict_personalizado(self):
         return json.dumps({
             "nome": self.nome,
             "descricao": self.descricao,
