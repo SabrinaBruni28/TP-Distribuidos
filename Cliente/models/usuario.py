@@ -1,7 +1,6 @@
 from models.endereco import Endereco
 from models.pedido import Pedido
 from models.loja import Loja
-from typing import Optional
 import json
 
 class Usuario:
@@ -10,10 +9,8 @@ class Usuario:
 
 class Usuario_Identificado(Usuario):
     def __init__(
-            self, id = 0, nome = "", cpf = "", email = "", senha = "", 
-            lojas: Optional[list[Loja]] = None, 
-            enderecos: Optional[list[Endereco]] = None, 
-            pedidos: Optional[list[Pedido]] = None
+            self, id: int = 0, nome: str = "", cpf: str = "", email: str = "", senha: str = "", 
+            lojas: Loja = [], enderecos: Endereco = [], pedidos: Pedido = []
         ):
         self.id = id
         self.nome = nome
@@ -21,9 +18,9 @@ class Usuario_Identificado(Usuario):
         self.email = email
         self.senha = senha
 
-        self.lojas = lojas if lojas is not None else []
-        self.enderecos = enderecos if enderecos is not None else []
-        self.pedidos = pedidos if pedidos is not None else []
+        self.lojas = lojas
+        self.enderecos = enderecos
+        self.pedidos = pedidos
 
     def criar_loja(self, loja):
         self.lojas.append(loja)

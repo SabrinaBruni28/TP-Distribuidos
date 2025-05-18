@@ -19,12 +19,16 @@ from PyQt6.QtWidgets import (
    QVBoxLayout, QHBoxLayout, QScrollArea, QFrame, QStackedWidget
 )
 
+IP = "localhost"
+PORTA = 5000
+
 class MarketplaceUI(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Caldeirão")
         self.setGeometry(100, 100, 1000, 600)
         self.showMaximized()
+        Utils.cria_pasta("uploads/")
 
         self.stack = QStackedWidget()
         self.setCentralWidget(self.stack)
@@ -1695,7 +1699,7 @@ class InterfaceHandler:
     def __init__(self, parent, stack):
         self.parent = parent
         self.stack = stack
-        self.aplicacao = ClienteAplicacao()
+        self.aplicacao = ClienteAplicacao(IP, PORTA)
         self.thread = Threads(stack)
         self.view = ViewHelper()
 
@@ -2449,6 +2453,10 @@ class InterfaceHandler:
             dialogo.close()
 
 if __name__ == "__main__":
+   if len(sys.argv) > 1:
+        IP = sys.argv[1]
+        PORTA = sys.argv[2]
+
    app = QApplication(sys.argv)
    window = MarketplaceUI()
    window.show()

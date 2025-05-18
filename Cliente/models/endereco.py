@@ -1,14 +1,17 @@
 import json
 
 class Endereco:
-    def __init__(self, id = 0, rua = "", numero = 0, complemento = "", bairro = "", cidade = "", estado = ""):
+    def __init__(
+            self, id: int = 0, rua: str = "", numero: int = 0, bairro: str = "", 
+                cidade: str = "", estado: str = "", complemento: str = ""
+        ):
         self.id = id
         self.rua = rua
         self.numero = numero
-        self.complemento = complemento
         self.bairro = bairro
         self.cidade = cidade
         self.estado = estado
+        self.complemento = complemento
 
     def to_dict(self):
         return json.dumps({

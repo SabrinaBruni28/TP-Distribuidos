@@ -1,7 +1,7 @@
 import json
 
 class Produto:
-    def __init__(self, id = 0, nome = "", descricao = "", imagens = [], loja = None):
+    def __init__(self, id: int = 0, nome: str = "", descricao: str = "", imagens: list = [], loja = None):
         self.id = id
         self.nome = nome
         self.descricao = descricao

@@ -1,3 +1,6 @@
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
 from models.usuario import Usuario, Usuario_Identificado
 from cliente_socket import UnixSocketClient
 from models.endereco import Endereco
@@ -8,10 +11,11 @@ from models.loja import Loja
 import json
 
 class ClienteAplicacao():
-    def __init__(self):
+    def __init__(self, ip, porta):
+        print("IP:", ip, "Porta:", porta)
         self.anuncios = []
         self.usuario = Usuario()
-        self.socket = UnixSocketClient(ip="192.168.1.17", port=5000)
+        self.socket = UnixSocketClient(ip, porta)
 
     def chamar(self, obj, *args, **kwargs):
         nome_funcao = f"visualizar_{obj}"
@@ -110,7 +114,6 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         quantidade = self.socket.receive_size()
-        print("Quantidade recebida:", quantidade)
         if quantidade:
             for i in range(quantidade):
                 resposta = self.divide_mensagem(self.socket.receive())

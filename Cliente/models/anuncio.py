@@ -2,13 +2,16 @@ from models.produto import Produto
 import json
 
 class Anuncio:
-    def __init__(self, id = 0, produto: Produto = None, preco = 0, quantidade_disponivel = 0, chave_pix = "", pausado = False):
+    def __init__(
+            self, id: int = 0, preco: float = 0, quantidade_disponivel: int = 0, 
+            chave_pix:str = "", pausado: bool = False, produto: Produto = None
+        ):
         self.id = id 
-        self.produto = produto
         self.preco = preco
         self.quantidade_disponivel = quantidade_disponivel
         self.chave_pix = chave_pix
         self.pausado = pausado
+        self.produto = produto
         
         if self.quantidade_disponivel <= 0:
             self.pausar()

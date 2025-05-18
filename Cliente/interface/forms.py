@@ -1,6 +1,5 @@
 import sys, os
-# Adiciona o diretório raiz ao sys.path
-CAMINHO_BASE = sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 from view_utils import WidgetHelper
 from utils import Utils

@@ -1,12 +1,20 @@
-install:
-	sudo apt install libxcb-cursor0
+.PHONY: cliente
 
-salvar_bibliotecas:
-	pip freeze > requirements.txt
+criar_ambiente:
+	python3 -m venv .venv
 
-install_bibliotecas:
-	pip install -r requirements.txt
+ativar_ambiente:
+	source .venv/bin/activate
+
+instalar_bibliotecas:
+	pip install -r Cliente/requirements.txt -r ServidorAp/requirements.txt -r ServidorBD/requirements.txt
 	python3 -m pip install --upgrade pip
 
-app:
-	python3 interface/interface.py
+cliente:
+	$(MAKE) --no-print-directory -C Cliente cliente IP=$(IP) PORTA=$(PORTA)
+
+servidorAp:
+	$(MAKE) --no-print-directory -C ServidorAp cliente
+
+servidorBD:
+	$(MAKE) --no-print-directory -C ServidorBD cliente

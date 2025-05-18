@@ -1,10 +1,7 @@
 import sys, os, shutil
-# Adiciona o diretório raiz ao sys.path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-sys.path.append(CAMINHO_BASE)
 from utils import Utils
-
 from PyQt6.QtGui import QPixmap, QMovie, QPainter
 from PyQt6.QtCore import Qt, QTimer, QSize, QThread, QObject, pyqtSignal
 

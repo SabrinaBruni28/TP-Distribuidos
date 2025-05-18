@@ -1,3 +1,5 @@
+import sys, os
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import socket
 
 class UnixSocketClient:
@@ -45,6 +47,7 @@ class UnixSocketClient:
             tamanho = len(data)
             self.send_size(tamanho)
             self.socket.sendall(data)
+        print("Manda Imagem:", image_path)
         return data
 
     def receive_image(self, buffer_size=4096, path='received_image.png'):
@@ -62,11 +65,13 @@ class UnixSocketClient:
                 if diferenca < buffer_size:
                     buffer_size = diferenca
             f.write(data)
+            print("Recebe Imagem:", path)
         return data, path
 
     def send_size(self, tamanho: int):
         if not self.socket:
             return False 
+        print("Manda tamanho:", tamanho)
         self.socket.sendall(tamanho.to_bytes(8, 'big'))
 
     def receive_size(self):
@@ -76,6 +81,7 @@ class UnixSocketClient:
             self.socket.settimeout(10)
             tamanho_bytes = self.socket.recv(8)
             tamanho_total = int.from_bytes(tamanho_bytes, 'big')
+            print("Recebe tamanho:", tamanho_total)
             return tamanho_total
         except socket.timeout:
             return False

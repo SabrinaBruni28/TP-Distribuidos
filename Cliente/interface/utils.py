@@ -1,10 +1,16 @@
-import re, sys, os
-from pybrcode.pix import generate_simple_pix
-
+import sys, os
 CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
 
+from pybrcode.pix import generate_simple_pix
+import re
+
 class Utils:
+    @staticmethod
+    def cria_pasta(path):
+        nova_pasta = os.path.join(CAMINHO_BASE, path)
+        os.makedirs(nova_pasta, exist_ok=True)
+
     @staticmethod
     def caminho_imagem(path):
         return os.path.join(CAMINHO_BASE, path)

@@ -4,7 +4,11 @@ from models.pedido import Pedido
 import json
 
 class Loja:
-    def __init__(self, id = 0, nome = "", imagem = "", produtos: Produto = [], anuncios = [], pedidos_confirmados = [], pedidos_em_andamento = []):
+    def __init__(
+            self, id: int = 0, nome: str = "", imagem: str = "", 
+            produtos: Produto = [], anuncios: Anuncio = [], 
+            pedidos_confirmados: Pedido = [], pedidos_em_andamento: Pedido = []
+        ):
         self.id = id
         self.nome = nome
         self.imagem = imagem

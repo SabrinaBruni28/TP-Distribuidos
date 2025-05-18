@@ -1,15 +1,18 @@
-import datetime, json
-from models.produto import Produto
 from models.endereco import Endereco
+from models.produto import Produto
+import datetime, json
 
 class Pedido:
-    def __init__(self, id = 0, produto: Produto = None, quantidade = 0, preco = 0, endereco: Endereco = None, data = None):
+    def __init__(
+            self, id: int = 0, quantidade: int = 0, preco: float = 0, data: datetime = None, 
+            produto: Produto = None, endereco: Endereco = None
+        ):
         self.id = id
-        self.produto = produto
         self.quantidade = quantidade
         self.preco = preco
-        self.endereco = endereco
         self.data = data if data else datetime.datetime.now()
+        self.produto = produto
+        self.endereco = endereco
 
     def calcular_total(self):
         total = self.preco * self.quantidade
