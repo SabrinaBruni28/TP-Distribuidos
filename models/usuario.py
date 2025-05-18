@@ -6,7 +6,7 @@ import json
 
 class Usuario:
     def __init__(self):
-        self.id = 0
+        pass
 
 class Usuario_Identificado(Usuario):
     def __init__(

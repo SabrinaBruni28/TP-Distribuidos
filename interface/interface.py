@@ -1313,7 +1313,7 @@ class MarketplaceUI(QMainWindow):
         comprar = WidgetHelper.botao(
             nome="Comprar", fonte=30,
             largura=200, altura=50,
-            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login)
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login())
         )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 

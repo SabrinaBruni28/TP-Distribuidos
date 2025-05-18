@@ -55,6 +55,9 @@ class UnixSocketClient:
                 if not chunk:
                     break
                 data += chunk
+                diferenca = tamanho_total - len(data)
+                if diferenca < buffer_size:
+                    buffer_size = diferenca
             f.write(data)
         return data, path
 
