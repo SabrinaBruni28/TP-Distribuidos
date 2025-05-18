@@ -1,4 +1,4 @@
-import datetime
+import datetime, json
 from models.produto import Produto
 from models.endereco import Endereco
 
@@ -16,26 +16,28 @@ class Pedido:
         return total
     
     def to_dict(self):
-        return {
+        return json.dumps({
             "id": self.id,
             "data": self.data.isoformat() if self.data else "",
             "produto": self.produto.to_dict() if self.produto else None,
             "quantidade": self.quantidade,
             "preco": self.preco,
             "endereco": self.endereco.to_dict() if self.endereco else None,
-        }
+        })
     
     def to_dict_personalisado(self):
-        return {
+        return json.dumps({
             "data": self.data.isoformat() if self.data else datetime.datetime.now().isoformat(),
             "produto": "{" + f"id: {self.produto.id if self.produto else None}" +"}",
             "quantidade": self.quantidade,
             "preco": self.preco,
             "endereco": self.endereco.id if self.endereco else None,
-        }
+        })
     
     @classmethod
     def from_dict(cls, data):
+        if isinstance(data, str):
+            data = json.loads(data)
         id = data.get("id", 0)
         data = datetime.datetime.fromisoformat(data["data"]) if "data" in data else ""
         produto = Produto.from_dict(data["produto"]) if "produto" in data else []

@@ -5,7 +5,6 @@ from models.anuncio import Anuncio
 from models.produto import Produto
 from models.pedido import Pedido
 from models.loja import Loja
-import time
 
 class ClienteAplicacao():
     def __init__(self):
@@ -27,8 +26,8 @@ class ClienteAplicacao():
             return False
 
     def divide_mensagem(self, stringMensagem):
-        if isinstance(stringMensagem, bool) :
-            return [stringMensagem]
+        if not stringMensagem:
+            return [""]
         return [ws.strip() for ws in stringMensagem.split('|')]
     
     def is_identificado(self):
@@ -67,6 +66,7 @@ class ClienteAplicacao():
         return True
 
     def cadastrar(self, usuario: Usuario_Identificado):
+        print(usuario)
         mensagem = f"cadastramento|{usuario.to_dict_cadastramento()}"
         self.socket.send(mensagem)
 
@@ -80,6 +80,7 @@ class ClienteAplicacao():
         return False
         
     def email_confirmacao(self, codigo):
+        print(codigo)
         mensagem = f"codigo|{codigo}"
         self.socket.send(mensagem)
 
@@ -92,6 +93,7 @@ class ClienteAplicacao():
             return False, resposta[1]
         
     def login(self, usuario: Usuario_Identificado):
+        print(usuario)
         mensagem = f"login|{usuario.to_dict_login()}"
         self.socket.send(mensagem)
 
@@ -108,15 +110,20 @@ class ClienteAplicacao():
     def visualizar_anuncios(self):
         mensagem = f"visualizar|todos_anuncios"
         self.socket.send(mensagem)
+        print("Mensagem enviada:", mensagem)
 
         quantidade = self.socket.receive_size()
+        print("Quantidade recebida:", quantidade)
         if quantidade:
             for i in range(quantidade):
                 resposta = self.divide_mensagem(self.socket.receive())
+                print("Resposta:", resposta)
                 if resposta[0] == "anuncios":
                     anuncio = Anuncio.from_dict(resposta[1])
+                    print("Anuncio", i, anuncio)
                     self.anuncios.append(anuncio)
                     for imagem in anuncio.produto.imagens:
+                        print("imagem:", imagem)
                         self.socket.receive_image(path=f"uploads/{imagem}")
                 else:
                     return False
@@ -253,7 +260,7 @@ class ClienteAplicacao():
         return True
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
-        mensagem = f"editar|anuncio|{anuncio.id}|{novos_dados}"
+        mensagem = f"editar|anuncio|{novos_dados}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
@@ -263,7 +270,7 @@ class ClienteAplicacao():
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
-        mensagem = f"editar|produto|{produto.id}|{novos_dados}"
+        mensagem = f"editar|produto|{novos_dados}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
@@ -273,7 +280,7 @@ class ClienteAplicacao():
         return False
     
     def editar_loja(self, loja: Loja, novos_dados):
-        mensagem = f"editar|loja|{loja.id}|{novos_dados}"
+        mensagem = f"editar|loja|{novos_dados}"
         self.socket.send(mensagem)
         if novos_dados["imagem"]:
             self.socket.send_image(novos_dados["imagem"])
@@ -287,7 +294,7 @@ class ClienteAplicacao():
         return False
     
     def editar_usuario(self, novos_dados):
-        mensagem = f"editar|usuario|{self.usuario.id}|{novos_dados}"
+        mensagem = f"editar|usuario|{novos_dados}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
@@ -301,7 +308,7 @@ class ClienteAplicacao():
         return False
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
-        mensagem = f"editar|endereco|{endereco.id}|{novos_dados}"
+        mensagem = f"editar|endereco|{novos_dados}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())

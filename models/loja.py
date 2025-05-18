@@ -1,6 +1,7 @@
 from models.produto import Produto
 from models.anuncio import Anuncio
 from models.pedido import Pedido
+import json
 
 class Loja:
     def __init__(self, id = 0, nome = "", imagem = "", produtos: Produto = [], anuncios = [], pedidos_confirmados = [], pedidos_em_andamento = []):
@@ -68,7 +69,7 @@ class Loja:
         return False
     
     def to_dict(self):
-        return {
+        return json.dumps({
             "id": self.id,
             "nome": self.nome,
             "imagem": self.imagem,
@@ -76,16 +77,18 @@ class Loja:
             "anuncios": [anuncio.produto.nome for anuncio in self.anuncios] if self.anuncios else [],
             "pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados] if self.pedidos_confirmados else [],
             "pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento] if self.pedidos_em_andamento else [],
-        }  
+        }) 
     
     def to_dict_personalisado(self):
-        return {
+        return json.dumps({
             "nome": self.nome,
             "imagem": self.imagem if self.imagem else "",
-        } 
+        })
     
     @classmethod
     def from_dict(cls, data):
+        if isinstance(data, str):
+            data = json.loads(data)
         id = data.get("id", 0)
         nome = data.get("nome", "")
         imagem = data.get("imagem", "")

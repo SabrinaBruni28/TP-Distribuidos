@@ -28,12 +28,12 @@ class UnixSocketClient:
         if not self.socket:
             return False
         try:
-            self.socket.timeout(10)
+            self.socket.settimeout(10)
             tamanho = self.receive_size()
             return self.socket.recv(tamanho).decode()
         except socket.timeout:
             return False
-    
+
     def send_image(self, image_path: str):
         if not self.socket:
             return False
@@ -66,6 +66,16 @@ class UnixSocketClient:
     def receive_size(self):
         if not self.socket:
             return False
-        tamanho_bytes = self.socket.recv(8)
-        tamanho_total = int.from_bytes(tamanho_bytes, 'big')
-        return tamanho_total
+        try:
+            self.socket.settimeout(10)
+            tamanho_bytes = self.socket.recv(8)
+            tamanho_total = int.from_bytes(tamanho_bytes, 'big')
+            return tamanho_total
+        except socket.timeout:
+            return False
+
+if __name__ == "__main__":
+    socket_c = UnixSocketClient(ip="192.168.1.17", port=5000)
+    print("Socket:", socket_c)
+    socket_c.receive_image(path="imagem.jpg")
+    print("imagem recebida")

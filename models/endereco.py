@@ -1,3 +1,4 @@
+import json
 
 class Endereco:
     def __init__(self, id = 0, rua = "", numero = 0, complemento = "", bairro = "", cidade = "", estado = ""):
@@ -10,7 +11,7 @@ class Endereco:
         self.estado = estado
 
     def to_dict(self):
-        return {
+        return json.dumps({
             "id": self.id,
             "rua": self.rua,
             "numero": self.numero,
@@ -18,20 +19,22 @@ class Endereco:
             "bairro": self.bairro,
             "cidade": self.cidade,
             "estado": self.estado
-        }
+        })
     
     def to_dict_personalisado(self):
-        return {
+        return json.dumps({
             "rua": self.rua,
             "numero": self.numero,
             "complemento": self.complemento,
             "bairro": self.bairro,
             "cidade": self.cidade,
             "estado": self.estado
-        }
+        })
     
     @classmethod
     def from_dict(cls, data):
+        if isinstance(data, str):
+            data = json.loads(data)
         id = data.get("id", 0)
         rua = data.get("rua", "")
         numero = data.get("numero", 0)

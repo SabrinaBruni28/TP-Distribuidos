@@ -1762,7 +1762,7 @@ class InterfaceHandler:
         if erro:
             formulario.exibir_erros()
         else:
-            usuario = Usuario_Identificado(formulario.obter_valores())
+            usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
             def ao_cadastrar(resposta):
                 if isinstance(resposta, dict):
                     capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
@@ -1790,7 +1790,7 @@ class InterfaceHandler:
         if erro:
             formulario.exibir_erros()
         else:
-            usuario = Usuario_Identificado(formulario.obter_valores())
+            usuario = Usuario_Identificado.from_dict(formulario.obter_valores())
             def ao_login(resposta):
                 if isinstance(resposta, dict):
                     capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
@@ -1999,6 +1999,7 @@ class InterfaceHandler:
         else:
             valores_alterados = formulario.obter_valores_alterados({"Nome": produto.nome, "Descrição": produto.descricao})
             if valores_alterados:
+                valores_alterados["id"] = produto.id
                 def ao_editar_produto(resposta):
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
@@ -2039,6 +2040,7 @@ class InterfaceHandler:
                 valores_alterados['imagem'] = imagem
 
             if valores_alterados:
+                valores_alterados["id"] = loja.id
                 def ao_editar_loja(resposta):
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
@@ -2083,6 +2085,7 @@ class InterfaceHandler:
                 }
             )
             if valores_alterados:
+                valores_alterados["id"] = endereco.id
                 def ao_editar_endereco(resposta):
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
@@ -2128,6 +2131,7 @@ class InterfaceHandler:
                 }
             )
             if valores_alterados:
+                valores_alterados["id"] = usuario.id
                 def ao_editar_perfil(resposta):
                     if isinstance(resposta, dict):
                         capitalizado = {chave.capitalize(): valor for chave, valor in resposta.items()}
@@ -2172,8 +2176,9 @@ class InterfaceHandler:
                 {"Preço": anuncio.preco, "Quantidade Disponível": anuncio.quantidade_disponivel, "Chave Pix": anuncio.chave_pix}
             )
             valores_alterados = valores_alterados | formularioOp.obter_valores_alterados({"Pausado": anuncio.pausado})
-            print(valores_alterados)
+
             if valores_alterados:
+                valores_alterados["id"] = anuncio.id
                 def ao_editar_anuncio(resposta):
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(

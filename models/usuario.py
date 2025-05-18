@@ -2,6 +2,7 @@ from models.endereco import Endereco
 from models.pedido import Pedido
 from models.loja import Loja
 from typing import Optional
+import json
 
 class Usuario:
     def __init__(self):
@@ -77,8 +78,8 @@ class Usuario_Identificado(Usuario):
         return None
     
     def to_dict(self):
-        return {
-            "id_usuario": self.id_usuario,
+        return json.dumps({
+            "id": self.id,
             "nome": self.nome,
             "cpf": self.cpf,
             "email": self.email,
@@ -86,25 +87,27 @@ class Usuario_Identificado(Usuario):
             "lojas": [loja.to_dict() for loja in self.lojas] if self.lojas else [],
             "enderecos": [endereco.to_dict() for endereco in self.enderecos] if self.enderecos else [],
             "pedidos": [pedido.to_dict() for pedido in self.pedidos] if self.pedidos else []
-        } 
+        })
 
     def to_dict_cadastramento(self):
-        return {
+        return json.dumps({
             "nome": self.nome,
             "cpf": self.cpf,
             "email": self.email,
             "senha": self.senha,
-        } 
+        })
     
     def to_dict_login(self):
-        return {
+        return json.dumps({
             "email": self.email,
             "senha": self.senha,
-        } 
+        })
     
     @classmethod
     def from_dict(cls, data):
-        id_usuario = data.get("id_usuario", 0)
+        if isinstance(data, str):
+            data = json.loads(data)
+        id = data.get("id_usuario", 0)
         nome = data.get("nome", "")
         cpf = data.get("cpf", "")
         email = data.get("email", "")
@@ -113,7 +116,7 @@ class Usuario_Identificado(Usuario):
         enderecos = [Endereco.from_dict(endereco) for endereco in data["enderecos"]] if "enderecos" in data else []
         pedidos = [Pedido.from_dict(pedido) for pedido in data["pedidos"]] if "pedidos" in data else []
 
-        return cls(id_usuario, nome, cpf, email, senha, lojas, enderecos, pedidos)
+        return cls(id, nome, cpf, email, senha, lojas, enderecos, pedidos)
     
     def __str__(self):
-        return f"Usuario(id_usuario={self.id_usuario}, nome={self.nome}, cpf={self.cpf}, email={self.email}, senha={self.senha})"
+        return f"Usuario(id={self.id}, nome={self.nome}, cpf={self.cpf}, email={self.email}, senha={self.senha})"
