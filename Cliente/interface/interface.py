@@ -1660,7 +1660,7 @@ class MarketplaceUI(QMainWindow):
             nome="≡", fonte=40,
             largura=50, altura=50,
             backcolor="", hover="#3a3a3a", border="",
-            pressed='#000000',
+            pressed='#000000', fontcolor="gray",
             acao= self.toggle_menu
         )
 
@@ -1697,7 +1697,7 @@ class MarketplaceUI(QMainWindow):
             nome="⟲", fonte=40,
             largura=100, altura=50,
             backcolor="", hover="#3a3a3a", border="",
-            pressed='#000000',
+            pressed='#000000', fontcolor="gray",
             acao= lambda: (self.handler.visualizar(self.tela_inicial, "anuncios"), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
         )
 
