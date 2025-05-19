@@ -116,7 +116,7 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         quantidade = self.socket.receive_size()
-        if quantidade:
+        if isinstance(quantidade, int):
             for i in range(quantidade):
                 resposta = self.divide_mensagem(self.socket.receive())
                 if resposta[0] == "anuncios":
@@ -203,16 +203,18 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         quantidade = self.socket.receive_size()
-        for i in range(quantidade):
-            resposta = self.divide_mensagem(self.socket.receive())
-            if resposta[0] == "minhas_lojas":
-                loja = Loja.from_dict(resposta[1])
-                self.usuario.lojas.append(loja)
-                if loja.imagem:
-                    self.socket.receive_image(path=f"uploads/{loja.imagem}")
-            else:
-                return False
-        return True
+        if isinstance(quantidade, int):
+            for i in range(quantidade):
+                resposta = self.divide_mensagem(self.socket.receive())
+                if resposta[0] == "minhas_lojas":
+                    loja = Loja.from_dict(resposta[1])
+                    self.usuario.lojas.append(loja)
+                    if loja.imagem:
+                        self.socket.receive_image(path=f"uploads/{loja.imagem}")
+                else:
+                    return False
+            return True
+        return False
 
     def visualizar_meus_enderecos(self):
         if self.usuario.enderecos:
@@ -221,7 +223,7 @@ class ClienteAplicacao():
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
         quantidade = self.socket.receive_size()
-        if quantidade:
+        if isinstance(quantidade, int):
             for i in range(quantidade):
                 resposta = self.divide_mensagem(self.socket.receive())
                 if resposta[0] == "meus_enderecos":
@@ -253,13 +255,15 @@ class ClienteAplicacao():
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
         self.socket.send(mensagem)
         quantidade = self.socket.receive_size()
-        for i in range(quantidade):
-            resposta = self.divide_mensagem(self.socket.receive())
-            if resposta[0] == "meus_pedidos":
-                self.usuario.pedidos.append(Pedido.from_dict(resposta[i]))
-            else:
-                return False
-        return True
+        if isinstance(quantidade, 0):
+            for i in range(quantidade):
+                resposta = self.divide_mensagem(self.socket.receive())
+                if resposta[0] == "meus_pedidos":
+                    self.usuario.pedidos.append(Pedido.from_dict(resposta[i]))
+                else:
+                    return False
+            return True
+        return False
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
         mensagem = f"editar|anuncio|{json.dumps(novos_dados)}"

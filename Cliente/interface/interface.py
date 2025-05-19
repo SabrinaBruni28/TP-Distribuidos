@@ -37,7 +37,8 @@ class MarketplaceUI(QMainWindow):
         self.imagem = None
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
-        self.handler.visualizar(self.tela_inicial, "anuncios")
+        #self.handler.visualizar(self.tela_inicial, "anuncios")
+        self.view.abrir_tela(self.stack, funcao_criadora=self.tela_inicial)
 
     ##############  AUXILIARES  ################
     def substituir_imagem(self):
