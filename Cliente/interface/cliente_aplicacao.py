@@ -301,7 +301,7 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         if novos_dados.get("imagem", 0):
-            self.socket.send_image(novos_dados["imagem"])
+            self.socket.send_image(f"uploads/{novos_dados["imagem"]}")
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
@@ -350,7 +350,7 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         for imagem in produto.imagens:
-            self.socket.send_image(imagem)
+            self.socket.send_image(f"uploads/{imagem}")
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
@@ -366,7 +366,7 @@ class ClienteAplicacao():
         mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalizado()}"
         self.socket.send(mensagem)
         if loja.imagem:
-            self.socket.send_image(loja.imagem)
+            self.socket.send_image(f"uploads/{loja.imagem}")
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
@@ -400,7 +400,7 @@ class ClienteAplicacao():
     def criar_imagem(self, produto: Produto, imagem):
         mensagem = f"criar|imagem|{produto.id}"
         self.socket.send(mensagem)
-        self.socket.send_image(imagem)
+        self.socket.send_image(f"uploads/{imagem}")
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "imagem":
