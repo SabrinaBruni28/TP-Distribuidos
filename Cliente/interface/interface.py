@@ -567,11 +567,10 @@ class MarketplaceUI(QMainWindow):
         # Adiciona os blocos no layout do conteúdo do scroll
         blocos = self.tela_lista_lojas(self.handler.aplicacao.usuario.lojas)
         layout_loja.addWidget(blocos)
+        layout_loja.addStretch()
 
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
-
-        layout_vertical.addStretch()
 
         return tela
     
@@ -602,11 +601,10 @@ class MarketplaceUI(QMainWindow):
         # Adiciona os blocos no layout do conteúdo do scroll
         blocos = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos, botao_loja=True)
         layout_pedido.addWidget(blocos)
+        layout_pedido.addStretch()
 
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
-
-        layout_vertical.addStretch()
 
         return tela
     
