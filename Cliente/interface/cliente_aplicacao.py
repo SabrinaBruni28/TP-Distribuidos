@@ -295,7 +295,7 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         if novos_dados.get("imagem", 0):
-            self.socket.send_image(f"uploads/{novos_dados["imagem"]}")
+            self.socket.send_image(f"uploads/{novos_dados['imagem']}")
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":

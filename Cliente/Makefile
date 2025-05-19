@@ -1,5 +1,5 @@
 # Definindo valores padrão
-IP ?= "192.168.1.110"
+IP ?= "192.168.1.17"
 PORTA ?= 5000
 
 criar_ambiente:

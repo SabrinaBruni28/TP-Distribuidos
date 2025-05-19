@@ -122,7 +122,7 @@ class MarketplaceUI(QMainWindow):
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self,
                 backcolor="#FFC107", fontcolor="#000000",
-                largura=400, altura=50,paddingH=50, paddingV=50,
+                posicao="superior_direita",
                 mensagem="Adicione um endereço"
             )
             return
@@ -291,7 +291,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar", fonte=30,
-            largura=200, altura=50,
+            largura=500, altura=50,
             acao=lambda: self.comprar(anuncio, formulario)
         )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -315,7 +315,7 @@ class MarketplaceUI(QMainWindow):
         titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Pagamento</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(20)
+        layout_vertical.addSpacing(50)
 
         try:
             dados = Utils.gerar_qrcode_pix(
@@ -334,7 +334,7 @@ class MarketplaceUI(QMainWindow):
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self,
                 backcolor="#f44336",
-                largura=400, altura=50, paddingH=50, paddingV=50,
+                posicao="superior_direita",
                 mensagem="Erro ao gerar qrcode!"
             )
             return None
@@ -361,7 +361,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar", fonte=30,
-            largura=200, altura=50,
+            largura=500, altura=50,
             acao=lambda: self.handler.criar_pedido(pedido, anuncio)
         )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -389,7 +389,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar", fonte=30,
-            largura=200, altura=50,
+            largura=500, altura=50,
             acao=lambda: self.handler.confirmar_codigo(formulario)
         )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -417,7 +417,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_cadastrar = WidgetHelper.botao(
             nome="Cadastrar", fonte=30,
-            largura=200, altura=50,
+            largura=500, altura=50,
             acao=lambda: self.handler.cadastrar(formulario)
         )
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -452,7 +452,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_login = WidgetHelper.botao(
             nome="Entrar", fonte=30,
-            largura=200, altura=50,
+            largura=500, altura=50,
             acao=lambda: self.handler.login(formulario)
         )
         layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -698,14 +698,13 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addLayout(layout_horizontal_2)
 
         def atualiza_imagem():
-            from PyQt6.QtGui import QPixmap
             nonlocal imagem, label_imagem, botao_excluir_img, botao_substituir
             if self.imagem:
                 imagem = self.imagem
                 label_imagem.show()
                 botao_substituir.setText("Substituir imagem")
                 botao_excluir_img.show()
-                label_imagem.setPixmap(QPixmap(f"uploads/{imagem}").scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+                label_imagem.setPixmap(WidgetHelper.imagem(imagem, pixmap=True))
 
             elif self.imagem == "":
                 imagem = self.imagem
@@ -815,7 +814,7 @@ class MarketplaceUI(QMainWindow):
 
         # Botão para adicionar nova imagem
         botao_adicionar = WidgetHelper.botao(
-            nome="Adicionar imagem", largura=200,
+            nome="Adicionar imagem", largura=500,
             acao=lambda: (
                 self.substituir_imagem(),
                 imagens.append(self.imagem) if self.imagem else None,
@@ -1028,9 +1027,12 @@ class MarketplaceUI(QMainWindow):
         if loja.imagem:
             label_imagem = WidgetHelper.imagem(loja.imagem)
             layout_horizontal_2.addWidget(label_imagem)
+        else:
+            label_imagem = QLabel()
+            layout_horizontal_2.addWidget(label_imagem)
 
         botao_substituir = WidgetHelper.botao(
-            nome=("Substituir imagem" if loja.imagem else "Adicionar imagem"), 
+            nome=("Substituir imagem" if loja.imagem else "Adicionar imagem"),
             fonte=10, largura=100, altura=30,
             acao= lambda: (self.substituir_imagem(), atualiza_imagem())
         )
@@ -1049,14 +1051,13 @@ class MarketplaceUI(QMainWindow):
         imagem = loja.imagem
 
         def atualiza_imagem():
-            from PyQt6.QtGui import QPixmap
             nonlocal imagem, label_imagem, botao_excluir_img, botao_substituir
             if self.imagem:
                 imagem = self.imagem
                 label_imagem.show()
                 botao_substituir.setText("Substituir imagem")
                 botao_excluir_img.show()
-                label_imagem.setPixmap(QPixmap(f"uploads/{imagem}").scaled(200, 200, Qt.AspectRatioMode.KeepAspectRatio))
+                label_imagem.setPixmap(WidgetHelper.imagem(imagem, pixmap=True))
 
             elif self.imagem == "":
                 imagem = self.imagem
@@ -1141,7 +1142,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_criar = WidgetHelper.botao(
             nome="Criar Anúncio",
-            largura=200,
+            largura=500,
             acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_criar_anuncio(produto))
         )
         layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
@@ -1279,7 +1280,7 @@ class MarketplaceUI(QMainWindow):
 
         # Botão para adicionar nova imagem
         botao_adicionar = WidgetHelper.botao(
-            nome="Adicionar imagem", largura=200,
+            nome="Adicionar imagem", largura=500,
             acao=lambda: (
                 self.substituir_imagem(),
                 self.handler.criar_imagem(produto, self.imagem) if self.imagem else None
@@ -1318,7 +1319,7 @@ class MarketplaceUI(QMainWindow):
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(titulo)
 
-        descricao = QLabel(f"<span style='font-size: 20px'>{anuncio.produto.descricao}</span>")
+        descricao = QLabel(f"<span style='font-size: 50px'>{anuncio.produto.descricao}</span>")
         descricao.setWordWrap(True)
         descricao.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(descricao)
@@ -1329,12 +1330,12 @@ class MarketplaceUI(QMainWindow):
 
         layout_horizontal_2 = QHBoxLayout()
 
-        quantidade = QLabel(f"<span style='font-size: 20px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
+        quantidade = QLabel(f"<span style='font-size: 50px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
         layout_horizontal_2.addWidget(quantidade, alignment=Qt.AlignmentFlag.AlignLeft)
 
         comprar = WidgetHelper.botao(
             nome="Comprar", fonte=30,
-            largura=200, altura=50,
+            largura=500, altura=50,
             acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login())
         )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
@@ -1397,7 +1398,7 @@ class MarketplaceUI(QMainWindow):
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(titulo)
-        layout_vertical.addSpacing(20)
+        layout_vertical.addSpacing(50)
 
         layout_horizontal2 = QHBoxLayout()
 
@@ -1413,7 +1414,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_pedidos_confirmados = WidgetHelper.botao(
             nome="Pedidos Confirmados", fonte=18,
-            largura=220,
+            largura=250,
         )
         layout_horizontal2.addWidget(botao_pedidos_confirmados)
 
@@ -1471,7 +1472,7 @@ class MarketplaceUI(QMainWindow):
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self,
                     backcolor="#FFC107", fontcolor="#000000",
-                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Produto ou Loja excluídos!"
                 )
             )
@@ -1589,7 +1590,7 @@ class MarketplaceUI(QMainWindow):
 
         return scroll
     
-    def tela_lista_pedidos(self, pedidos, botao_confirmar = False, botao_loja = True, largura=250, altura=220):
+    def tela_lista_pedidos(self, pedidos, botao_confirmar = False, botao_loja = True, largura=250, altura=250):
         scroll, grid = WidgetHelper.lista_grid()
 
         for i, pedido in enumerate(pedidos):
@@ -1598,7 +1599,7 @@ class MarketplaceUI(QMainWindow):
 
         return scroll
     
-    def tela_lista_lojas(self, lojas, largura=250, altura=220):
+    def tela_lista_lojas(self, lojas, largura=250, altura=250):
         scroll, grid = WidgetHelper.lista_grid()
 
         for i, loja in enumerate(lojas):
@@ -1678,7 +1679,7 @@ class MarketplaceUI(QMainWindow):
         self.input_busca.hide()
 
         self.botao_reset = WidgetHelper.botao(
-            nome="❌", fonte=20,
+            nome="❌", fonte=50,
             largura=50, altura=50,
             backcolor="", hover="#3a3a3a", border="",
             pressed='#000000',
@@ -1729,14 +1730,15 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#f44336",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem=f"Erro ao visualizar!"
                 )
         # Executa:
         self.thread.executar_tela(
             tela=tela,
             acao=ao_visualizar,
-            requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs)
+            requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs),
+            atualizar_tela=False
         ) 
 
     def confirmar_codigo(self, formulario: Formulario):
@@ -1750,7 +1752,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50,paddingH=20, paddingV=20,
+                        posicao="superior_direita",
                         mensagem="Cadastro realizado com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -4)
@@ -1763,7 +1765,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Limite de tentativas excedido!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -1772,7 +1774,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Limite de tempo excedido!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -1781,7 +1783,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao confirmar código!"
                     )
             # Executa:
@@ -1816,7 +1818,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao realizar cadastramento!"
                     )
             # Executa:
@@ -1839,7 +1841,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#4CAF50",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Login realizado com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -1852,7 +1854,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao realizar login!"
                     )
             # Executa:
@@ -1869,7 +1871,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent, 
                     backcolor="#4CAF50",
-                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Pedido Criado com Sucesso!"
                 )
                 self.view.set_tela(self.stack,-3)
@@ -1877,7 +1879,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent, 
                     backcolor="#f44336",
-                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Erro ao criar pedido!"
                 )
         # Executa:
@@ -1903,7 +1905,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Loja Criada com Sucesso!"
                     )
                     self.view.set_tela(self.stack,-2)
@@ -1911,7 +1913,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao criar loja!"
                     )
             # Executa:
@@ -1935,7 +1937,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50, paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Endereço Criado com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -1943,7 +1945,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50, paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao criar endereço!"
                     )
             # Executa:
@@ -1960,7 +1962,7 @@ class InterfaceHandler:
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self.parent,
                 backcolor="#FFC107", fontcolor="#000000",
-                largura=400, altura=50, paddingH=50, paddingV=50,
+                posicao="superior_direita",
                 mensagem="O produto não pode ficar sem imagem"
             )
         else:
@@ -1974,7 +1976,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50, paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Produto Criado com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -1982,7 +1984,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50, paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao criar produto!"
                     )
 
@@ -2017,7 +2019,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50, paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Anúncio Criado com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -3)
@@ -2025,7 +2027,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50, paddingH=50, paddingV=50,
+                        posicao="superior_direita",
                         mensagem="Erro ao criar anúncio!"
                     )
             # Executa:
@@ -2040,8 +2042,8 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#f44336",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
-                    mensagem="Ocorreu um erro inesperado"
+                    posicao="superior_direita",
+                    mensagem="Erro ao criar imagem!"
                 )
         # Executa:
         self.thread.executar_mensagem(
@@ -2063,14 +2065,14 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Produto Editado com Sucesso!"
                         )
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Erro ao editar produto!"
                         )
                 # Executa:
@@ -2083,7 +2085,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#FFC107", fontcolor="#000000",
-                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Nenhuma alteração realizada"
                 )
 
@@ -2099,19 +2101,20 @@ class InterfaceHandler:
 
             if valores_alterados:
                 valores_alterados["id"] = loja.id
+                valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
                 def ao_editar_loja(resposta):
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Loja Editada com Sucesso!"
                         )
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Erro ao editar loja!"
                         )
                 # Executa:
@@ -2124,7 +2127,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#FFC107", fontcolor="#000000",
-                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Nenhuma alteração realizada"
                 )
 
@@ -2150,14 +2153,14 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Endereço Editado com Sucesso!"
                         )
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Erro ao editar endereço!"
                         )
                 # Executa:
@@ -2170,7 +2173,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#FFC107", fontcolor="#000000",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Nenhuma alteração realizada"
                 )
     
@@ -2193,7 +2196,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Perfil Editado com Sucesso!"
                         )
                         self.view.atualiza_tela(self.stack)
@@ -2212,7 +2215,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Erro ao editar perfil!"
                         )
                         self.view.atualiza_tela(self.stack)
@@ -2227,7 +2230,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#FFC107", fontcolor="#000000",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Nenhuma alteração realizada"
                 )
     
@@ -2249,14 +2252,14 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Anúncio Editado com Sucesso!"
                         )
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingH=50, paddingV=50,
+                            posicao="superior_direita",
                             mensagem="Erro ao editar anúncio!"
                         )
                 # Executa:
@@ -2269,7 +2272,7 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#FFC107", fontcolor="#000000",
-                    largura=400, altura=50, paddingH=50, paddingV=50,
+                    posicao="superior_direita",
                     mensagem="Nenhuma alteração realizada"
                 )
 
@@ -2277,7 +2280,7 @@ class InterfaceHandler:
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar excluir loja",
             mensagem=f"Você tem certeza que deseja excluir loja {loja.nome}?",
-            largura=420
+            largura=450
         )
         escolha = dialogo.exec()
 
@@ -2287,7 +2290,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50,paddingH=920, paddingV=920,
+                        posicao="inferior_esquerda",
                         mensagem="Loja Excluída com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -3)
@@ -2295,7 +2298,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=920, paddingV=920,
+                        posicao="inferior_esquerda",
                         mensagem="Erro ao excluir loja!"
                     )
             # Executa:
@@ -2312,7 +2315,7 @@ class InterfaceHandler:
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar excluir produto",
             mensagem=f"Você tem certeza que deseja excluir produto {produto.nome}?",
-            largura=420
+            largura=450
         )
         escolha = dialogo.exec()
 
@@ -2322,7 +2325,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50,paddingH=920, paddingV=100,
+                        posicao="inferior_esquerda",
                         mensagem="Produto Excluído com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -2330,7 +2333,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=920, paddingV=100,
+                        posicao="inferior_esquerda",
                         mensagem="Erro ao excluir produto!"
                     )
             # Executa:
@@ -2347,7 +2350,7 @@ class InterfaceHandler:
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar excluir anúncio",
             mensagem=f"Você tem certeza que deseja excluir esse anúncio?",
-            largura=420
+            largura=450
         )
         escolha = dialogo.exec()
 
@@ -2357,7 +2360,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        largura=400, altura=50,paddingH=920, paddingV=100,
+                        posicao="inferior_esquerda",
                         mensagem="Anúncio Excluído com Sucesso!"
                     )
                     self.view.set_tela(self.stack, -2)
@@ -2365,7 +2368,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        largura=400, altura=50,paddingH=920, paddingV=100,
+                        posicao="inferior_esquerda",
                         mensagem="Erro ao excluir anúncio!"
                     )
             # Executa:
@@ -2382,7 +2385,7 @@ class InterfaceHandler:
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar excluir endereço",
             mensagem=f"Você tem certeza que deseja excluir esse endereço?",
-            largura=420
+            largura=450
         )
         escolha = dialogo.exec()
 
@@ -2393,7 +2396,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent,
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingH=920, paddingV=100,
+                            posicao="inferior_esquerda",
                             mensagem="Endereço Excluído com Sucesso!"
                         )
                         self.view.set_tela(self.stack, -2)
@@ -2401,7 +2404,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingH=920, paddingV=100,
+                            posicao="inferior_esquerda",
                             mensagem="Erro ao excluir endereço!"
                         )
             # Executa:
@@ -2420,14 +2423,14 @@ class InterfaceHandler:
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent,
                     backcolor="#f44336",
-                    largura=400, altura=50,paddingH=50, paddingV=50,
-                    mensagem="Ocorreu um erro inesperado"
+                    posicao="superior_direita",
+                    mensagem="Erro ao excluir imagem!"
                 )
         if len(produto.imagens) == 1:
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self.parent, fontcolor="#000000",
                 backcolor="#FFC107",
-                largura=450, altura=50,paddingH=50, paddingV=50,
+                posicao="superior_direita",
                 mensagem="O produto não pode ficar sem imagem"
             )
         else:
@@ -2452,7 +2455,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingV=100, paddingH=950,
+                            posicao="inferior_esquerda",
                             mensagem="Pedido Cancelado com Sucesso!"
                         )
                         self.view.set_tela(self.stack, -2)
@@ -2460,7 +2463,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingV=100, paddingH=950,
+                            posicao="inferior_esquerda",
                             mensagem="Erro ao cancelar pedido!"
                         )
             # Executa:
@@ -2488,7 +2491,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#4CAF50",
-                            largura=400, altura=50,paddingV=100, paddingH=50,
+                            posicao="inferior_direita",
                             mensagem="Pedido Confirmado com Sucesso!"
                         )
                         self.view.set_tela(self.stack, -2)
@@ -2496,7 +2499,7 @@ class InterfaceHandler:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            largura=400, altura=50,paddingV=100, paddingH=50,
+                            posicao="inferior_direita",
                             mensagem="Erro ao confirmar pedido!"
                         )
             # Executa:

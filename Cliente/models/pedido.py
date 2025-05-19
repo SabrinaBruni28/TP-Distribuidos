@@ -38,17 +38,17 @@ class Pedido:
         })
     
     @classmethod
-    def from_dict(cls, data):
-        if isinstance(data, str):
-            data = json.loads(data)
-        id = data.get("id", 0)
-        data = datetime.datetime.fromisoformat(data["data"]) if "data" in data else ""
-        produto = Produto.from_dict(data["produto"]) if "produto" in data else []
-        quantidade = data.get("quantidade", 0)
-        preco = data.get("preco", 0)
-        endereco = Endereco.from_dict(data["endereco"]) if "endereco" in data else []
+    def from_dict(cls, dados):
+        if isinstance(dados, str):
+            dados = json.loads(dados)
+        id = dados.get("id", 0)
+        data = datetime.datetime.fromisoformat(dados["data"]) if "data" in dados else ""
+        produto = Produto.from_dict(dados["produto"]) if "produto" in dados else []
+        quantidade = dados.get("quantidade", 0)
+        preco = dados.get("preco", 0)
+        endereco = Endereco.from_dict(dados["endereco"]) if "endereco" in dados else []
 
         return cls(id, quantidade, preco, data, produto, endereco)
-    
+
     def __str__(self):
         return f"Pedido(id={self.id}, data={self.data}, produto={self.produto.nome}, quantidade={self.quantidade}, preco={self.preco}, endereco={self.endereco})"

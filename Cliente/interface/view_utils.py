@@ -136,7 +136,7 @@ class WidgetHelper(QWidget):
         return bloco
 
     @staticmethod
-    def imagem(imagem, pasta="uploads/", scaled=200):
+    def imagem(imagem, pasta="uploads/", scaled=200, pixmap=False):
         imagem_label = QLabel()
         caminho = Utils.caminho_imagem(pasta + imagem)
 
@@ -165,16 +165,20 @@ class WidgetHelper(QWidget):
         imagem_label.setPixmap(base_pixmap)
         imagem_label.setFixedSize(scaled, scaled)
         imagem_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        
+        if pixmap:
+            return imagem_label.pixmap()
         return imagem_label
 
     @staticmethod
     def mostrar_alerta_temporario(
         parent_widget, mensagem, duracao_ms=3000,
-        largura=110, altura=30, fonte=20, paddingH = 20, paddingV=20,
-        fontcolor = 'white', backcolor='#0078d7',
-        border = '#000000',
+        largura=400, altura=50, fonte=20,
+        paddingH=20, paddingV=20,
+        fontcolor='white', backcolor='#0078d7',
+        border='#000000',
+        posicao='inferior_direita'  # <-- novo parâmetro
     ):
-        
         alerta = QLabel(mensagem, parent_widget)
         alerta.setFixedSize(largura, altura)
         alerta.setStyleSheet(f"""
@@ -195,18 +199,23 @@ class WidgetHelper(QWidget):
         alerta.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.ToolTip)
         alerta.setAttribute(Qt.WidgetAttribute.WA_ShowWithoutActivating)
 
-        # Centraliza no parent
-        parent_rect = parent_widget.geometry()
-        alerta.adjustSize()
-        alerta_width = alerta.width()
-        alerta.move(
-            parent_rect.x() + parent_rect.width() - alerta_width - paddingH,
-            parent_rect.y() + paddingV
-        )
+        # Calcula a posição com base na string
+        parent_pos = parent_widget.mapToGlobal(parent_widget.rect().topLeft())
+        x = y = 0
 
+        if 'direita' in posicao:
+            x = parent_pos.x() + parent_widget.width() - largura - paddingH
+        elif 'esquerda' in posicao:
+            x = parent_pos.x() + paddingH
+
+        if 'superior' in posicao:
+            y = parent_pos.y() + paddingV
+        elif 'inferior' in posicao:
+            y = parent_pos.y() + parent_widget.height() - altura - paddingV
+
+        alerta.move(x, y)
         alerta.show()
 
-        # Esconde depois da duração
         QTimer.singleShot(duracao_ms, alerta.close)
 
     @staticmethod
