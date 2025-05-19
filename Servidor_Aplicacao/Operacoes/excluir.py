@@ -35,6 +35,7 @@ class Excluir(operacao.Operacao):
                 print("[Servidor] Mensagem inválida.")
 
     def anuncio(self):
+        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
         idAnuncio = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"excluir | anuncio | {idAnuncio}")
 
@@ -42,6 +43,7 @@ class Excluir(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.excluirAnuncioCallback, self.conexaoCliente, "excluir")
 
     def produto(self):
+        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
         idProduto = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"excluir | produto | {idProduto}")
 
@@ -49,6 +51,7 @@ class Excluir(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.excluirProdutoCallback, self.conexaoCliente, "excluir")
 
     def loja(self):
+        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"excluir | loja | {idLoja}")
 
@@ -56,6 +59,7 @@ class Excluir(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.excluirLojaCallback, self.conexaoCliente, "excluir")
 
     def endereco(self):
+        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
         idEndereco = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"excluir | endereco | {idEndereco}")
 

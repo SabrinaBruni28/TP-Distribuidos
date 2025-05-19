@@ -16,7 +16,7 @@ class Codigo(operacao.Operacao):
 
     def codigo(self):
         from Estruturas.mensagem import Mensagem
-        print("[Servidor][Codigo] Código recebido.")
+        print("[Servidor][Código] Código recebido.")
 
         codigoEnviadoCliente = self.mensagemCliente.camposMensagem[1]
         

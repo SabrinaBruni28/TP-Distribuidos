@@ -25,7 +25,6 @@ class Cadastramento(operacao.Operacao):
 
     def cadastrar(self):
         print("[Servidor][Cadastramento] Operação de Cadastramento recebida.")
-        
         dados = self.mensagemCliente.camposMensagem[1]
         dadosJson = json.loads(dados)
         mensagemServidor = Mensagem.produtorMensagem(f"confere | usuario | {json.dumps(dadosJson)}")

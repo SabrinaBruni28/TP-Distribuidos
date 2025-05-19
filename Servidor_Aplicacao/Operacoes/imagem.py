@@ -40,7 +40,9 @@ class Imagem():
         imagens = []
         imagens.append(mensagemImagemLoja)
 
+        print("[Servidor][Imagem] Imagem da loja recebida.")
         return imagens
+    
     
     def produto(self):
         quantidade = op.recebeQuantidade(self.mensagem_cliente.camposMensagem[2], 'imagens')
@@ -50,13 +52,17 @@ class Imagem():
             imagemProduto = Mensagem.receptorImagem(self.cliente)
             imagensProduto.append(imagemProduto)
 
+        if quantidade > 0:
+            print("[Servidor][Imagem] Imagem(s) do produto recebida.")
         return imagensProduto
     
+
     def imagem(self):
         mensagemImagemLoja = Mensagem.receptorImagem(self.cliente)
 
         imagens = []
         imagens.append(mensagemImagemLoja)
 
+        print("[Servidor][Imagem] Imagem recebida.")
         return imagens
     

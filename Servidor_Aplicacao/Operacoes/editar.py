@@ -19,7 +19,6 @@ class Editar(operacao.Operacao):
 
     def decisor(self):
         operacao = self.mensagemCliente.camposMensagem[1]
-        print(f"[Editar] Operação: {operacao}")
 
         match operacao:
             case "anuncio":
@@ -41,6 +40,7 @@ class Editar(operacao.Operacao):
                 print("[Servidor] Mensagem inválida.")
 
     def anuncio(self):
+        print("[Servidor][Editar] Operação de editar anúncio recebida.")
         dados = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
 
@@ -48,6 +48,7 @@ class Editar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.editarAnuncioCallback, self.conexaoCliente, "editar")
 
     def produto(self):
+        print("[Servidor][Editar] Operação de editar produto recebida.")
         dados = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
 
@@ -55,6 +56,7 @@ class Editar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar")
 
     def loja(self):
+        print("[Servidor][Editar] Operação de editar loja recebida.")
         dados = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"editar | loja | {dados}")
 
@@ -62,6 +64,7 @@ class Editar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar", imagem=self.imagem)
 
     def endereco(self):
+        print("[Servidor][Editar] Operação de editar endereço recebida.")
         dados = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"editar | endereco | {dados}")
 
@@ -69,6 +72,7 @@ class Editar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.editarEnderecoCallback, self.conexaoCliente, "editar")
 
     def usuario(self):
+        print("[Servidor][Editar] Operação de editar usuário recebida.")
         dados = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"editar | usuario | {dados}")
 

@@ -11,7 +11,7 @@ def loginCallback(respostaBD, socket_cliente):
     resposta = respostaBD.camposMensagem
     if resposta[0] == "ok":
         mensagemAoCliente = Mensagem.produtorMensagem(f"ok | {resposta[1]}")
-        print("[Servidor] Confirmando login do cliente...")
+        print("[Servidor][Login] LOGIN REALIZADO COM SUCESSO!")
 
     else:
         mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
@@ -54,7 +54,7 @@ def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
 
         else:
             mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {json.dumps(dadosJson)}")
-            print("[Servidor] Reportando erro de cadastro...")
+            print("[Servidor][Cadastramento] Reportando erro de cadastro...")
 
         op.enviaMensagem(cliente, mensagemAoCliente)
 
@@ -93,6 +93,7 @@ def visualizarTodosAnunciosCallback(resposta_banco, socket_cliente, socket_banco
     socket_cliente.sendall(byteQ)
         
     enviaSequenciaAnuncios(socket_cliente, anuncios)
+    print("[Servidor][Visualizar] ANÚNCIOS RETORNADOS COM SUCESSO!")
         
 def enviaSequenciaAnuncios(socket_cliente, anuncios):
     for anuncio in anuncios:
@@ -125,6 +126,7 @@ def visualizarAnuncioCallback(resposta_banco: list, socket_cliente, socket_banco
     socket_cliente.sendall(byteQ)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Visualizar] ANÚNCIO RETORNADO COM SUCESSO!")
 
 def enviaSequencialmenteImagens(socket_cliente, imagens):
      if imagens == None:
@@ -153,6 +155,7 @@ def visualizarProdutoCallback(resposta_banco: list, socket_cliente, socket_banco
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Visualizar] PRODUTO RETORNADO COM SUCESSO!")
 
 def visualizarPedidoCallback(resposta_banco, socket_cliente, socket_banco):
     pedido = json.loads(resposta_banco[1])
@@ -176,6 +179,7 @@ def visualizarPedidoCallback(resposta_banco, socket_cliente, socket_banco):
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Visualizar] PEDIDO RETORNADO COM SUCESSO!")
 
 def visualizarLojaCallback(resposta_banco, socket_cliente, socket_banco):
     loja = json.loads(resposta_banco[1])
@@ -200,6 +204,7 @@ def visualizarLojaCallback(resposta_banco, socket_cliente, socket_banco):
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Visualizar] LOJA RETORNADA COM SUCESSO!")
 
 def visualizarLojaUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     loja = json.loads(resposta_banco[1])
@@ -222,6 +227,7 @@ def visualizarLojaUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Visualizar] LOJA DO USUÁRIO RETORNADA COM SUCESSO!")
 
 def visualizarListaLojasUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     lojas = []
@@ -259,6 +265,7 @@ def visualizarListaLojasUsuarioCallback(resposta_banco, socket_cliente, socket_b
     socket_cliente.sendall(byteQ)
 
     enviaSequenciaLojas(socket_cliente, lojas)
+    print("[Servidor][Visualizar] LOJAS RETORNADAS COM SUCESSO!")
 
 def enviaSequenciaLojas(socket_cliente, lojas):
     for loja in lojas:
@@ -290,6 +297,7 @@ def visualizarEnderecosUsuarioCallback(resposta_banco, socket_cliente, socket_ba
     socket_cliente.sendall(byteQ)
 
     enviaSequenciaEnderecos(socket_cliente, enderecos)
+    print("[Servidor][Visualizar] ENDEREÇOS RETORNADOS COM SUCESSO!")
 
 def enviaSequenciaEnderecos(socket_cliente, enderecos):
     for endereco in enderecos:
@@ -316,6 +324,7 @@ def visualizarListaPedidosUsuarioCallback(resposta_banco, socket_cliente, socket
     socket_cliente.sendall(byteQ)
 
     enviaSequenciaPedidos(socket_cliente, pedidos)
+    print("[Servidor][Visualizar] PEDIDOS RETORNADOS COM SUCESSO!")
 
 def enviaSequenciaPedidos(socket_cliente, pedidos):
     for pedido in pedidos:
@@ -325,10 +334,12 @@ def enviaSequenciaPedidos(socket_cliente, pedidos):
 def editarAnuncioCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Editar] ANÚNCIO EDITADO COM SUCESSO!")
 
 def editarProdutoCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Editar] PRODUTO EDITADO COM SUCESSO!")
 
 def editarLojaCallback(resposta, socket_cliente, imagem):
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
@@ -336,10 +347,13 @@ def editarLojaCallback(resposta, socket_cliente, imagem):
     
     if imagem != None:
         op.enviaImagem(socket_cliente, imagem[0])
+    
+    print("[Servidor][Editar] LOJA EDITADA COM SUCESSO!")
 
 def editarEnderecoCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Editar] ENDEREÇO EDITADO COM SUCESSO!")
 
 def editarUsuarioCallback(resposta, socket_cliente):
     if resposta[0] == "ok":
@@ -349,67 +363,82 @@ def editarUsuarioCallback(resposta, socket_cliente):
         mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
 
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Editar] USUÁRIO EDITADO COM SUCESSO!")
 
 def criarProdutoCallback(resposta, socket_cliente: socket.socket, imagens: list):
     mensagemAoCliente = Mensagem.produtorMensagem(f"pedido | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Criar] PRODUTO CRIADO COM SUCESSO!")
 
 def criarLojaCallback(resposta, socket_cliente: socket.socket, imagens: list):
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Criar] LOJA CRIADA COM SUCESSO!")
 
 def criarImagemCallback(resposta, socket_cliente: socket.socket, imagens: list):
     mensagemAoCliente = Mensagem.produtorMensagem(f"imagem | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
+    print("[Servidor][Criar] IMAGEM CRIADA COM SUCESSO!")
 
 def criarAnuncioCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Criar] ANÚNCIO CRIADO COM SUCESSO!")
 
 def criarPedidoCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"pedido | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Criar] PEDIDO CRIADO COM SUCESSO!")
 
 def criarEnderecoCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Criar] ENDEREÇO CRIADO COM SUCESSO!")
 
 def excluirAnuncioCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Excluir] ANÚNCIO COM SUCESSO!")
 
 def excluirProdutoCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Excluir] PRODUTO EXCLUÍDO COM SUCESSO!")
 
 def excluirLojaCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Excluir] LOJA EXCLUÍDA COM SUCESSO!")
 
 def excluirEnderecoCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Excluir] ENDEREÇO EXCLUÍDO COM SUCESSO!")
 
 def excluirImagemCallback(resposta, socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"imagem | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Excluir] IMAGEM EXCLUÍDA COM SUCESSO!")
 
 def pedidoConfirmadoCallback(socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"ok | confirmado")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Pedido] PEDIDO CONFIRMADO COM SUCESSO!")
 
 def pedidoCanceladoCallback(socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"ok | cancelado")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Pedido] PEDIDO CANCELADO COM SUCESSO!")
 
 def codigoCallback(resposta_banco: Mensagem, socket_cliente: socket.socket):
     resposta = resposta_banco.camposMensagem
     mensagemAoCliente = Mensagem.produtorMensagem(f"ok | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    print("[Servidor][Cadastramento] CADASTRAMENTO FEITO COM SUCESSO!")
         
