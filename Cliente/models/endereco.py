@@ -48,7 +48,6 @@ class Endereco:
 
         return cls(id, rua, numero, bairro, cidade, estado, complemento)
 
-
     def __str__(self):
         return f"{self.rua}, {self.numero}, {self.bairro}, {self.cidade} - {self.estado}, {self.complemento}"
 

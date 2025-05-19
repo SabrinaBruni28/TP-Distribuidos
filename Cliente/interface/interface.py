@@ -37,7 +37,7 @@ class MarketplaceUI(QMainWindow):
         self.imagem = None
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
-        #self.handler.visualizar(self.tela_inicial, "anuncios")
+        self.handler.visualizar(self.tela_inicial, "anuncios")
         self.view.abrir_tela(self.stack, funcao_criadora=self.tela_inicial)
 
     ##############  AUXILIARES  ################
@@ -218,9 +218,10 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = WidgetHelper.imagem(loja.imagem, scaled=180)
-        layout.addWidget(imagem_label)
-        layout.addSpacing(5)
+        if loja.imagem:
+            imagem_label = WidgetHelper.imagem(loja.imagem, scaled=180)
+            layout.addWidget(imagem_label)
+            layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(loja.nome)
         layout.addWidget(label_nome)
@@ -959,13 +960,13 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addSpacing(40)
 
         formulario = Formulario(
-            campos=["Rua", "N°", "Bairro", "Cidade", "Estado", "Complemento"],
+            campos=["Rua", "Número", "Bairro", "Cidade", "Estado", "Complemento"],
             largura=600,
             altura=50
         )
         formulario.preencher_campos(
             {
-                "Rua": endereco.rua, "N°": endereco.numero, 
+                "Rua": endereco.rua, "Número": endereco.numero, 
                 "Bairro": endereco.bairro, "Cidade": endereco.cidade, 
                 "Estado": endereco.estado, "Complemento": endereco.complemento
             }
@@ -1025,8 +1026,9 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal_2 = QHBoxLayout()
         layout_horizontal_2.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        label_imagem = WidgetHelper.imagem(loja.imagem)
-        layout_horizontal_2.addWidget(label_imagem)
+        if loja.imagem:
+            label_imagem = WidgetHelper.imagem(loja.imagem)
+            layout_horizontal_2.addWidget(label_imagem)
 
         botao_substituir = WidgetHelper.botao(
             nome=("Substituir imagem" if loja.imagem else "Adicionar imagem"), 
@@ -1384,15 +1386,14 @@ class MarketplaceUI(QMainWindow):
 
         botao_editar = WidgetHelper.botao(
             nome="Editar",
-            acao=lambda e: self.handler.visualizar(
-                lambda: self.tela_editar_loja(loja), "loja", loja
-            )
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_editar_loja(loja))
         )
         layout_horizontal.addWidget(botao_editar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal)
 
-        imagem_label = WidgetHelper.imagem(loja.imagem)
-        layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
+        if loja.imagem:
+            imagem_label = WidgetHelper.imagem(loja.imagem)
+            layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
         titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
         titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1631,7 +1632,7 @@ class MarketplaceUI(QMainWindow):
             nome="Minhas Lojas", 
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
-            acao= lambda: self.handler.visualizar(
+            acao=lambda: self.handler.visualizar(
                 self.tela_minhas_lojas, "minhas_lojas"
             )
         )
@@ -1730,7 +1731,7 @@ class InterfaceHandler:
                     parent_widget=self.parent,
                     backcolor="#f44336",
                     largura=400, altura=50,paddingH=50, paddingV=50,
-                    mensagem=f"Erro ao visualizar {funcao}!"
+                    mensagem=f"Erro ao visualizar!"
                 )
         # Executa:
         self.thread.executar_tela(

@@ -22,16 +22,22 @@ class Utils:
     @staticmethod
     def check_cpf(cpf: str) -> bool:
         """
-        Valida um número de CPF (Cadastro de Pessoa Física).
+        Valida um número de CPF (Cadastro de Pessoa Física) com máscara.
 
         Parâmetros:
-        - cpf: string com ou sem máscara (ex: '12.345.678-95' ou '12345678000195')
+        - cpf: string COM máscara (ex: '123.456.789-09')
 
         Retorna:
         - True se o CPF for válido, False caso contrário.
         """
-        cpf = re.sub(r'\D', '', cpf)
-        if len(cpf) != 11 or cpf == cpf[0] * 11:
+        # Verifica se o CPF está no formato XXX.XXX.XXX-XX
+        if not re.fullmatch(r'\d{3}\.\d{3}\.\d{3}-\d{2}', cpf):
+            return False
+
+        # Remove pontos e traço para validação
+        cpf_numeros = re.sub(r'\D', '', cpf)
+
+        if len(cpf_numeros) != 11 or cpf_numeros == cpf_numeros[0] * 11:
             return False
 
         def calc_digit(digs):
@@ -39,9 +45,9 @@ class Utils:
             r = 11 - s % 11
             return '0' if r > 9 else str(r)
 
-        d1 = calc_digit(cpf[:9])
-        d2 = calc_digit(cpf[:9] + d1)
-        return cpf.endswith(d1 + d2)
+        d1 = calc_digit(cpf_numeros[:9])
+        d2 = calc_digit(cpf_numeros[:9] + d1)
+        return cpf_numeros.endswith(d1 + d2)
     
     @staticmethod
     def check_email(email: str) -> bool:

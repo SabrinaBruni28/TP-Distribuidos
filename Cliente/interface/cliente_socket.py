@@ -35,13 +35,18 @@ class UnixSocketClient:
             return False
         print("Tentando receber mensagem")
         data = b''
-        while len(data) < tamanho:
-            chunk = self.socket.recv(min(4096, tamanho - len(data)))
-            if not chunk:
-                raise ConnectionError("Socket fechado inesperadamente")
-            data += chunk
-        resposta = data.decode()
-        print("Resposta:", resposta)
+        self.socket.settimeout(15)
+        try:
+            while len(data) < tamanho:
+                chunk = self.socket.recv(min(4096, tamanho - len(data)))
+                if not chunk:
+                    raise ConnectionError("Socket fechado inesperadamente")
+                data += chunk
+            resposta = data.decode()
+            print("Resposta:", resposta)
+        except Exception as e:
+            print("Erro ao receber mensagem:", e)
+            return False
         return resposta
 
     def send_image(self, image_path: str):
@@ -62,13 +67,10 @@ class UnixSocketClient:
         with open(path, 'wb') as f:
             data = b''
             while len(data) < tamanho_total:
-                chunk = self.socket.recv(buffer_size)
+                chunk = self.socket.recv(min(buffer_size, tamanho_total - len(data)))
                 if not chunk:
                     break
                 data += chunk
-                diferenca = tamanho_total - len(data)
-                if diferenca < buffer_size:
-                    buffer_size = diferenca
             f.write(data)
             print("Recebe Imagem:", path)
         return data, path
@@ -83,11 +85,13 @@ class UnixSocketClient:
         if not self.socket:
             return False
         print("Tentar receber tamanho (8 bytes)")
-
+        self.socket.settimeout(15)
         try:
             tamanho_bytes = b''
             while len(tamanho_bytes) < 8:
+                print("Recebendo tamanho:", len(tamanho_bytes))
                 chunk = self.socket.recv(8 - len(tamanho_bytes))
+                print("Chunk:", chunk)
                 if not chunk:
                     raise ConnectionError("Socket fechado antes de receber os 8 bytes de tamanho")
                 tamanho_bytes += chunk
