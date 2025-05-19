@@ -507,10 +507,9 @@ class MarketplaceUI(QMainWindow):
        
         botao_editar = []
         for i in range(quantidade):
-            endereco = usuario.enderecos[i]
             botao = WidgetHelper.botao(
                 nome="Editar",
-                acao=lambda _, endereco=endereco: self.view.abrir_tela(self.stack, lambda: self.tela_editar_endereco(endereco))
+                acao=lambda _, i=i: self.view.abrir_tela(self.stack, lambda: self.tela_editar_endereco(usuario.enderecos[i]))
             )
             botao_editar.append(botao)
             layout_vertical2.addWidget(botao)
@@ -1081,7 +1080,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
 
-    def tela_editar_produto(self, produto):
+    def tela_editar_produto(self, produto: Produto):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
