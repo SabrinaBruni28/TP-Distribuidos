@@ -14,13 +14,7 @@ class ClienteAplicacao():
     def __init__(self, ip, porta):
         print("IP:", ip, "Porta:", porta)
         self.anuncios = []
-        #self.usuario = Usuario()
-        self.usuario = Usuario_Identificado(
-            id=0, nome="Nome", cpf="000.000.000-00", email="email@example.com", senha="senha123",
-        )
-        self.usuario.enderecos = [Endereco(
-            id=0, rua="Aristides", numero=50, bairro="California", cidade="Florestal", estado="MG", complemento="Complemento"
-        )]
+        self.usuario = Usuario()
         self.socket = UnixSocketClient(ip, porta)
 
     def chamar(self, obj, *args, **kwargs):
