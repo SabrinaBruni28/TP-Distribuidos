@@ -47,16 +47,16 @@ class Imagem():
 
         imagensProduto = []
         for i in range(quantidade):
-            imagemProduto = Mensagem.receptorMensagemETamanho(self.cliente)
-            imagensProduto.append(imagemProduto.stringMensagem)
+            imagemProduto = Mensagem.receptorImagem(self.cliente)
+            imagensProduto.append(imagemProduto)
 
         return imagensProduto
     
     def imagem(self):
-        mensagemImagemLoja = Mensagem.receptorMensagemETamanho(self.cliente)
+        mensagemImagemLoja = Mensagem.receptorImagem(self.cliente)
 
         imagens = []
-        imagens.append(mensagemImagemLoja.stringMensagem)
+        imagens.append(mensagemImagemLoja)
 
         return imagens
     

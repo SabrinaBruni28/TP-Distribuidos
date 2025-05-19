@@ -34,7 +34,8 @@ class ClientHandler(threading.Thread):
 
     # run vai ser executado logo após a thread ClientHandler ser disparada
     def run(self):
-        logging.info(f"Cliente conectado: {self.enderecoCliente}")
+        logging.info(f"\n===============================================================================\n \
+                     Cliente conectado: {self.enderecoCliente}")
 
         try:
             while self.ativo:
@@ -89,7 +90,7 @@ class ClientHandler(threading.Thread):
             case "editar":
                 imagem = []
                 dados = mensagem.camposMensagem[2]
-                imagem = Imagem(dados, self.socketCliente, mensagem.camposMensagem[1], "imagem").run()
+                imagem = Imagem(dados=dados, socket_cliente=self.socketCliente, tipo=mensagem.camposMensagem[1], campo="imagem").run()
                 Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem, imagem).start()
 
             case "criar":
@@ -183,4 +184,5 @@ def rodarServidorT(endereco_ip, porta, fila):
 
 # Inicialização do socket servidor
 #rodarServidor('localhost', 5000, filaDeMensagem)
-rodarServidor('192.168.1.110', 5000, filaDeMensagem)
+#rodarServidor('192.168.1.110', 5000, filaDeMensagem)
+rodarServidor('192.168.19.146', 5000, filaDeMensagem)

@@ -127,6 +127,8 @@ def visualizarAnuncioCallback(resposta_banco: list, socket_cliente, socket_banco
     enviaSequencialmenteImagens(socket_cliente, imagens)
 
 def enviaSequencialmenteImagens(socket_cliente, imagens):
+     if imagens == None:
+         return
      for imagem in imagens:
         op.enviaImagem(socket_cliente, imagem)
 
@@ -331,11 +333,9 @@ def editarProdutoCallback(resposta, socket_cliente):
 def editarLojaCallback(resposta, socket_cliente, imagem):
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
-
-    mensagemImagem = Mensagem.produtorMensagem(f"{imagem[0]}")
-    op.enviaMensagem(socket_cliente, mensagemImagem)
-
-    op.enviaImagem(socket_cliente, resposta[0])
+    
+    if imagem != None:
+        op.enviaImagem(socket_cliente, imagem[0])
 
 def editarEnderecoCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")

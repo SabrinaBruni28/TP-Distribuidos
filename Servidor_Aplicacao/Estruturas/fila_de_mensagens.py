@@ -7,6 +7,7 @@ from Operacoes import server_operation as op
 from queue import Queue, Empty
 #from Operacoes.login import Login
 from Operacoes import callback as cb
+from Operacoes import imagem as img
 
 
 
@@ -135,7 +136,8 @@ class FilaDeMensagens(threading.Thread):
     def conectaBanco(self):
         try:
             #self.socketBD = socket.create_connection(('localhost', 6001))
-            self.socketBD = socket.create_connection(('192.168.1.106', 6000))
+            #self.socketBD = socket.create_connection(('192.168.1.106', 6000))
+            self.socketBD = socket.create_connection(('177.137.215.46', 6000))
             logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
@@ -202,11 +204,16 @@ class FilaDeMensagens(threading.Thread):
 
     def decisorCriar(self, resposta_banco: Mensagem, connect: socket.socket, callback, imagens: list):
         resposta = resposta_banco.camposMensagem
+
+        imagens = []
+        
         match resposta[0]:
             case "produto":
+                imagens = img.Imagem(resposta[1], self.socketBD, resposta[0], "imagens")
                 callback(resposta, connect, imagens)
 
             case "loja":
+                imagens = img.Imagem(resposta[1], self.socketBD, resposta[0], "imagem")
                 callback(resposta, connect, imagens)
 
             case "pedido":
@@ -216,6 +223,7 @@ class FilaDeMensagens(threading.Thread):
                 callback(resposta, connect)
 
             case "imagem":
+                imagens = img.Imagem(resposta[1], self.socketBD, resposta[0])
                 callback(resposta, connect, imagens)
 
             case "anuncio":
