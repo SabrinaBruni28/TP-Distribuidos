@@ -19,6 +19,7 @@ class Editar(operacao.Operacao):
 
     def decisor(self):
         operacao = self.mensagemCliente.camposMensagem[1]
+        print(f"[Editar] Operação: {operacao}")
 
         match operacao:
             case "anuncio":
@@ -72,4 +73,4 @@ class Editar(operacao.Operacao):
         mensagemServidor = Mensagem.produtorMensagem(f"editar | usuario | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarUsuarioCallback, self.conexaoServidor, "editar")
+        self.fila.enfileira(mensagemServidor, cb.editarUsuarioCallback, self.conexaoCliente, "editar")

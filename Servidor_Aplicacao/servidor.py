@@ -41,7 +41,7 @@ class ClientHandler(threading.Thread):
                 # Recebe a mensagem do cliente e separa seus campos
                 print("[Servidor][ClientHandler] Recebendo mensagem nova do cliente...")
                 mensagemCliente = Mensagem.receptorMensagemETamanho(self.socketCliente)
-                print(f"[Servidor][ClientHandler] Mensagem recebida: {mensagemCliente.stringMensagem}")
+                print(f"\n\n[Servidor][ClientHandler] Mensagem recebida: {mensagemCliente.stringMensagem}")
                 
                 # Se o cliente fechou a conexão
                 if not mensagemCliente or mensagemCliente.camposMensagem[0] == "":
@@ -94,8 +94,8 @@ class ClientHandler(threading.Thread):
 
             case "criar":
                 imagem = []
-                dados = mensagem.camposMensagem[2]
-                imagem = Imagem(mensagem, self.socketCliente, self.filaDeMensagem, mensagem.camposMensagem[1]).run()
+                dados = mensagem.camposMensagem[3]
+                imagem = Imagem(dados, self.socketCliente, self.filaDeMensagem, mensagem.camposMensagem[1]).run()
                 Criar(mensagem, self.socketCliente, self.filaDeMensagem, imagem).start()
             
             case "excluir":
@@ -130,8 +130,8 @@ def conectaNovoCliente(servidor: socket.socket, fila: FilaDeMensagens):
 def rodarServidor(endereco_ip, porta, fila):
     # O terminal do servidor ficará aberto para receber comandos, assim é possível encerrar o
     # servidor pelo terminal do servidor sem necessitar do ctrl+c.
-    flagEncerramento = threading.Event()
-    threading.Thread(target=terminalServidor, args=(flagEncerramento, ), daemon=True).start()
+    #flagEncerramento = threading.Event()
+    #threading.Thread(target=terminalServidor, args=(flagEncerramento, ), daemon=True).start()
 
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
         servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -142,10 +142,11 @@ def rodarServidor(endereco_ip, porta, fila):
         servidor.listen()
         logging.info(f"Ouvindo em {endereco_ip}:{porta}")
 
-        servidor.settimeout(0.2)
+        #servidor.settimeout(0.2)
 
         # Enquanto o servidor não fecha, aceita novas conexões e cria novas thread para elas
-        while not flagEncerramento.is_set():
+        #while not flagEncerramento.is_set():
+        while True:
             conectaNovoCliente(servidor, fila)
 
         
@@ -182,4 +183,4 @@ def rodarServidorT(endereco_ip, porta, fila):
 
 # Inicialização do socket servidor
 #rodarServidor('localhost', 5000, filaDeMensagem)
-rodarServidor('192.168.1.17', 5000, filaDeMensagem)
+rodarServidor('192.168.1.110', 5000, filaDeMensagem)

@@ -43,21 +43,22 @@ class Criar(operacao.Operacao):
 
     def anuncio(self):
         dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"criar | anuncio | " + str(dados))
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | anuncio | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.criarAnuncioCallback, self.conexaoCliente, "criar")
 
     def produto(self):
         dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"criar | produto | " + str(dados))
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | produto | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.criarProdutoCallback, self.conexaoCliente,"criar", imagem=self.imagens)
 
     def loja(self):
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"criar | loja | " + str(dados))
+        idLoja = self.mensagemCliente.camposMensagem[2]
+        dados = self.mensagemCliente.camposMensagem[3]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | loja | {idLoja} | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.criarLojaCallback, self.conexaoCliente, "criar", imagem=self.imagens)
@@ -70,8 +71,9 @@ class Criar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.criarPedidoCallback, self.conexaoCliente, "criar")
 
     def endereco(self):
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"criar | endereco | " + str(dados))
+        dados = self.mensagemCliente.camposMensagem[3]
+        idUsusario = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | endereco | {idUsusario} | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.criarEnderecoCallback, self.conexaoCliente, "criar")

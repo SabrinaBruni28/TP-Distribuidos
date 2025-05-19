@@ -177,7 +177,7 @@ def visualizarPedidoCallback(resposta_banco, socket_cliente, socket_banco):
 
 def visualizarLojaCallback(resposta_banco, socket_cliente, socket_banco):
     loja = json.loads(resposta_banco[1])
-    produtoLoja = loja.get("produto")
+    produtoLoja = loja.get("produtos")
 
     imagens = []
 
@@ -201,7 +201,7 @@ def visualizarLojaCallback(resposta_banco, socket_cliente, socket_banco):
 
 def visualizarLojaUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     loja = json.loads(resposta_banco[1])
-    produtoLoja = loja.get("produto")
+    produtoLoja = loja.get("produtos")
 
     imagens = []
 
@@ -216,7 +216,7 @@ def visualizarLojaUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
             print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
             break
     
-    mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta_banco[1]}")
+    mensagemAoCliente = Mensagem.produtorMensagem(f"minha_loja | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
@@ -228,7 +228,16 @@ def visualizarListaLojasUsuarioCallback(resposta_banco, socket_cliente, socket_b
     for i in range(quantidadeLojas):
         try:
             mensagemLoja = Mensagem.receptorMensagemETamanho(socket_banco)
-            mensagemImagemLoja = Mensagem.receptorImagem(socket_banco)
+            print(f"[Servidor][Visualizar] Mensagem: {mensagemLoja.stringMensagem}")
+
+            mensagemLojaObj = json.loads(mensagemLoja.camposMensagem[1])
+
+
+            if (mensagemLojaObj.get("imagem") == "" ):
+                mensagemImagemLoja = Mensagem.produtorMensagem('')
+                print(f"[Servidor][Visualizar] Mensagem: {mensagemImagemLoja.tamanho}")
+            else:
+                mensagemImagemLoja = Mensagem.receptorImagem(socket_banco)
 
             dicio = {
                 "loja": mensagemLoja,
@@ -254,7 +263,10 @@ def enviaSequenciaLojas(socket_cliente, lojas):
         #mensagemLoja = Mensagem.produtorMensagem(f"{(loja.get("loja"))}")
         #mensagemImagem = Mensagem.produtorMensagem(loja.get("imagem"))
         op.enviaMensagem(socket_cliente, loja.get("loja"))
-        op.enviaImagem(socket_cliente, loja.get("imagem"))
+
+        if (loja.get("imagem")).stringMensagem != '':
+            print("[E N V I A S E Q U E N C I A]")
+            op.enviaImagem(socket_cliente, loja.get("imagem"))
 
 def visualizarEnderecosUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     enderecos = []
@@ -316,12 +328,14 @@ def editarProdutoCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
-def editarLojaCallback(resposta, socket_cliente, imagem: list):
+def editarLojaCallback(resposta, socket_cliente, imagem):
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
     mensagemImagem = Mensagem.produtorMensagem(f"{imagem[0]}")
     op.enviaMensagem(socket_cliente, mensagemImagem)
+
+    op.enviaImagem(socket_cliente, resposta[0])
 
 def editarEnderecoCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"endereco | {resposta[1]}")
@@ -332,7 +346,7 @@ def editarUsuarioCallback(resposta, socket_cliente):
         mensagemAoCliente = Mensagem.produtorMensagem(f"usuario | {resposta[1]}")
 
     else:
-        mensagemAoCliente = Mensagem.produtorMensagem(f"erro | campos com problema")
+        mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
 
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 

@@ -135,7 +135,7 @@ class FilaDeMensagens(threading.Thread):
     def conectaBanco(self):
         try:
             #self.socketBD = socket.create_connection(('localhost', 6001))
-            self.socketBD = socket.create_connection(('192.168.1.15', 6000))
+            self.socketBD = socket.create_connection(('192.168.1.106', 6000))
             logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
@@ -165,6 +165,9 @@ class FilaDeMensagens(threading.Thread):
             case "minha_loja":
                 callback(resposta, connect, socket_banco)
 
+            case "minhas_lojas":
+                callback(resposta, connect, socket_banco)
+
             case "meus_enderecos":
                 callback(resposta, connect, socket_banco)
 
@@ -178,8 +181,7 @@ class FilaDeMensagens(threading.Thread):
         match resposta[0]:
             case "loja":
                 print("[Decisor Editar][Editar Loja]")
-                mensagemImagemProBanco = Mensagem.produtorMensagem(imagens[0])
-                op.enviaMensagem(socket_banco, mensagemImagemProBanco)
+                #op.enviaImagem(socket_banco, imagens[0])
                 callback(resposta, connect, imagens)
 
             case "anuncio":
@@ -239,12 +241,9 @@ class FilaDeMensagens(threading.Thread):
 
     def decisorPedido(self, resposta_banco: Mensagem, connect: socket.socket, callback, mensagemServidor: Mensagem):
         resposta = resposta_banco.camposMensagem
-        if mensagemServidor.camposMensagem[0] == "pedido":
-            callback(resposta, connect)
+        callback(resposta, connect)
 
-        elif mensagemServidor.camposMensagem[0] == "excluir":
-            callback(resposta, connect)
-
+        
     def mensagemProBancoCriar(self, mensagem: Mensagem, imagens: list):
         try:
             # Se não há conexão com o banco de dados, cria seu socket e estabelece comunicação

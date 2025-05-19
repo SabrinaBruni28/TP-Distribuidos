@@ -32,17 +32,15 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
         # Verifica se o socket ainda está aberto
         if socket.fileno() == -1:
             print("[Erro] Socket fechado. Não é possível enviar a mensagem.")
+            socket.sendall(mensagem.bytesTamanho)
             return False
-
-        # Define um timeout de segurança (caso ainda não esteja definido)
-        if socket.gettimeout() is None:
-            socket.settimeout(5.0)  # tempo razoável para envio
 
         # Tenta enviar os dados da mensagem
         socket.sendall(mensagem.bytesTamanho)
         socket.sendall(mensagem.bytesMensagem)
 
-        print(f"[Servidor][Envia Mensagem] Enviado: {mensagem.stringMensagem}")
+        print(f"[Servidor][ENVIA MENSAGEM][TAMANHO] Enviado: {mensagem.tamanho}")
+        print(f"[Servidor][ENVIA MENSAGEM][MENSAGEM] Enviado: {mensagem.stringMensagem}")
         return True
 
     except (BrokenPipeError, ConnectionResetError) as e:

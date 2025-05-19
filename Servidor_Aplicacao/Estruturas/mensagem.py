@@ -44,7 +44,7 @@ class Mensagem:
         tamanhoMensagem = len(stringMensagemServidor)
 
         mensagemServidor = Mensagem(stringMensagemServidor, tamanhoMensagem, binario=bin)
-        print(f"[Servidor][MENSAGEM] Mensagem peoduzida: {mensagemServidor.stringMensagem}")
+        print(f"[Servidor][MENSAGEM] Mensagem produzida: {mensagemServidor.stringMensagem}")
         return mensagemServidor
     
     # Receptor mensagem é o equivalente ao receptorMensagemETamanho, mas para uma imagem.

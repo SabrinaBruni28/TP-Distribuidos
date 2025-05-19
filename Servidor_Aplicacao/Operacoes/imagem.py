@@ -31,14 +31,14 @@ class Imagem():
 
 
     def loja(self):
-        dadosJson = json.loads(self.dados)
+        dadosJson = json.loads(self.dados_cliente)
         if dadosJson.get(self.campo) == "":
             return None
         
-        mensagemImagemLoja = Mensagem.receptorMensagemETamanho(self.cliente)
+        mensagemImagemLoja = Mensagem.receptorImagem(self.cliente)
 
         imagens = []
-        imagens.append(mensagemImagemLoja.stringMensagem)
+        imagens.append(mensagemImagemLoja)
 
         return imagens
     
