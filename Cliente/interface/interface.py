@@ -2301,7 +2301,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.excluir_loja(loja),
-                acao=ao_excluir_loja
+                acao=ao_excluir_loja,
+                atualizar_tela=False
             )
 
         else:
@@ -2335,7 +2336,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.excluir_produto(produto),
-                acao=ao_excluir_produto
+                acao=ao_excluir_produto,
+                atualizar_tela=False
             )
 
         else:
@@ -2369,7 +2371,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.excluir_anuncio(anuncio),
-                acao=ao_excluir_anuncio
+                acao=ao_excluir_anuncio,
+                atualizar_tela=False
             )
 
         else:
@@ -2404,7 +2407,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.excluir_endereco(endereco),
-                acao=ao_excluir_endereco
+                acao=ao_excluir_endereco,
+                atualizar_tela=False
             )
 
         else:
@@ -2462,7 +2466,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.cancelar_pedido(pedido, pedido.produto.loja),
-                acao=ao_cancelar_pedido
+                acao=ao_cancelar_pedido,
+                atualizar_tela=False
             )
 
         else:
@@ -2497,7 +2502,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar_mensagem(
                 requisicao=lambda: self.aplicacao.confirmar_pedido(pedido, pedido.produto.loja),
-                acao=ao_confirmar_pedido
+                acao=ao_confirmar_pedido,
+                atualizar_tela=False
             )
 
         else:

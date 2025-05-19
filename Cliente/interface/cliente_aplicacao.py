@@ -445,11 +445,7 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "endereco":
-            print("Excluindo endereco")
-            print(endereco)
-            print(self.usuario.enderecos)
             self.usuario.apagar_endereco(endereco)
-            print(self.usuario.enderecos)
             return True
         return False
     
