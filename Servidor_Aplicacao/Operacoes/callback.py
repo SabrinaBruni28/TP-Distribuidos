@@ -8,8 +8,7 @@ from Operacoes import server_operation as op
 # ok | dados do cliente     -> Em caso do login ser confirmado no banco de dados.
 # erro | dados incorretos   -> Em caso dos dados de login não terem sido encontrados no banco de dados.
 def loginCallback(respostaBD, socket_cliente):
-    resposta = [ws.strip() for ws in respostaBD.split('|')]
-    
+    resposta = respostaBD.camposMensagem
     if resposta[0] == "ok":
         mensagemAoCliente = Mensagem.produtorMensagem(f"ok | {resposta[1]}")
         print("[Servidor] Confirmando login do cliente...")
@@ -21,12 +20,23 @@ def loginCallback(respostaBD, socket_cliente):
 
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
-def cadastramentoCallback(resposta_banco, socket_cliente, socket_servidor, fila):
-        resposta = [ws.strip() for ws in resposta_banco.split('|')]
-        dados = json.loads(resposta[1])
-        dadosJson = (dados)
+def cadastramentoCallback(resposta_banco: Mensagem, socket_cliente, fila, mensagem):
+        resposta = resposta_banco.camposMensagem
+        print(f"[CadastramentoCallback] Resposta[0]: {resposta[0]}")
+        print(f"[CadastramentoCallback] Resposta[1]: {resposta[1]}")
+        
+        cadastramentoCallbackDecisor(resposta, socket_cliente, fila, mensagem)
 
-        signupHandler(dadosJson, resposta, socket_cliente, fila)
+def cadastramentoCallbackDecisor(resposta_banco, socket_cliente, fila, mensagem_servidor: Mensagem):
+    if resposta_banco[0] == "erro":
+        print("[Servidor][CadastramentoCallback] Erro no cadastramento.")
+        mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta_banco[1]}")
+        op.enviaMensagem(socket_cliente, mensagemAoCliente)
+        return
+
+    if resposta_banco[0] == "ok":
+        dadosJson = json.loads(mensagem_servidor.camposMensagem[2])
+        signupHandler(dadosJson, resposta_banco, socket_cliente, fila)
 
 def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
         if resposta[0] == "ok":
@@ -43,7 +53,7 @@ def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
             print("[Servidor] Esperando confirmação de email do cliente...")
 
         else:
-            mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {resposta[1]}")
+            mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {json.dumps(dadosJson)}")
             print("[Servidor] Reportando erro de cadastro...")
 
         op.enviaMensagem(cliente, mensagemAoCliente)
@@ -58,7 +68,7 @@ def visualizarTodosAnunciosCallback(resposta_banco, socket_cliente, socket_banco
         try:
             mensagemNovoAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
 
-            print(f"[Servidor][Vizualizar blá blá blá] Anúncio: {mensagemNovoAnuncio.stringMensagem}")
+            #print(f"[Servidor][Vizualizar Todos Anúncios] Anúncio: {mensagemNovoAnuncio.stringMensagem}\n")
 
             #mensagemImagemNovoAnuncio, path = op.receive_image()
             mensagemImagemNovoAnuncio = Mensagem.receptorImagem(socket_banco)
@@ -77,7 +87,7 @@ def visualizarTodosAnunciosCallback(resposta_banco, socket_cliente, socket_banco
              break
         
     quantidadeCliente = Mensagem.produtorMensagem(f"{str(quantidadeAnuncios)}")
-    print(f"[Servidor] Quantidade definitiva: {quantidadeCliente.stringMensagem}")
+    print(f"[Servidor][Visualizar Todos Anúncios] Quantidade definitiva: {quantidadeCliente.stringMensagem}")
 
     byteQ = quantidadeAnuncios.to_bytes(8, 'big')
     socket_cliente.sendall(byteQ)
@@ -90,153 +100,124 @@ def enviaSequenciaAnuncios(socket_cliente, anuncios):
         op.enviaMensagem(socket_cliente, mensagemAnuncio)
         op.enviaImagem(socket_cliente, anuncio.get("imagem"))
 
-def visualizarAnuncioCallback(resposta_banco, socket_cliente, socket_banco):
+def visualizarAnuncioCallback(resposta_banco: list, socket_cliente, socket_banco):
+    anuncio = json.loads(resposta_banco[1])
+    produtoAnuncio = anuncio.get("produto")
+    imagensAnuncio = produtoAnuncio.get("imagens")
+
     imagens = []
-    mensagemQuantidadeImg = 0
 
-    try:
-        retornoQuantidade = Mensagem.receptorMensagemETamanho(socket_banco)
-        quantidadeImagens = int(retornoQuantidade.camposMensagem[1])
-        mensagemQuantidadeImg = quantidadeImagens
+    quantidadeImagensAnuncio = len(imagensAnuncio)
 
-        for i in range(mensagemQuantidadeImg):
-            try:
-                novaImagemAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
-                imagens.append(novaImagemAnuncio.stringMensagem)
 
-            except Exception as e:
-                print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
-                break
-
-    except Exception:
-         return
+    for i in range(quantidadeImagensAnuncio):
+        try:
+            novaImagemAnuncio = Mensagem.receptorImagem(socket_banco)
+            imagens.append(novaImagemAnuncio)
+        except Exception as e:
+            print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
+            break
     
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
-    
-    mensagemQuantidadeImgAoCliente = Mensagem.produtorMensagem(str(len(imagens)))
-    op.enviaMensagem(socket_cliente, mensagemQuantidadeImgAoCliente)
+
+    byteQ = quantidadeImagensAnuncio.to_bytes(8, 'big')
+    socket_cliente.sendall(byteQ)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
 
 def enviaSequencialmenteImagens(socket_cliente, imagens):
      for imagem in imagens:
-        mensagemImagem = Mensagem.produtorMensagem(imagem)
-        op.enviaMensagem(socket_cliente, mensagemImagem)
+        op.enviaImagem(socket_cliente, imagem)
 
-def visualizarProdutoCallback(resposta_banco, socket_cliente, socket_banco):
+def visualizarProdutoCallback(resposta_banco: list, socket_cliente, socket_banco):
+    produto = json.loads(resposta_banco[1])
+    imagensProduto = produto.get("imagens")
+
     imagens = []
-    mensagemQuantidadeImg = 0
 
-    try:
-        retornoQuantidade = Mensagem.receptorMensagemETamanho(socket_banco)
-        quantidadeImagens = int(retornoQuantidade.camposMensagem[1])
-        mensagemQuantidadeImg = quantidadeImagens
+    quantidadeImagensProduto = len(imagensProduto)
 
-        for i in range(mensagemQuantidadeImg):
-            try:
-                novaImagemAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
-                imagens.append(novaImagemAnuncio.stringMensagem)
 
-            except Exception as e:
-                print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
-                break
-
-    except Exception:
-         return
+    for i in range(quantidadeImagensProduto):
+        try:
+            novaImagemProduto = Mensagem.receptorImagem(socket_banco)
+            imagens.append(novaImagemProduto)
+        except Exception as e:
+            print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
+            break
     
     mensagemAoCliente = Mensagem.produtorMensagem(f"produto | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
-    
-    mensagemQuantidadeImgAoCliente = Mensagem.produtorMensagem(str(len(imagens)))
-    op.enviaMensagem(socket_cliente, mensagemQuantidadeImgAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
 
 def visualizarPedidoCallback(resposta_banco, socket_cliente, socket_banco):
+    pedido = json.loads(resposta_banco[1])
+    produtoPedido = pedido.get("produto")
+    imagensPedido = produtoPedido.get("imagens")
+
     imagens = []
-    mensagemQuantidadeImg = 0
 
-    try:
-        retornoQuantidade = Mensagem.receptorMensagemETamanho(socket_banco)
-        quantidadeImagens = int(retornoQuantidade.camposMensagem[1])
-        mensagemQuantidadeImg = quantidadeImagens
+    quantidadeImagensPedido = len(imagensPedido)
 
-        for i in range(mensagemQuantidadeImg):
-            try:
-                novaImagemAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
-                imagens.append(novaImagemAnuncio.stringMensagem)
 
-            except Exception as e:
-                print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
-                break
-
-    except Exception:
-         return
+    for i in range(quantidadeImagensPedido):
+        try:
+            novaImagemPedido = Mensagem.receptorImagem(socket_banco)
+            imagens.append(novaImagemPedido)
+        except Exception as e:
+            print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
+            break
     
     mensagemAoCliente = Mensagem.produtorMensagem(f"pedido | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
-    
-    mensagemQuantidadeImgAoCliente = Mensagem.produtorMensagem(str(len(imagens)))
-    op.enviaMensagem(socket_cliente, mensagemQuantidadeImgAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
 
 def visualizarLojaCallback(resposta_banco, socket_cliente, socket_banco):
+    loja = json.loads(resposta_banco[1])
+    produtoLoja = loja.get("produto")
+
     imagens = []
-    mensagemQuantidadeImg = 0
 
-    try:
-        retornoQuantidade = Mensagem.receptorMensagemETamanho(socket_banco)
-        quantidadeImagens = int(retornoQuantidade.camposMensagem[1])
-        mensagemQuantidadeImg = quantidadeImagens
+    quantidadeImagensLoja = len(produtoLoja)
 
-        for i in range(mensagemQuantidadeImg):
-            try:
-                novaImagemAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
-                imagens.append(novaImagemAnuncio.stringMensagem)
+    if (len(loja.get("imagem"))) > 0:
+        quantidadeImagensLoja = len(produtoLoja) + 1
 
-            except Exception as e:
-                print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
-                break
-
-    except Exception:
-         return
+    for i in range(quantidadeImagensLoja):
+        try:
+            novaImagem = Mensagem.receptorImagem(socket_banco)
+            imagens.append(novaImagem)
+        except Exception as e:
+            print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
+            break
     
     mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
-    
-    mensagemQuantidadeImgAoCliente = Mensagem.produtorMensagem(str(len(imagens)))
-    op.enviaMensagem(socket_cliente, mensagemQuantidadeImgAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
 
 def visualizarLojaUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
+    loja = json.loads(resposta_banco[1])
+    produtoLoja = loja.get("produto")
+
     imagens = []
-    mensagemQuantidadeImg = 0
 
-    try:
-        retornoQuantidade = Mensagem.receptorMensagemETamanho(socket_banco)
-        quantidadeImagens = int(retornoQuantidade.camposMensagem[1])
-        mensagemQuantidadeImg = quantidadeImagens
+    quantidadeImagensLoja = len(produtoLoja)
 
-        for i in range(mensagemQuantidadeImg):
-            try:
-                novaImagemAnuncio = Mensagem.receptorMensagemETamanho(socket_banco)
-                imagens.append(novaImagemAnuncio.stringMensagem)
 
-            except Exception as e:
-                print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
-                break
-
-    except Exception:
-         return
+    for i in range(quantidadeImagensLoja):
+        try:
+            novaImagem = Mensagem.receptorImagem(socket_banco)
+            imagens.append(novaImagem)
+        except Exception as e:
+            print(f"[Servidor][Visualizar] Problema ao ler imagem: {e}")
+            break
     
-    mensagemAoCliente = Mensagem.produtorMensagem(f"minha_loja | {resposta_banco[1]}")
+    mensagemAoCliente = Mensagem.produtorMensagem(f"loja | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
-    
-    mensagemQuantidadeImgAoCliente = Mensagem.produtorMensagem(str(len(imagens)))
-    op.enviaMensagem(socket_cliente, mensagemQuantidadeImgAoCliente)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
 
@@ -246,12 +227,12 @@ def visualizarListaLojasUsuarioCallback(resposta_banco, socket_cliente, socket_b
 
     for i in range(quantidadeLojas):
         try:
-            mensagemLoja = Mensagem.produtorMensagem(socket_banco)
-            mensagemImagemLoja = Mensagem.produtorMensagem(socket_banco)
+            mensagemLoja = Mensagem.receptorMensagemETamanho(socket_banco)
+            mensagemImagemLoja = Mensagem.receptorImagem(socket_banco)
 
             dicio = {
-                "loja": mensagemLoja.stringMensagem,
-                "imagem": mensagemImagemLoja.stringMensagem
+                "loja": mensagemLoja,
+                "imagem": mensagemImagemLoja
             }
 
             lojas.append(dicio)
@@ -260,17 +241,20 @@ def visualizarListaLojasUsuarioCallback(resposta_banco, socket_cliente, socket_b
             print(f"[Servidor][Visualizar] Problema ao ler loja: {e}")
             break
 
-    mensagemAoCliente = Mensagem.produtorMensagem(f"minhas_lojas | {str(len(lojas))}")
-    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    #mensagemAoCliente = Mensagem.produtorMensagem(f"{str(len(lojas))}")
+    #op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    byteQ = quantidadeLojas.to_bytes(8, 'big')
+    socket_cliente.sendall(byteQ)
 
     enviaSequenciaLojas(socket_cliente, lojas)
 
 def enviaSequenciaLojas(socket_cliente, lojas):
     for loja in lojas:
-        mensagemLoja = Mensagem.produtorMensagem(loja.get("loja"))
-        mensagemImagem = Mensagem.produtorMensagem(loja.get("imagem"))
-        op.enviaMensagem(socket_cliente, mensagemLoja)
-        op.enviaMensagem(socket_cliente, mensagemImagem)
+        #mensagemLoja = Mensagem.produtorMensagem(f"{(loja.get("loja"))}")
+        #mensagemImagem = Mensagem.produtorMensagem(loja.get("imagem"))
+        op.enviaMensagem(socket_cliente, loja.get("loja"))
+        op.enviaImagem(socket_cliente, loja.get("imagem"))
 
 def visualizarEnderecosUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     enderecos = []
@@ -278,22 +262,25 @@ def visualizarEnderecosUsuarioCallback(resposta_banco, socket_cliente, socket_ba
 
     for i in range(quantidadeEnderecos):
         try:
-            mensagemEndereco = Mensagem.produtorMensagem(socket_banco)
-            enderecos.append(mensagemEndereco.stringMensagem)
+            mensagemEndereco = Mensagem.receptorMensagemETamanho(socket_banco)
+            enderecos.append(mensagemEndereco)
 
         except Exception as e:
             print(f"[Servidor][Visualizar] Problema ao ler endereço: {e}")
             break
 
-    mensagemAoCliente = Mensagem.produtorMensagem(f"meus_enderecos | {str(len(enderecos))}")
-    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    #mensagemAoCliente = Mensagem.produtorMensagem(f"{str(len(enderecos))}")
+    #op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    byteQ = quantidadeEnderecos.to_bytes(8, 'big')
+    socket_cliente.sendall(byteQ)
 
     enviaSequenciaEnderecos(socket_cliente, enderecos)
 
 def enviaSequenciaEnderecos(socket_cliente, enderecos):
     for endereco in enderecos:
-        mensagemEndereco = Mensagem.produtorMensagem(endereco)
-        op.enviaMensagem(socket_cliente, mensagemEndereco)
+        #mensagemEndereco = Mensagem.produtorMensagem(f"{endereco}")
+        op.enviaMensagem(socket_cliente, endereco)
 
 def visualizarListaPedidosUsuarioCallback(resposta_banco, socket_cliente, socket_banco):
     pedidos = []
@@ -301,22 +288,25 @@ def visualizarListaPedidosUsuarioCallback(resposta_banco, socket_cliente, socket
 
     for i in range(quantidadePedidos):
         try:
-            mensagemPedido = Mensagem.produtorMensagem(socket_banco)
-            pedidos.append(mensagemPedido.stringMensagem)
+            mensagemPedido = Mensagem.receptorMensagemETamanho(socket_banco)
+            pedidos.append(mensagemPedido)
 
         except Exception as e:
             print(f"[Servidor][Visualizar] Problema ao ler pedido: {e}")
             break
 
-    mensagemAoCliente = Mensagem.produtorMensagem(f"meus_pedidos | {str(len(pedidos))}")
-    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+    #mensagemAoCliente = Mensagem.produtorMensagem(f"meus_pedidos | {str(len(pedidos))}")
+    #op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+    byteQ = quantidadePedidos.to_bytes(8, 'big')
+    socket_cliente.sendall(byteQ)
 
     enviaSequenciaPedidos(socket_cliente, pedidos)
 
 def enviaSequenciaPedidos(socket_cliente, pedidos):
     for pedido in pedidos:
-        mensagemPedido = Mensagem.produtorMensagem(pedido)
-        op.enviaMensagem(socket_cliente, mensagemPedido)
+        #mensagemPedido = Mensagem.produtorMensagem(f"{pedido}")
+        op.enviaMensagem(socket_cliente, pedido)
 
 def editarAnuncioCallback(resposta, socket_cliente):
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta[1]}")
@@ -403,3 +393,9 @@ def pedidoConfirmadoCallback(socket_cliente: socket.socket):
 def pedidoCanceladoCallback(socket_cliente: socket.socket):
     mensagemAoCliente = Mensagem.produtorMensagem(f"ok | cancelado")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
+
+def codigoCallback(resposta_banco: Mensagem, socket_cliente: socket.socket):
+    resposta = resposta_banco.camposMensagem
+    mensagemAoCliente = Mensagem.produtorMensagem(f"ok | {resposta[1]}")
+    op.enviaMensagem(socket_cliente, mensagemAoCliente)
+        

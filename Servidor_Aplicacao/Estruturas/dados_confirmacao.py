@@ -1,4 +1,5 @@
 import socket
+import time
 
 class DadosTemporariosConfirmacao:
     def __init__(self):
@@ -8,12 +9,13 @@ class DadosTemporariosConfirmacao:
         self._dados[socket_cliente] = {
             "codigo": codigo,
             "dados": dados,
-            "tentativas": 0
+            "tentativas": 0,
+            "timestamp": time.time()
         }
 
     def verificarCodigo(self, socket_cliente, codigo_recebido):
         if socket_cliente not in self._dados:
-            return "erro", "sem_dados"
+            return "erro", "tempo_excedido"
 
         info = self._dados[socket_cliente]
         if codigo_recebido == info["codigo"]:
@@ -31,3 +33,14 @@ class DadosTemporariosConfirmacao:
 
     def abortar(self, socket_cliente):
         self._dados.pop(socket_cliente, None)
+
+    def limpar_expirados(self):
+        agora = time.time()
+        
+        expirados = [
+            sock for sock, info in self._dados.items()
+            if agora - info["timestamp"] > 180
+        ]
+
+        for sock in expirados:
+            del self._dados[sock]

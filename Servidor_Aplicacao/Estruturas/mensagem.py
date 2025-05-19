@@ -3,7 +3,7 @@ from Operacoes import server_operation as op
 # Estrutura de mensagem para organizar melhor uma mensagem do cliente
 # Ela carrega a string original, os campos da mensagem e o tamanho
 class Mensagem:
-    def __init__(self, mensagem, tamanho: int, tipoDivisao=None, binario=False):
+    def __init__(self, mensagem, tamanho: int, binario=False):
         self.stringMensagem = mensagem
         self.tamanho = tamanho
         self.bytesTamanho = tamanho.to_bytes(8, "big")
@@ -25,22 +25,8 @@ class Mensagem:
     def _divideString(self):
         return [ws.strip() for ws in self.stringMensagem.split('|')]
     
-    def _divideStringImg(self):
-        return []
     
-    # Função para receber mensagens que vêm com o tamanho delas antes
-    @classmethod
-    def receptorMensagemETamanho(cls, socket_cliente: socket.socket):
-        print("[Servidor] Entrou em receptorMensagem() e está esperando as mensagens do cliente.")
-        tamanho = cls._recebeTamanhoDaMensagem(socket_cliente)
-        print(f"[Servidor] Tamanho da mensagem do cliente a receber: {tamanho}")
 
-        if tamanho == 0:
-            return None
-
-        stringMensagem = cls._recebeMensagem(socket_cliente, tamanho)
-        mensagemCliente = Mensagem(stringMensagem, tamanho)
-        return mensagemCliente
     
     # Função para receber apenas a mensagem. Usada em casos onde o tamanho da mensagem é conhecido.
     @classmethod
@@ -58,6 +44,7 @@ class Mensagem:
         tamanhoMensagem = len(stringMensagemServidor)
 
         mensagemServidor = Mensagem(stringMensagemServidor, tamanhoMensagem, binario=bin)
+        print(f"[Servidor][MENSAGEM] Mensagem peoduzida: {mensagemServidor.stringMensagem}")
         return mensagemServidor
     
     # Receptor mensagem é o equivalente ao receptorMensagemETamanho, mas para uma imagem.
@@ -88,19 +75,41 @@ class Mensagem:
 
         return dados
 
-    # Função auxiliar para receber o tamanho de uma mensagem antes de receber a string propriamente dita.
+        # Função para receber mensagens que vêm com o tamanho delas antes
+    @classmethod
+    def receptorMensagemETamanho(cls, socket_cliente: socket.socket):
+        print("[Servidor] Entrou em receptorMensagem() e está esperando as mensagens do cliente.")
+        tamanho = cls._recebeTamanhoDaMensagem(socket_cliente)
+        print(f"[Servidor] Tamanho da mensagem do cliente a receber: {tamanho}")
+    
+        if tamanho == 0:
+            return None
+    
+        stringMensagem = cls._recebeMensagem(socket_cliente, tamanho)
+        mensagemCliente = Mensagem(stringMensagem, tamanho)
+        return mensagemCliente
+    
     @staticmethod
     def _recebeTamanhoDaMensagem(socket_cliente: socket.socket):
         print(f"[Servidor] Entrou em _recebeMensagemTamanho() e vai receber o tamanho da mensagem.")
-        tamanhoEmBytes = socket_cliente.recv(8)
-        tamanho = int.from_bytes(tamanhoEmBytes, "big")
+        dados = b''
+        while len(dados) < 8:
+            parte = socket_cliente.recv(8 - len(dados))
+            if not parte:
+                raise ConnectionError("Conexão perdida ao tentar ler o tamanho da mensagem.")
+            dados += parte
+        tamanho = int.from_bytes(dados, "big")
         return tamanho
     
-    # Finalmente, a função que recebe o bytestring que representa uma mensagem de outro processo.
     @staticmethod
     def _recebeMensagem(socket_cliente: socket.socket, tamanho: int):
         print(f"[Servidor] Entrou em recebeMensagem() e vai receber a string da mensagem recebida.")
-        mensagemEmBytes = socket_cliente.recv(tamanho)
-        mensagem = op.decodifica(mensagemEmBytes)
+        dados = b''
+        while len(dados) < tamanho:
+            parte = socket_cliente.recv(min(4096, tamanho - len(dados)))
+            if not parte:
+                raise ConnectionError("Conexão perdida durante a recepção da mensagem.")
+            dados += parte
+        mensagem = op.decodifica(dados)
         return mensagem
-
+    

@@ -80,6 +80,9 @@ class ClientHandler(threading.Thread):
             case "cadastramento":
                 Cadastramento(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).start()
 
+            case "codigo":
+                Codigo(mensagem, self.socketCliente, self.filaDeMensagem).start()
+
             case "visualizar":
                 Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
@@ -100,9 +103,6 @@ class ClientHandler(threading.Thread):
 
             case "pedido":
                 Pedido(mensagem, self.socketCliente, self.filaDeMensagem).start()
-
-            case "codigo":
-                Codigo(mensagem, self.socketCliente, self.filaDeMensagem).start()
 
             case _:
                 logging.info("Comando inválido")

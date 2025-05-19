@@ -29,14 +29,31 @@ def fazMensagemServidor(string):
 
 def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
     try:
+        # Verifica se o socket ainda está aberto
+        if socket.fileno() == -1:
+            print("[Erro] Socket fechado. Não é possível enviar a mensagem.")
+            return False
+
+        # Define um timeout de segurança (caso ainda não esteja definido)
+        if socket.gettimeout() is None:
+            socket.settimeout(5.0)  # tempo razoável para envio
+
+        # Tenta enviar os dados da mensagem
         socket.sendall(mensagem.bytesTamanho)
         socket.sendall(mensagem.bytesMensagem)
+
         print(f"[Servidor][Envia Mensagem] Enviado: {mensagem.stringMensagem}")
         return True
-    
+
+    except (BrokenPipeError, ConnectionResetError) as e:
+        print(f"[Erro] Conexão perdida com o cliente: {e}")
+    except socket.timeout:
+        print(f"[Erro] Timeout ao tentar enviar mensagem: {mensagem.stringMensagem}")
     except Exception as e:
-        print(f"[Erro] {e}\nFalha no envio da mensagem: {mensagem.stringMensagem}")
-        return False
+        print(f"[Erro] Erro inesperado ao enviar mensagem: {e}\nMensagem: {mensagem.stringMensagem}")
+
+    return False
+
     
 def receive_image(self, buffer_size=4096, path='received_image.png'):
         if not self.socket:

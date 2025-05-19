@@ -41,22 +41,27 @@ class Visualizar(operacao.Operacao):
             case "minhas_lojas":
                 self.minhasListaLojas()
 
-            case "pedidos":
+            case "pedido":
                 self.pedidos()
 
             case "meus_pedidos":
                 self.meusPedidos()
+
+            case "meus_enderecos":
+                self.meusEnderecos()
             
             case _:
                 print("[Servidor] Mensagem inválida.")
 
     def todosAnuncios(self):
+        print("[Servidor][Visualizar] Operação de visualizar todos os anúncios recebida.")
         mensagemServidor = Mensagem.produtorMensagem("retornar | anuncios")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.visualizarTodosAnunciosCallback, self.conexaoCliente, "visualizar")
 
     def anuncio(self):
+        print("[Servidor][Visualizar] Operação de visualizar anúncio recebida.")
         idAnuncio = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"retornar | anuncio | {str(idAnuncio)}")
 
@@ -64,6 +69,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarAnuncioCallback, self.conexaoCliente, "visualizar")
 
     def produto(self):
+        print("[Servidor][Visualizar] Operação de visualizar produto recebida.")
         idProduto = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"retornar | produto | {str(idProduto)}")
 
@@ -71,6 +77,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarProdutoCallback, self.conexaoCliente, "visualizar")
 
     def loja(self):
+        print("[Servidor][Visualizar] Operação de visualizar loja recebida.")
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | loja | " + str(idLoja))
 
@@ -78,6 +85,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarLojaCallback, self.conexaoCliente, "visualizar")
 
     def minhaLoja(self):
+        print("[Servidor][Visualizar] Operação de visualizar loja do usuário recebida.")
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | minha_loja | " + str(idLoja))
 
@@ -85,6 +93,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarLojaUsuarioCallback,  self.conexaoCliente, "visualizar")
 
     def minhasListaLojas(self):
+        print("[Servidor][Visualizar] Operação de visualizar lojas do usuário recebida.")
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | minhas_lojas | " + str(idUsuario))
 
@@ -92,6 +101,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarListaLojasUsuarioCallback,  self.conexaoCliente, "visualizar")
 
     def pedido(self):
+        print("[Servidor][Visualizar] Operação de visualizar pedido recebida.")
         idLoja = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | pedido | " + str(idLoja))
 
@@ -99,6 +109,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarPedidoCallback,  self.conexaoCliente, "visualizar")
 
     def meusPedidos(self):
+        print("[Servidor][Visualizar] Operação de visualizar pedidos do usuário recebida.")
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem("retornar | meus_pedidos | " + str(idUsuario))
 
@@ -106,6 +117,7 @@ class Visualizar(operacao.Operacao):
         self.fila.enfileira(mensagemServidor, cb.visualizarListaPedidosUsuarioCallback,  self.conexaoCliente, "visualizar")
 
     def meusEnderecos(self):
+        print("[Servidor][Visualizar] Operação de visualizar endereços do usuário recebida.")
         idUsuario = self.mensagemCliente.camposMensagem[2]
         mensagemServidor = Mensagem.produtorMensagem(f"retornar | meus_enderecos | {str(idUsuario)}")
 

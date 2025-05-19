@@ -25,16 +25,10 @@ class Cadastramento(operacao.Operacao):
 
     def cadastrar(self):
         print("[Servidor][Cadastramento] Operação de Cadastramento recebida.")
-
-        # Função de abortamento da operação. Inutilizada por hora.
-        if (self.mensagemCliente.camposMensagem[1] == "abortar"):
-            self.fila.dadosTemp.abortar(self.conexaoCliente)
-            print("[Servidor][Cadastramento] Cadastro abortado.")
-            return
         
         dados = self.mensagemCliente.camposMensagem[1]
         dadosJson = json.loads(dados)
-        mensagemServidor = Mensagem.produtorMensagem(f"criar | usuario | {json.dumps(dadosJson)}")
+        mensagemServidor = Mensagem.produtorMensagem(f"confere | usuario | {json.dumps(dadosJson)}")
 
         # A operação de cadastramento não é tão simples quanto a operação de login. Aqui, além da mensagem, do socket do cliente e do callback,
         # deve-se enfileirar, também, a própria fila para o armazenamento dos dados. O banco de dados recuperará dados que não serão devolvidos

@@ -7,9 +7,9 @@ class Imagem():
     def __init__(self, dados, socket_cliente, tipo: str, campo: str = ""):
         self.dados_cliente = dados
         self.cliente = socket_cliente
-        self.quantidade = 0
         self.tipo = tipo
         self.campo = campo
+        self.quantidade = 0
     
     def run(self):
         return self.decisor(self.tipo)
