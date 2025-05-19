@@ -29,16 +29,20 @@ class UnixSocketClient:
         print("Mensagem:", data)
 
     def receive(self):
-        if not self.socket:
+        tamanho = self.receive_size()
+        print("Tamanho:", tamanho)
+        if not tamanho:
             return False
-        try:
-            self.socket.settimeout(10)
-            tamanho = self.receive_size()
-            resposta = self.socket.recv(tamanho).decode()
-            print("Resposta:", resposta)
-            return resposta
-        except socket.timeout:
-            return False
+        print("Tentando receber mensagem")
+        data = b''
+        while len(data) < tamanho:
+            chunk = self.socket.recv(min(4096, tamanho - len(data)))
+            if not chunk:
+                raise ConnectionError("Socket fechado inesperadamente")
+            data += chunk
+        resposta = data.decode()
+        print("Resposta:", resposta)
+        return resposta
 
     def send_image(self, image_path: str):
         if not self.socket:
@@ -78,11 +82,29 @@ class UnixSocketClient:
     def receive_size(self):
         if not self.socket:
             return False
+        print("Tentar receber tamanho (8 bytes)")
+
         try:
-            self.socket.settimeout(10)
-            tamanho_bytes = self.socket.recv(8)
+            tamanho_bytes = b''
+            while len(tamanho_bytes) < 8:
+                chunk = self.socket.recv(8 - len(tamanho_bytes))
+                if not chunk:
+                    raise ConnectionError("Socket fechado antes de receber os 8 bytes de tamanho")
+                tamanho_bytes += chunk
+
             tamanho_total = int.from_bytes(tamanho_bytes, 'big')
             print("Recebe tamanho:", tamanho_total)
             return tamanho_total
-        except socket.timeout:
+
+        except Exception as e:
+            print("Erro ao receber tamanho:", e)
             return False
+
+    def _flush_buffer(self):
+        # lê dados restantes se houver (até esvaziar ou dar timeout rápido)
+        self.socket.settimeout(0.1)
+        try:
+            while self.socket.recv(4096):
+                pass
+        except:
+            pass
