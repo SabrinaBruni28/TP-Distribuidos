@@ -547,6 +547,7 @@ class MarketplaceUI(QMainWindow):
             acao=lambda: self.view.abrir_tela(self.stack, self.tela_criar_loja)
         )
         layout_horizintal.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignRight)
+
         layout_vertical.addLayout(layout_horizintal)
         layout_vertical.addSpacing(40)
 
@@ -555,6 +556,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
+        # Scroll area e seu conteúdo
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
 
@@ -562,8 +564,13 @@ class MarketplaceUI(QMainWindow):
         layout_loja = QVBoxLayout(conteudo_scroll)
         layout_loja.setSpacing(15)
 
+        # Adiciona os blocos no layout do conteúdo do scroll
         blocos = self.tela_lista_lojas(self.handler.aplicacao.usuario.lojas)
-        layout_vertical.addWidget(blocos)
+        layout_loja.addWidget(blocos)
+
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
         layout_vertical.addStretch()
 
         return tela
@@ -584,8 +591,22 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
+        # Scroll area e seu conteúdo
+        scroll_area = QScrollArea()
+        scroll_area.setWidgetResizable(True)
+
+        conteudo_scroll = QWidget()
+        layout_pedido = QVBoxLayout(conteudo_scroll)
+        layout_pedido.setSpacing(15)
+
+        # Adiciona os blocos no layout do conteúdo do scroll
         blocos = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos, botao_loja=True)
-        layout_vertical.addWidget(blocos)
+        layout_pedido.addWidget(blocos)
+
+        scroll_area.setWidget(conteudo_scroll)
+        layout_vertical.addWidget(scroll_area)
+
+        layout_vertical.addStretch()
 
         return tela
     
@@ -2103,6 +2124,7 @@ class InterfaceHandler:
                 valores_alterados["id"] = loja.id
                 valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
                 def ao_editar_loja(resposta):
+                    print("Loja", loja)
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 

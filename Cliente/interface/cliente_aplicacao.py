@@ -299,9 +299,14 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
-            self.usuario.editar_loja(loja, Loja.from_dict(resposta[1]))
+            print("Loja antes:", loja)
+            loja = Loja.from_dict(resposta[1])
+            print("Loja depois:", loja)
             if loja.imagem:
+                print("Loja imagem:", loja.imagem)
                 self.socket.receive_image(path=f"uploads/{loja.imagem}")
+            else:
+                print("Não Loja imagem:", loja.imagem)
             return True
         return False
     

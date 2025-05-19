@@ -46,6 +46,7 @@ class UnixSocketClient:
             print("Resposta:", resposta)
         except Exception as e:
             print("Erro ao receber mensagem:", e)
+            self.socket.close()
             return False
         return resposta
 
@@ -102,6 +103,7 @@ class UnixSocketClient:
 
         except Exception as e:
             print("Erro ao receber tamanho:", e)
+            self.socket.close()
             return False
 
     def _flush_buffer(self):
