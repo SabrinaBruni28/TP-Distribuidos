@@ -45,7 +45,7 @@ class Anuncio:
     
     def to_dict_personalizado(self):
         return json.dumps({
-            "produto": "{" + f"id: {self.produto.id if self.produto else None}" +"}",
+            "produto": {"id": f"{self.produto.id if self.produto else None}"},
             "preco": self.preco,
             "quantidade_disponivel": self.quantidade_disponivel,
             "chave_pix": self.chave_pix,

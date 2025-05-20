@@ -833,7 +833,7 @@ class MarketplaceUI(QMainWindow):
 
         # Botão para adicionar nova imagem
         botao_adicionar = WidgetHelper.botao(
-            nome="Adicionar imagem", largura=500,
+            nome="Adicionar imagem", largura=200,
             acao=lambda: (
                 self.substituir_imagem(),
                 imagens.append(self.imagem) if self.imagem else None,

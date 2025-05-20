@@ -22,11 +22,17 @@ class UnixSocketClient:
     def send(self, data: str):
         if not self.socket:
             return False
-        data_byte = data.encode()
-        tamanho = len(data_byte)
-        self.send_size(tamanho)
-        self.socket.sendall(data_byte)
-        print("Mensagem:", data)
+        try:
+            data_byte = data.encode()
+            tamanho = len(data_byte)
+            self.send_size(tamanho)
+            self.socket.sendall(data_byte)
+            print("Mensagem:", data)
+            return True
+        except Exception as e:
+            print("Erro ao enviar mensagem:", e)
+            self.socket.close()
+            return False
 
     def receive(self):
         tamanho = self.receive_size()
@@ -44,43 +50,58 @@ class UnixSocketClient:
                 data += chunk
             resposta = data.decode()
             print("Resposta:", resposta)
+            return resposta
         except Exception as e:
             print("Erro ao receber mensagem:", e)
             self.socket.close()
             return False
-        return resposta
 
     def send_image(self, image_path: str):
         if not self.socket:
             return False
-        with open(image_path, 'rb') as f:
-            data = f.read()
-            tamanho = len(data)
-            self.send_size(tamanho)
-            self.socket.sendall(data)
-        print("Manda Imagem:", image_path)
-        return data
+        try:
+            with open(image_path, 'rb') as f:
+                data = f.read()
+                tamanho = len(data)
+                self.send_size(tamanho)
+                self.socket.sendall(data)
+            print("Manda Imagem:", image_path)
+            return data
+        except Exception as e:
+            print("Erro ao enviar imagem:", e)
+            self.socket.close()
+            return False
 
     def receive_image(self, buffer_size=4096, path='received_image.png'):
         if not self.socket:
             return False
         tamanho_total = self.receive_size()
-        with open(path, 'wb') as f:
-            data = b''
-            while len(data) < tamanho_total:
-                chunk = self.socket.recv(min(buffer_size, tamanho_total - len(data)))
-                if not chunk:
-                    break
-                data += chunk
-            f.write(data)
-            print("Recebe Imagem:", path)
-        return data, path
+        try:
+            with open(path, 'wb') as f:
+                data = b''
+                while len(data) < tamanho_total:
+                    chunk = self.socket.recv(min(buffer_size, tamanho_total - len(data)))
+                    if not chunk:
+                        break
+                    data += chunk
+                f.write(data)
+                print("Recebe Imagem:", path)
+            return data, path
+        except Exception as e:
+            print("Erro ao receber imagem:", e)
+            self.socket.close()
+            return False, path
 
     def send_size(self, tamanho: int):
         if not self.socket:
             return False 
         print("Manda tamanho:", tamanho)
-        self.socket.sendall(tamanho.to_bytes(8, 'big'))
+        try:
+            self.socket.sendall(tamanho.to_bytes(8, 'big'))
+        except Exception as e:
+            print("Erro ao enviar tamanho:", e)
+            self.socket.close()
+            return False
 
     def receive_size(self):
         if not self.socket:
