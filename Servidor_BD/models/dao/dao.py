@@ -73,3 +73,18 @@ class DAO():
             cursor.execute(sql, (id_obj,))
             conn.commit()
             return 'ok'
+    
+    def zerar(self, obj: Persistivel, referencias_externas):
+        with self._connect() as conn:
+            cursor = conn.cursor()
+            persistivel = obj.to_dict_bd(referencias_externas)
+
+            sql = f'''UPDATE {self.table_names[0]} SET
+            {', '.join([f'{column} = NULL' for column in persistivel.keys()])}
+            WHERE id_{self.table_names[0]} = ?
+            RETURNING id_{self.table_names[0]}, {', '.join(self.nome_colunas)};'''
+            print(sql, end='\n\n')
+            cursor.execute(sql, [obj.id])
+            persistivel = cursor.fetchone()
+            conn.commit()
+            return persistivel

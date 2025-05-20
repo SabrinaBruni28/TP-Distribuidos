@@ -7,13 +7,15 @@ class Pedido(Persistivel):
     def __init__(self, id = 0, produto = None, quantidade = 0, preco = 0, endereco = None, data = None):
         # Atributos próprios
         self.id = id
-        self.data = data if data else datetime.datetime.now()
+        self.data = data
         self.quantidade = quantidade
         self.preco = preco
 
         # Atributos estrangeiros
         self.produto = produto
+        self.id_produto = produto.id if produto else 0
         self.endereco = endereco
+        self.id_endereco = endereco.id if endereco else 0
 
     def calcular_total(self):
         total = self.preco * self.quantidade
@@ -34,7 +36,7 @@ class Pedido(Persistivel):
             'produto': {'id': self.produto.id, 'nome': self.produto.nome} if self.produto else None,
             'preco': self.preco,
             'quantidade': self.quantidade,
-            'data': self.data.isoformat() if self.data else datetime.datetime.now().isoformat(),
+            'data': self.data.isoformat() if self.data else ''
             }
     
     def to_dict_bd(self, nome_colunas):
@@ -53,10 +55,10 @@ class Pedido(Persistivel):
     def from_dict(cls, dados):
         id = dados.get('id', 0)
         data = datetime.datetime.fromisoformat(dados['data']) if 'data' in dados else None
-        produto = Produto.from_dict(dados['produto']) if 'produto' in dados else []
+        produto = Produto.from_dict(dados['produto']) if 'produto' in dados else None
         quantidade = dados.get('quantidade', 0)
         preco = dados.get('preco', 0)
-        endereco = Endereco.from_dict(dados['endereco']) if 'endereco' in dados else []
+        endereco = Endereco.from_dict(dados['endereco']) if 'endereco' in dados else None
 
         return cls(id, produto, quantidade, preco, endereco, data)
     

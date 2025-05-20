@@ -30,3 +30,6 @@ class DAOPedido(DAO):
 
     def delete(self, id_obj: int):
         return super().delete(id_obj)
+    
+    def zerar(self, obj: Pedido):
+        pass

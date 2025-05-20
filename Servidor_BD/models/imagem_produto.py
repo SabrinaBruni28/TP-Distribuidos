@@ -44,4 +44,4 @@ class Imagem_Produto(Persistivel):
         return cls(id, id_produto)
     
     def __str__(self):
-        return f'Imagem_Produto(id={self.id}, imagem={self.caminho()})'
+        return f'Imagem_Produto(id={self.id}, id_produto={self.id_produto} imagem={self.caminho()})'

@@ -90,12 +90,31 @@ class Banqueiro():
     def excluir(self, obj: Persistivel):
         return self._dao(obj).delete(obj.id)
     
+    def excluirProduto(self, obj: Produto):
+        imagens_a_remover = []
+        ans = 'erro'
+        pedidos = self.buscar(Pedido(produto = obj))
+        if pedidos:
+            result = self.encontrar(obj)
+            if isinstance(result, Produto):
+                obj = result
+                self.__daoProduto.zerar(Produto(id = obj.id))
+                ans = 'ok'
+        else:
+            for imagem_produto in self.buscar(Imagem_Produto(id_produto = obj.id)):
+                if self.excluir(imagem_produto) == 'ok':
+                    imagens_a_remover.append(imagem_produto.caminho())
+            ans = self.excluir(obj)
+        return imagens_a_remover, ans
+
+    
     def retornarLoja(self, obj: Loja, minha=False):
         result = self.encontrar(obj)
-        if result:
+        if isinstance(result, Loja):
             obj = result
             obj.produtos = self.buscar(Produto(loja=obj))
-            obj.anuncios = [self.buscar(Anuncio(produto=produto)) for produto in obj.produtos]
+            for produto in obj.produtos:
+                obj.anuncios += self.buscar(Anuncio(produto=produto)) 
             if minha:
                 for produto in obj.produtos:
                     for pedidos in self.buscar(Pedido(produto = produto)):

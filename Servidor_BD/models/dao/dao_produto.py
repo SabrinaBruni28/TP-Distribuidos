@@ -6,9 +6,9 @@ class DAOProduto(DAO):
     def __init__(self):
         super().__init__(
             ['produto'],
-            ["id_loja", "nome_produto", "descricao_produto"])
+            ['id_loja', 'nome_produto', 'descricao_produto'])
     
-    def _from_tuple(self, tupla = (0, 0, "", "")):
+    def _from_tuple(self, tupla = (0, 0, '', '')):
         return Produto(
             id = tupla[0],
             loja = Loja(id = tupla[1]),
@@ -26,3 +26,6 @@ class DAOProduto(DAO):
 
     def delete(self, id_obj: int):
         return super().delete(id_obj)
+    
+    def zerar(self, obj: Produto):
+        return self._from_tuple(super().zerar(obj, ['id_loja']))
