@@ -31,6 +31,9 @@ class Excluir(operacao.Operacao):
             case "endereco":
                 self.endereco()
 
+            case "imagem":
+                self.imagem()
+
             case _:
                 print("[Servidor] Mensagem inválida.")
 
@@ -66,3 +69,10 @@ class Excluir(operacao.Operacao):
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.excluirEnderecoCallback, self.conexaoCliente, "excluir")
 
+    def imagem(self):
+        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
+        nomeImagem = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | imagem | {nomeImagem}")
+
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.excluirImagemCallback, self.conexaoCliente, "excluir")

@@ -90,4 +90,4 @@ class Criar(operacao.Operacao):
         mensagemServidor = Mensagem.produtorMensagem(f"criar | imagem | " + str(dados))
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.criarLojaCallback, self.conexaoCliente, "criar", imagem=self.imagens)
+        self.fila.enfileira(mensagemServidor, cb.criarImagemCallback, self.conexaoCliente, "criar", imagem=self.imagens)

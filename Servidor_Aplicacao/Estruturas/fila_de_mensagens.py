@@ -64,6 +64,12 @@ class FilaDeMensagens(threading.Thread):
 
         if resposta == None:
             print(f"[Fila de Mensagens] Erro ao receber resposta do Banco de Dados.\n[Fila de Mensagens] Mensagem não processada: {mensagem.stringMensagem}")
+            self.socketBD = None
+            return
+        
+        if resposta.stringMensagem == "erro | falha desconhecida":
+            print(f"[Fila de Mensagens][Erro] {resposta.stringMensagem}")
+            op.enviaMensagem(connect, resposta)
             return
 
         match tipo:
@@ -110,6 +116,13 @@ class FilaDeMensagens(threading.Thread):
             if self.socketBD is None:
                 self.conectaBanco()
 
+            if self.socketBD and not op.is_socket_alive(self.socketBD):
+                print("[Fila de Mensagens] Conexão com o Banco de Dados perdida. Reconectando...")
+                self.socketBD = None
+                self.conectaBanco()
+
+
+
             # Envia a mensagem e retorna a resposta do banco
             if self.socketBD:
 
@@ -141,9 +154,9 @@ class FilaDeMensagens(threading.Thread):
             if self.socketBD:
                 op.enviaMensagem(self.socketBD, mensagem)
 
-                self.socketBD.settimeout(30)
+                Mensagem.limpar_buffer_socket(self.socketBD)
                 resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
-                self.socketBD.settimeout(None)
+                
                 print(f"[Fila de Mensagens] Resposta do Banco: {resposta.stringMensagem}")
                 if not resposta:
                     return None
@@ -303,7 +316,7 @@ class FilaDeMensagens(threading.Thread):
                 callback(resposta, connect, imagens)
 
             case "anuncio":
-                callback(resposta, connect, imagens)
+                callback(resposta, connect)
 
     def decisorExcluir(self, resposta_banco: Mensagem, connect: socket.socket, callback):
         resposta = resposta_banco.camposMensagem

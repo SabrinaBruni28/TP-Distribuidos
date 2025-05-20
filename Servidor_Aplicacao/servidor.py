@@ -89,8 +89,10 @@ class ClientHandler(threading.Thread):
 
             case "editar":
                 imagem = []
-                dados = mensagem.camposMensagem[2]
-                imagem = Imagem(dados=dados, socket_cliente=self.socketCliente, tipo=mensagem.camposMensagem[1], campo="imagem").run()
+                if mensagem.camposMensagem[1] == "loja":
+                    
+                    dados = mensagem.camposMensagem[2]
+                    imagem = Imagem(dados=dados, socket_cliente=self.socketCliente, tipo=mensagem.camposMensagem[1], campo="imagem").run()
                 Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem, imagem).start()
 
             case "criar":
