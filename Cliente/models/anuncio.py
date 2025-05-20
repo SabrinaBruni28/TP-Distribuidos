@@ -8,7 +8,8 @@ class Anuncio:
         ):
         self.id = id 
         self.preco = preco
-        self.quantidade_disponivel = quantidade_disponivel
+        # Breno alterou a linha abaixo para int, pois o valor é sempre inteiro
+        self.quantidade_disponivel = int(quantidade_disponivel)
         self.chave_pix = chave_pix
         self.pausado = pausado
         self.produto = produto
