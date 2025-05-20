@@ -1,4 +1,4 @@
-.PHONY: cliente
+.PHONY: cliente, servidorAp, servidorBD
 
 criar_ambiente:
 	python3 -m venv .venv
@@ -14,10 +14,10 @@ instalar_bibliotecas:
 	python3 -m pip install --upgrade pip
 
 cliente:
-	$(MAKE) --no-print-directory -C Cliente cliente $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
+	@$(MAKE) --no-print-directory -C Cliente cliente $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
 servidorAp:
-	$(MAKE) --no-print-directory -C ServidorAp cliente
+	@$(MAKE) --no-print-directory -C Servidor_Aplicacao servidorAp
 
 servidorBD:
-	$(MAKE) --no-print-directory -C ServidorBD cliente
+	@$(MAKE) --no-print-directory -C Servidor_BD servidorBD
