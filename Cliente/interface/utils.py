@@ -92,6 +92,12 @@ class Utils:
         Retorna:
         - Dicionário com: payload Pix, base64 PNG e SVG string
         """
+        nome = nome.strip()[:25]
+        cidade = cidade.strip()[:15]
+        chave = chave.strip()
+        descricao = descricao.strip()[:40]
+        valor = float(valor)
+        
         pix = generate_simple_pix(
             fullname=nome,
             key=chave,

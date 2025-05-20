@@ -32,15 +32,17 @@ class Loja:
         return pedido
     
     def apagar_produto(self, produto):
-        if produto in self.produtos:
-            self.produtos.remove(produto)
-            return True
+        for i, p in enumerate(self.produtos):
+            if p.id == produto.id:
+                del self.produtos[i]
+                return True
         return False
-    
+
     def apagar_anuncio(self, anuncio: Anuncio):
-        if anuncio in self.anuncios:
-            self.anuncios.remove(anuncio)
-            return True
+        for i, a in enumerate(self.anuncios):
+            if a.id == anuncio.id:
+                del self.anuncios[i]
+                return True
         return False
     
     def editar_produto(self, produto, novo_produto):

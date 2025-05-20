@@ -135,7 +135,7 @@ class MarketplaceUI(QMainWindow):
         self.view.abrir_tela(self.stack, lambda: self.tela_pagamento(pedido, anuncio))
     
     #############  BLOCOS  #################
-    def bloco_anuncio(self, anuncio: Anuncio, largura, altura, editar = False):
+    def bloco_anuncio(self, anuncio: Anuncio, largura, altura):
         bloco = WidgetHelper.bloco(largura, altura)
         layout = QVBoxLayout(bloco)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -153,12 +153,28 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_preco)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: (
-            self.handler.visualizar_anuncio(self.tela_editar_anuncio, anuncio)
-            if editar
-            else
-            self.handler.visualizar_anuncio(self.tela_detalhes_anuncio, anuncio)
-        )
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_anuncio(self.tela_detalhes_anuncio, anuncio)
+        return bloco
+
+    def bloco_anuncio_loja(self, anuncio: Anuncio, loja: Loja, largura, altura):
+        bloco = WidgetHelper.bloco(largura, altura)
+        layout = QVBoxLayout(bloco)
+        layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.setContentsMargins(10, 10, 10, 10)
+
+        imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
+        layout.addWidget(imagem_label)
+        layout.addSpacing(5)
+
+        label_nome = WidgetHelper.label_b(anuncio.produto.nome)
+        layout.addWidget(label_nome)
+        layout.addSpacing(5)
+
+        label_preco = WidgetHelper.label_preco(anuncio.preco)
+        layout.addWidget(label_preco)
+        layout.addSpacing(5)
+
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_anuncio(self.tela_editar_anuncio, anuncio, loja)
         return bloco
 
     def bloco_produto(self, produto: Produto, loja: Loja, largura, altura):
@@ -306,7 +322,7 @@ class MarketplaceUI(QMainWindow):
 
         try:
             dados = Utils.gerar_qrcode_pix(
-                nome=anuncio.produto.loja.nome,
+                nome=anuncio.produto.nome,
                 chave=anuncio.chave_pix,
                 cidade="Florestal",
                 valor=pedido.calcular_total(),
@@ -316,7 +332,7 @@ class MarketplaceUI(QMainWindow):
                 salvar_png = True,
                 salvar_svg = False
             )
-        except (Exception, AttributeError):
+        except (Exception, AttributeError) as e:
             self.view.set_tela(self.stack, -1)
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self,
@@ -324,6 +340,7 @@ class MarketplaceUI(QMainWindow):
                 posicao="superior_direita",
                 mensagem="Erro ao gerar qrcode!"
             )
+            print("Erro ao gerar QR Code:", e)
             return None
 
         imagem_label = WidgetHelper.imagem(pasta="images/",imagem="qrcode.png", scaled=300)
@@ -347,7 +364,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar", fonte=30,
-            largura=500, altura=50,
+            largura=200, altura=50,
             acao=lambda: self.handler.criar_pedido(pedido, anuncio)
         )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -435,7 +452,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_login = WidgetHelper.botao(
             nome="Entrar", fonte=30,
-            largura=500, altura=50,
+            largura=200, altura=50,
             acao=lambda: self.handler.login(formulario)
         )
         layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1137,7 +1154,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_excluir = WidgetHelper.botao(
             nome="Excluir",
-            acao=lambda: self.handler.excluir_produto(produto)
+            acao=lambda: self.handler.excluir_produto(produto, loja)
         )
         layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1150,7 +1167,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_editar_anuncio(self, anuncio: Anuncio):
+    def tela_editar_anuncio(self, anuncio: Anuncio, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1199,7 +1216,7 @@ class MarketplaceUI(QMainWindow):
         formularioOp.adicionar_opcao(campo="Pausado", opcao="Não")
         formularioOp.preencher_campos({"Pausado": "Sim" if anuncio.pausado else "Não"})
 
-        botao_editar.clicked.connect(lambda: self.handler.editar_anuncio(self.tela_editar_anuncio, formulario, formularioOp, anuncio))
+        botao_editar.clicked.connect(lambda: self.handler.editar_anuncio(self.tela_editar_anuncio, formulario, formularioOp, anuncio, loja))
 
         layout_form = QVBoxLayout()  # Lado a lado (horizontal)
         layout_form.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1216,7 +1233,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_excluir = WidgetHelper.botao(
             nome="Excluir",
-            acao=lambda: self.handler.excluir_anuncio(anuncio)
+            acao=lambda: self.handler.excluir_anuncio(anuncio, loja)
         )
         layout_vertical.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1261,7 +1278,7 @@ class MarketplaceUI(QMainWindow):
                 largura=100, altura=30,
                 acao=lambda _, img=img: (
                     self.excluir_imagem(img),
-                    self.handler.excluir_imagem(produto, img) if self.imagem == "" else None
+                    self.handler.excluir_imagem(self.tela_editar_imagens, produto, img) if self.imagem == "" else None
                 )
             )
             layout_linha.addWidget(botao_excluir)
@@ -1320,7 +1337,7 @@ class MarketplaceUI(QMainWindow):
         descricao.setWordWrap(True)
         layout_vertical.addWidget(descricao)
 
-        preco = WidgetHelper.label_preco(anuncio.preco)
+        preco = WidgetHelper.label_preco(anuncio.preco, tamanho=50)
         layout_vertical.addWidget(preco)
 
         layout_horizontal_2 = QHBoxLayout()
@@ -1331,7 +1348,7 @@ class MarketplaceUI(QMainWindow):
         comprar = WidgetHelper.botao(
             nome="Comprar", fonte=30,
             largura=200, altura=50,
-            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login())
+            acao=lambda: (self.handler.visualizar_meus_enderecos(lambda: self.tela_comprar(anuncio)) if self.handler.aplicacao.is_identificado() else self.view.abrir_tela(self.stack, lambda: self.tela_login()))
         )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
 
@@ -1417,7 +1434,7 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
-        lista_anuncios = self.tela_lista_anuncios(loja.anuncios, editar=True)
+        lista_anuncios = self.tela_lista_anuncios_loja(loja.anuncios, loja)
         lista_produtos = self.tela_lista_produtos(loja, loja.produtos, adicionar=True)
         lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, botao_loja=False)
         lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, botao_confirmar=True, botao_loja=False)
@@ -1526,19 +1543,28 @@ class MarketplaceUI(QMainWindow):
         return tela
     
     ############  TELAS LISTA  ##############
-    def tela_lista_anuncios_gerais(self, anuncios, editar = False, largura=250, altura=280):
+    def tela_lista_anuncios_gerais(self, anuncios, largura=250, altura=280):
         scroll, self.grid = WidgetHelper.lista_grid()
 
         for i, anuncio in enumerate(anuncios):
-            bloco = self.bloco_anuncio(anuncio, largura, altura, editar)
+            bloco = self.bloco_anuncio(anuncio, largura, altura)
             self.grid.addWidget(bloco, i // 5, i % 5)
         return scroll
-    
-    def tela_lista_anuncios(self, anuncios, editar = False, largura=250, altura=280):
+
+    def tela_lista_anuncios(self, anuncios, largura=250, altura=280):
         scroll, grid = WidgetHelper.lista_grid()
 
         for i, anuncio in enumerate(anuncios):
-            bloco = self.bloco_anuncio(anuncio, largura, altura, editar)
+            bloco = self.bloco_anuncio(anuncio, largura, altura)
+            grid.addWidget(bloco, i // 5, i % 5)
+
+        return scroll
+    
+    def tela_lista_anuncios_loja(self, anuncios, loja: Loja, largura=250, altura=280):
+        scroll, grid = WidgetHelper.lista_grid()
+
+        for i, anuncio in enumerate(anuncios):
+            bloco = self.bloco_anuncio_loja(anuncio, loja, largura, altura)
             if anuncio.pausado:
                 efeito = QGraphicsOpacityEffect()
                 efeito.setOpacity(0.4)  # valor entre 0 (transparente) e 1 (normal)
@@ -1723,7 +1749,7 @@ class InterfaceHandler:
             atualizar_tela=False
         ) 
 
-    def visualizar_anuncio(self, tela, anuncio):
+    def visualizar_anuncio(self, tela, anuncio, loja = None):
         def ao_visualizar(resposta):
             nonlocal tela
             if not resposta:
@@ -1735,7 +1761,10 @@ class InterfaceHandler:
                 )
             else:
                 anuncio = resposta[1]
-                self.view.abrir_tela(self.stack, lambda: tela(anuncio))
+                if loja:
+                    self.view.abrir_tela(self.stack, lambda: tela(anuncio, loja))
+                else:
+                    self.view.abrir_tela(self.stack, lambda: tela(anuncio))
         # Executa:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
@@ -2383,7 +2412,7 @@ class InterfaceHandler:
                     mensagem="Nenhuma alteração realizada"
                 )
     
-    def editar_anuncio(self, tela, formulario: Formulario, formularioOp: FormularioOpcoes, anuncio: Anuncio):
+    def editar_anuncio(self, tela, formulario: Formulario, formularioOp: FormularioOpcoes, anuncio: Anuncio, loja: Loja):
         erro =  formulario.validar_tipos({"Preço": float, "Quantidade Disponível": int, "Chave Pix": str})
         if erro:
             formulario.exibir_erros()
@@ -2391,13 +2420,21 @@ class InterfaceHandler:
             valores_alterados = formulario.obter_valores_alterados(
                 {"Preço": anuncio.preco, "Quantidade Disponível": anuncio.quantidade_disponivel, "Chave Pix": anuncio.chave_pix}
             )
-            valores_alterados = valores_alterados | formularioOp.obter_valores_alterados({"Pausado": anuncio.pausado})
+            valores_alterados = valores_alterados | formularioOp.obter_valores_alterados({"Pausado": "Sim" if anuncio.pausado else "Não"})
+            pausado = valores_alterados.get("Pausado", None)
+            if pausado:
+                if valores_alterados["Pausado"] == "Sim":
+                    valores_alterados["Pausado"] = True
+                else:
+                    valores_alterados["Pausado"] = False
+                    
             valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
+            print("valores_alterados", valores_alterados)
 
             if valores_alterados:
                 valores_alterados["id"] = anuncio.id
                 def ao_editar_anuncio(resposta):
-                    nonlocal anuncio, tela
+                    nonlocal anuncio, tela, loja
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2405,8 +2442,8 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Anúncio Editado com Sucesso!"
                         )
-                        anuncio.produto.loja.editar_anuncio(anuncio, resposta[1])
-                        self.view.abrir_tela(self.stack, lambda: tela(anuncio), excluir_anterior=True)
+                        anuncio = loja.editar_anuncio(anuncio, resposta[1])
+                        self.view.abrir_tela(self.stack, lambda: tela(anuncio, loja), excluir_anterior=True)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2463,7 +2500,7 @@ class InterfaceHandler:
         else:
             dialogo.close()
 
-    def excluir_produto(self, produto: Produto):
+    def excluir_produto(self, produto: Produto, loja: Loja):
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar excluir produto",
             mensagem=f"Você tem certeza que deseja excluir produto {produto.nome}?",
@@ -2473,6 +2510,7 @@ class InterfaceHandler:
 
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_produto(resposta):
+                nonlocal produto, loja
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2480,6 +2518,7 @@ class InterfaceHandler:
                         posicao="inferior_esquerda",
                         mensagem="Produto Excluído com Sucesso!"
                     )
+                    loja.apagar_produto(produto)
                     self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -2498,7 +2537,7 @@ class InterfaceHandler:
         else:
             dialogo.close()
 
-    def excluir_anuncio(self, anuncio: Anuncio):
+    def excluir_anuncio(self, anuncio: Anuncio, loja: Loja):
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar excluir anúncio",
             mensagem=f"Você tem certeza que deseja excluir esse anúncio?",
@@ -2508,6 +2547,7 @@ class InterfaceHandler:
 
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_anuncio(resposta):
+                nonlocal anuncio, loja
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2515,6 +2555,7 @@ class InterfaceHandler:
                         posicao="inferior_esquerda",
                         mensagem="Anúncio Excluído com Sucesso!"
                     )
+                    loja.apagar_anuncio(anuncio)
                     self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(

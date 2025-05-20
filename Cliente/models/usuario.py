@@ -56,15 +56,17 @@ class Usuario_Identificado(Usuario):
         return False
     
     def apagar_endereco(self, endereco):
-        if endereco in self.enderecos:
-            self.enderecos.remove(endereco)
-            return True
+        for i, p in enumerate(self.enderecos):
+            if p.id == endereco.id:
+                del self.enderecos[i]
+                return True
         return False
     
     def apagar_loja(self, loja):
-        if loja in self.lojas:
-            self.lojas.remove(loja)
-            return True
+        for i, p in enumerate(self.lojas):
+            if p.id == loja.id:
+                del self.lojas[i]
+                return True
         return False
     
     def get_endereco(self, endereco: str) -> Endereco:

@@ -253,8 +253,9 @@ class WidgetHelper(QWidget):
             parent,
             "Escolher arquivo",
             "",
-            "Imagens (*.png *.jpg *.jpeg)"
+            "Imagens (*.png *.jpg *.jpeg  *.webp *.gif)"
         )
+
         if caminho_arquivo:
             # Caminho de destino onde o arquivo será salvo (pode mudar para o que quiser)
             nome_arquivo = os.path.basename(caminho_arquivo)
@@ -286,14 +287,6 @@ class ViewHelper(QWidget):
         # Chama novamente a função para obter a tela atualizada
         funcao_criadora = self.__class__.funcoes_telas[index]
         self.sobrescrever_tela(stack, funcao_criadora, index)
-
-        # Remove widgets e funções após o índice atual
-        for i in range(len(self.__class__.funcoes_telas) - 1, index, -1):
-            if i < stack.count():
-                self.excluir_tela(stack, i, excluir_funcao=True)
-            else:
-                # Só remove da lista de funções, caso não exista mais o widget
-                del self.__class__.funcoes_telas[i]
 
     def voltar_tela(self, stack, excluir_funcao = True, atualizar_tela=True):
         index = stack.currentIndex()
@@ -337,6 +330,13 @@ class ViewHelper(QWidget):
                 self.__class__.funcoes_telas[index] = funcao_criadora
             else:
                 self.__class__.funcoes_telas.insert(index, funcao_criadora)
+            # Remove widgets e funções após o índice atual
+            for i in range(len(self.__class__.funcoes_telas) - 1, index, -1):
+                if i < stack.count():
+                    self.excluir_tela(stack, i, excluir_funcao=True)
+                else:
+                    # Só remove da lista de funções, caso não exista mais o widget
+                    del self.__class__.funcoes_telas[i]
 
     def atualiza_tela(self, stack):
         index = stack.currentIndex()

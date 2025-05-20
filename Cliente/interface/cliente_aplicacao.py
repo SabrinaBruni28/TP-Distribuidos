@@ -161,7 +161,6 @@ class ClienteAplicacao():
             lista_imagens = [produto.imagens[0] for produto in loja.produtos]
             for imagem in lista_imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
-            print("Loja:", loja)
             return True, loja
         return False
     
@@ -392,7 +391,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
-            anuncio.produto.loja.apagar_anuncio(anuncio)
             return True
         return False
     
@@ -403,7 +401,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
-            produto.loja.apagar_produto(produto)
             return True
         return False
     

@@ -105,18 +105,10 @@ class FormularioOpcoes(QWidget):
             valor_atual = entrada.currentText()
             valor_inicial = str(valores_iniciais.get(nome, "")).strip()
 
-            if valor_atual.lower() in ["sim", "não", "nao"]:
-                if valor_atual == 'sim':
-                    valor_comp = True
-                else:
-                    valor_comp = False
-            else:
-                valor_comp = valor_atual
-
             # Se o valor atual for diferente do inicial, armazene no dicionário
-            if valor_comp != valor_inicial:
-                valores_alterados[str(nome).lower()] = valor_comp
-        
+            if valor_atual != valor_inicial:
+                valores_alterados[nome] = valor_atual
+
         return valores_alterados
 
 class Formulario(QWidget):
