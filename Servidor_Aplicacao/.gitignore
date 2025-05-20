@@ -1,0 +1,10 @@
+Operacoes/__pycache__/
+Estruturas/__pycache__/
+Servidor_Dados/
+..Cliente/
+docker-compose.yml
+../.idea/
+../uploads/
+../docker-compose.yml
+../Servidor_Dados/
+__pycache__/
