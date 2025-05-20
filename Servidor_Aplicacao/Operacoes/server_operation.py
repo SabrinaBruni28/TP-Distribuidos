@@ -84,6 +84,7 @@ def enviaImagem(socket: socket.socket, mensagem: Mensagem):
 
         socket.sendall(tamanho.to_bytes(8, "big"))
         socket.sendall(dados)
+        print(f"[Envio] Imagem enviada: {dados[-20:]}")
         return True
 
     except Exception as e:

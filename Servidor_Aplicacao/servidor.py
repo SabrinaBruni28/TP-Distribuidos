@@ -42,7 +42,7 @@ class ClientHandler(threading.Thread):
                 # Recebe a mensagem do cliente e separa seus campos
                 print("[Servidor][ClientHandler] Recebendo mensagem nova do cliente...")
                 mensagemCliente = Mensagem.receptorMensagemETamanho(self.socketCliente)
-                print(f"\n\n[Servidor][ClientHandler] Mensagem recebida: {mensagemCliente.stringMensagem}")
+                print(f"[Servidor][ClientHandler] Mensagem recebida: {mensagemCliente.stringMensagem}")
                 
                 # Se o cliente fechou a conexão
                 if not mensagemCliente or mensagemCliente.camposMensagem[0] == "":
@@ -95,8 +95,15 @@ class ClientHandler(threading.Thread):
 
             case "criar":
                 imagem = []
-                dados = mensagem.camposMensagem[3]
-                imagem = Imagem(dados, self.socketCliente, self.filaDeMensagem, mensagem.camposMensagem[1]).run()
+                dados = None
+                tipo = mensagem.camposMensagem[1]
+                if tipo == "produto":
+                    dados = mensagem.camposMensagem[2]
+                elif tipo == "loja":
+                    dados = mensagem.camposMensagem[3]
+                imagem = Imagem(dados=dados, socket_cliente=self.socketCliente, tipo=tipo, campo="imagem").run()
+                if imagem != None:
+                    print(f"[Servidor][ClientHandler] Imagens: {len(imagem)}")
                 Criar(mensagem, self.socketCliente, self.filaDeMensagem, imagem).start()
             
             case "excluir":
@@ -184,5 +191,6 @@ def rodarServidorT(endereco_ip, porta, fila):
 
 # Inicialização do socket servidor
 #rodarServidor('localhost', 5000, filaDeMensagem)
+rodarServidor('192.168.1.17', 5000, filaDeMensagem)
 #rodarServidor('192.168.1.110', 5000, filaDeMensagem)
-rodarServidor('192.168.19.146', 5000, filaDeMensagem)
+#rodarServidor('192.168.19.146', 5000, filaDeMensagem)

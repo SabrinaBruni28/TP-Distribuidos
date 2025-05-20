@@ -32,7 +32,7 @@ class Imagem():
 
     def loja(self):
         dadosJson = json.loads(self.dados_cliente)
-        if dadosJson.get(self.campo) == "":
+        if dadosJson.get(self.campo) == "" or dadosJson.get(self.campo) == None:
             return None
         
         mensagemImagemLoja = Mensagem.receptorImagem(self.cliente)

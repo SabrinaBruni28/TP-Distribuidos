@@ -44,7 +44,10 @@ class Mensagem:
         tamanhoMensagem = len(stringMensagemServidor)
 
         mensagemServidor = Mensagem(stringMensagemServidor, tamanhoMensagem, binario=bin)
-        print(f"[Servidor][MENSAGEM] Mensagem produzida: {mensagemServidor.stringMensagem}")
+        if len(mensagemServidor.stringMensagem):
+            print(f"[Servidor][MENSAGEM] Mensagem produzida: {mensagemServidor.stringMensagem[-100:]}")
+        else:
+            print(f"[Servidor][MENSAGEM] Mensagem produzida: {mensagemServidor.stringMensagem}")
         return mensagemServidor
     
     # Receptor mensagem é o equivalente ao receptorMensagemETamanho, mas para uma imagem.
@@ -78,20 +81,21 @@ class Mensagem:
         # Função para receber mensagens que vêm com o tamanho delas antes
     @classmethod
     def receptorMensagemETamanho(cls, socket_cliente: socket.socket):
-        print("[Servidor] Entrou em receptorMensagem() e está esperando as mensagens do cliente.")
+        print("[Servidor] Entrou em receptorMensagemETamanho().")
         tamanho = cls._recebeTamanhoDaMensagem(socket_cliente)
-        print(f"[Servidor] Tamanho da mensagem do cliente a receber: {tamanho}")
+        print(f"[Servidor][Receptor Mensagem] Tamanho da mensagem do cliente a receber: {tamanho}")
     
         if tamanho == 0:
             return None
     
         stringMensagem = cls._recebeMensagem(socket_cliente, tamanho)
         mensagemCliente = Mensagem(stringMensagem, tamanho)
+        print(f"[Servidor][Receptor Mensagem] Mensagem: {mensagemCliente.stringMensagem}")
         return mensagemCliente
     
     @staticmethod
     def _recebeTamanhoDaMensagem(socket_cliente: socket.socket):
-        print(f"[Servidor] Entrou em _recebeMensagemTamanho() e vai receber o tamanho da mensagem.")
+        print(f"[Servidor] Entrou em _recebeMensagemTamanho().")
         dados = b''
         while len(dados) < 8:
             parte = socket_cliente.recv(8 - len(dados))
@@ -103,7 +107,7 @@ class Mensagem:
     
     @staticmethod
     def _recebeMensagem(socket_cliente: socket.socket, tamanho: int):
-        print(f"[Servidor] Entrou em recebeMensagem() e vai receber a string da mensagem recebida.")
+        print(f"[Servidor] Entrou em _recebeMensagem().")
         dados = b''
         while len(dados) < tamanho:
             parte = socket_cliente.recv(min(4096, tamanho - len(dados)))

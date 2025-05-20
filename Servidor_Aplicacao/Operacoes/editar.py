@@ -61,7 +61,7 @@ class Editar(operacao.Operacao):
         mensagemServidor = Mensagem.produtorMensagem(f"editar | loja | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar", imagem=self.imagem)
+        self.fila.enfileira(mensagemServidor, cb.editarLojaCallback, self.conexaoCliente, "editar", imagem=self.imagem)
 
     def endereco(self):
         print("[Servidor][Editar] Operação de editar endereço recebida.")

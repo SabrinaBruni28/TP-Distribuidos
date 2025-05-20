@@ -60,7 +60,7 @@ class FilaDeMensagens(threading.Thread):
 
         logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
 
-        resposta = self.enviaAoBanco(mensagem)
+        resposta, respostaImagens = self.enviaAoBanco(mensagem, imagens)
 
         if resposta == None:
             print(f"[Fila de Mensagens] Erro ao receber resposta do Banco de Dados.\n[Fila de Mensagens] Mensagem não processada: {mensagem.stringMensagem}")
@@ -81,11 +81,11 @@ class FilaDeMensagens(threading.Thread):
 
             case "editar":
                 print("[Fila de Mensagens] Entendeu que é sobre editar.")
-                self.decisorEditar(resposta, connect, self.socketBD, callback, imagens=imagens)
+                self.decisorEditar(resposta, connect, self.socketBD, callback, imagens=respostaImagens)
 
             case "criar":
                 print("[Fila de Mensagens] Entendeu que é sobre criar.")
-                self.decisorCriar(resposta, connect, callback, imagens)
+                self.decisorCriar(resposta, connect, callback, respostaImagens)
 
             case "excluir":
                 print("[Fila de Mensagens] Entendeu que é sobre excluir.")
@@ -103,10 +103,35 @@ class FilaDeMensagens(threading.Thread):
                 print("[Fila de Mensagens] Resposta do Banco de Dados não tratada.")
                 return
     
+    def enviaAoBanco(self, mensagem: Mensagem, imagens: list = []):
+        print("[Fila de Mensagens] Entrou em enviaAoBanco().")
+        try:
+            # Se não há conexão com o banco de dados, cria seu socket e estabelece comunicação
+            if self.socketBD is None:
+                self.conectaBanco()
+
+            # Envia a mensagem e retorna a resposta do banco
+            if self.socketBD:
+
+                if imagens == None:
+                    return self.enviaAoBancoSemImagem(mensagem, imagens)
+                
+                else:
+                    return self.enviaAoBancoComImagem(mensagem, imagens)
+                
+            else:
+                print(f"[Fila de Mensagens][Erro] Conexão com Banco de Dados não estabelecida.")
+                return None, None
+
+        except Exception as e:
+            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            self.socketBD = None
+            return None, None
+        
     # Após uma mensagem ser desenfileirada, essa função é responsável por fazer
     # a parte da comunicação entre o servidor de aplicação e o servidor de banco de dados.
-    def enviaAoBanco(self, mensagem: Mensagem):
-        print("[Fila de Mensagens] Entrou em enviaAoBanco().")
+    def enviaAoBancoSemImagem(self, mensagem: Mensagem, imagens: list = []):
+        print("[Fila de Mensagens] Entrou em enviaAoBancoSemImagem().")
         try:
             # Se não há conexão com o banco de dados, cria seu socket e estabelece comunicação
             if self.socketBD is None:
@@ -116,28 +141,76 @@ class FilaDeMensagens(threading.Thread):
             if self.socketBD:
                 op.enviaMensagem(self.socketBD, mensagem)
 
+                self.socketBD.settimeout(30)
                 resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
+                self.socketBD.settimeout(None)
                 print(f"[Fila de Mensagens] Resposta do Banco: {resposta.stringMensagem}")
                 if not resposta:
                     return None
-                return resposta
+                return resposta, None
                 
             else:
                 print(f"[Fila de Mensagens][Erro] Conexão com Banco de Dados não estabelecida.")
-                return None
+                return None, None
 
         except Exception as e:
             logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
-            return None
+            return None, None
+        
+    
+    def enviaAoBancoComImagem(self, mensagem: Mensagem, imagens: list = []):
+        print("[Fila de Mensagens] Entrou em enviaAoBancoComImagem().")
+        try:
+            # Se não há conexão com o banco de dados, cria seu socket e estabelece comunicação
+            if self.socketBD is None:
+                self.conectaBanco()
+
+
+            # Envia a mensagem e retorna a resposta do banco
+            if self.socketBD:
+                op.enviaMensagem(self.socketBD, mensagem)
+
+                
+                if imagens != None:
+                    for imagem in imagens:
+                        print("\n[FILA] Tá enviando imagem, sim.")
+                        op.enviaImagem(self.socketBD, imagem)
+
+
+                self.socketBD.settimeout(30)
+                resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
+                self.socketBD.settimeout(None)
+
+                if imagens != None:
+                    quantImg = len(imagens)
+                    imagens = []
+                    for i in range(quantImg):
+                        imagens.append(Mensagem.receptorImagem(self.socketBD))
+
+
+                print(f"[Fila de Mensagens] Resposta do Banco: {resposta.stringMensagem}")
+                if not resposta:
+                    return None, None
+                return resposta, imagens
+                
+            else:
+                print(f"[Fila de Mensagens][Erro] Conexão com Banco de Dados não estabelecida.")
+                return None, None
+
+        except Exception as e:
+            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            self.socketBD = None
+            return None, None
         
 
     # Função que faz a conexão com o servidor de banco de dados, cria seu socket
     def conectaBanco(self):
         try:
-            #self.socketBD = socket.create_connection(('localhost', 6001))
+            #self.socketBD = socket.create_connection(('localhost', 6000))
+            self.socketBD = socket.create_connection(('192.168.1.15', 6000))
             #self.socketBD = socket.create_connection(('192.168.1.106', 6000))
-            self.socketBD = socket.create_connection(('177.137.215.46', 6000))
+            #self.socketBD = socket.create_connection(('177.137.215.46', 6000))
             logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
@@ -205,15 +278,15 @@ class FilaDeMensagens(threading.Thread):
     def decisorCriar(self, resposta_banco: Mensagem, connect: socket.socket, callback, imagens: list):
         resposta = resposta_banco.camposMensagem
 
-        imagens = []
+        #imagens = []
         
         match resposta[0]:
             case "produto":
-                imagens = img.Imagem(resposta[1], self.socketBD, resposta[0], "imagens")
+                #imagens = img.Imagem(resposta[1], self.socketBD, resposta[0], "imagens").run()
                 callback(resposta, connect, imagens)
 
             case "loja":
-                imagens = img.Imagem(resposta[1], self.socketBD, resposta[0], "imagem")
+                #imagens = img.Imagem(resposta[1], self.socketBD, resposta[0], "imagem").run()
                 callback(resposta, connect, imagens)
 
             case "pedido":
@@ -223,7 +296,7 @@ class FilaDeMensagens(threading.Thread):
                 callback(resposta, connect)
 
             case "imagem":
-                imagens = img.Imagem(resposta[1], self.socketBD, resposta[0])
+                #imagens = img.Imagem(resposta[1], self.socketBD, resposta[0]).run()
                 callback(resposta, connect, imagens)
 
             case "anuncio":
