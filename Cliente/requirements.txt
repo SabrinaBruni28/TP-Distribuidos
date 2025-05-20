@@ -1,5 +1,6 @@
 colorama==0.4.6
 crcmod==1.7
+pybrcode==1.1
 pypng==0.20220715.0
 PyQt6==6.9.0
 PyQt6-Qt6==6.9.0
