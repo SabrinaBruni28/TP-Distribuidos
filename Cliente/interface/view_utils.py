@@ -85,8 +85,8 @@ class WidgetHelper(QWidget):
         return scroll, grid
 
     @staticmethod
-    def label_preco(preco_label, aligment=Qt.AlignmentFlag.AlignCenter):
-        preco_label = QLabel(f"<span style='font-size: 30px; color: green'>R$ {preco_label}</span>")
+    def label_preco(preco_label, aligment=Qt.AlignmentFlag.AlignCenter, tamanho=30):
+        preco_label = QLabel(f"<span style='font-size: {tamanho}px; color: green'>R$ {preco_label}</span>")
         preco_label.setAlignment(aligment)
         return preco_label
 
@@ -95,6 +95,12 @@ class WidgetHelper(QWidget):
         label_b = QLabel(f"<b>{label}</b>")
         label_b.setAlignment(aligment)
         return label_b
+    
+    @staticmethod
+    def label_span(label, tamanho, aligment=Qt.AlignmentFlag.AlignCenter):
+        label_span = QLabel(f"<span style='font-size: {tamanho}px'>{label}</span>")
+        label_span.setAlignment(aligment)
+        return label_span
 
     @staticmethod
     def bloco(largura, altura):

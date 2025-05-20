@@ -130,7 +130,7 @@ class UnixSocketClient:
 
             tamanho_total = int.from_bytes(tamanho_bytes, 'big')
             print("Recebe tamanho:", tamanho_total)
-            return int(tamanho_total)
+            return tamanho_total
         except socket.timeout:
             print("Timeout ao receber tamanho")
             return False

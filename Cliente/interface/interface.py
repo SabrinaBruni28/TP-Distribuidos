@@ -261,8 +261,7 @@ class MarketplaceUI(QMainWindow):
 
         layout_vertical.addLayout(layout_horizontal)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Comprar</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span("Comprar", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -280,7 +279,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar", fonte=30,
-            largura=500, altura=50,
+            largura=200, altura=50,
             acao=lambda: self.comprar(anuncio, formulario)
         )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -301,8 +300,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addLayout(layout_horizontal)
         layout_vertical.addSpacing(10)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Pagamento</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span("Pagamento", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -332,8 +330,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addSpacing(10)
 
-        string = QLabel(f"<span style='font-size: 12px; font-weight: 950'>{dados['payload']}</span>")
-        string.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        string = WidgetHelper.label_span(dados['payload'], 12, Qt.AlignmentFlag.AlignCenter)
         string.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         string.setWordWrap(True)
         string.setMaximumWidth(500)
@@ -341,7 +338,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_copiar = WidgetHelper.botao(
             nome="Copiar chave", fonte=15,
-            backcolor="", 
+            backcolor="",
             hover='#D3D3D3', pressed='#000000',
             acao=WidgetHelper.copiar_texto(string)
         )
@@ -368,8 +365,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(50)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Código de Confirmação</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span("Código de Confirmação", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -396,8 +392,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(50)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Cadastramento</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span("Cadastramento", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -431,8 +426,7 @@ class MarketplaceUI(QMainWindow):
 
         layout_vertical.addSpacing(50)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Login</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span("Login", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -472,8 +466,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Endereços</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Meus Endereços", 50)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
@@ -540,8 +533,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addLayout(layout_horizintal)
         layout_vertical.addSpacing(40)
 
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Minhas Lojas</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Minhas Lojas", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
@@ -573,8 +565,7 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
         layout_vertical.addSpacing(40)
 
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meus Pedidos</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Meus Pedidos", 50)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
@@ -621,8 +612,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Endereço</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Criar Endereço", 50)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
@@ -667,8 +657,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Loja</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Criar Loja", 50)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
@@ -755,8 +744,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout_conteudo.addSpacing(40)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Produto</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Criar Produto", 50)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -856,8 +844,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout_conteudo.addSpacing(40)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Criar Anúncio</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Criar Anúncio", 50)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -913,8 +900,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel("<span style='font-size: 50px; font-weight: bold'>Meu Perfil</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Meu Perfil", 50)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
@@ -970,8 +956,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout_conteudo.addSpacing(40)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Endereço</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Endereço", 50)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1029,8 +1014,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Editar Loja</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Editar Loja", 50)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
@@ -1122,8 +1106,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout_conteudo.addSpacing(40)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>{produto.nome}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span(produto.nome, 50)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1190,8 +1173,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignTop)
         layout_conteudo.addSpacing(40)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Anúncio: {anuncio.produto.nome}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span(f"Anúncio: {anuncio.produto.nome}", 50)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
 
@@ -1258,8 +1240,7 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo = QVBoxLayout(conteudo_scroll)
         layout_conteudo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
 
-        titulo = QLabel(f"<span style='font-size: 50px; font-weight: bold'>Editar Imagens</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span("Editar Imagens", 50)
         layout_conteudo.addSpacing(40)
         layout_conteudo.addWidget(titulo)
         layout_conteudo.addSpacing(40)
@@ -1332,27 +1313,24 @@ class MarketplaceUI(QMainWindow):
         carrossel = CarrosselImagem(anuncio.produto.imagens, largura=350, altura=350)
         layout_vertical.addWidget(carrossel, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{anuncio.produto.nome}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span(anuncio.produto.nome, 40)
         layout_vertical.addWidget(titulo)
 
-        descricao = QLabel(f"<span style='font-size: 50px'>{anuncio.produto.descricao}</span>")
+        descricao = WidgetHelper.label_span(anuncio.produto.descricao, 30)
         descricao.setWordWrap(True)
-        descricao.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addWidget(descricao)
 
-        preco = QLabel(f"<span style='font-size: 30px; color: green'>R$ {anuncio.preco:.2f}</span>")
-        preco.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        preco = WidgetHelper.label_preco(anuncio.preco)
         layout_vertical.addWidget(preco)
 
         layout_horizontal_2 = QHBoxLayout()
 
-        quantidade = QLabel(f"<span style='font-size: 50px'>Quantidade disponível: {anuncio.quantidade_disponivel}</span>")
+        quantidade = WidgetHelper.label_span(f"Quantidade disponível: {anuncio.quantidade_disponivel}", 20)
         layout_horizontal_2.addWidget(quantidade, alignment=Qt.AlignmentFlag.AlignLeft)
 
         comprar = WidgetHelper.botao(
             nome="Comprar", fonte=30,
-            largura=500, altura=50,
+            largura=200, altura=50,
             acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_comprar(anuncio) if self.handler.aplicacao.is_identificado() else self.tela_login())
         )
         layout_horizontal_2.addWidget(comprar, alignment=Qt.AlignmentFlag.AlignRight)
@@ -1380,15 +1358,14 @@ class MarketplaceUI(QMainWindow):
             imagem_label = WidgetHelper.imagem(loja.imagem)
             layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span(loja.nome, 40)
         layout_vertical.addWidget(titulo)
 
         anuncios = self.tela_lista_anuncios(loja.anuncios)
         layout_vertical.addWidget(anuncios)
 
         return tela
-    
+
     def tela_detalhes_minha_loja(self, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
@@ -1412,8 +1389,7 @@ class MarketplaceUI(QMainWindow):
             imagem_label = WidgetHelper.imagem(loja.imagem)
             layout_vertical.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{loja.nome}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        titulo = WidgetHelper.label_span(loja.nome, 40)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -1497,41 +1473,33 @@ class MarketplaceUI(QMainWindow):
 
         layout_vertical.addLayout(layout_horizontal)
 
-        titulo = QLabel(f"<span style='font-size: 40px; font-weight: bold'>{pedido.produto.nome}</span>")
-        titulo.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        titulo = WidgetHelper.label_span(pedido.produto.nome, 40)
         layout_vertical.addWidget(titulo)
 
         carrossel = CarrosselImagem(pedido.produto.imagens, largura=300, altura=300)
         layout_vertical.addWidget(carrossel, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        descricao = QLabel(f"<span style='font-size: 30px'>{pedido.produto.descricao}</span>")
+        descricao = WidgetHelper.label_span(pedido.produto.descricao, 30)
         descricao.setWordWrap(True)
-        descricao.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         layout_vertical.addWidget(descricao)
 
-        preco_total = QLabel(f"<span style='font-size: 35px; color: green'>R${pedido.preco * pedido.quantidade}</span>")
-        preco_total.setWordWrap(True)
-        preco_total.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        preco_total = WidgetHelper.label_preco(f"{pedido.preco * pedido.quantidade}",tamanho=35)
         layout_vertical.addWidget(preco_total)
 
         layout_horizontal_2 = QHBoxLayout()
-        quantidade = QLabel(f"<span style='font-size: 30px'>Quantidade: {pedido.quantidade}</span>")
-        quantidade.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        quantidade = WidgetHelper.label_span(f"Quantidade: {pedido.quantidade}", 30)
         layout_horizontal_2.addWidget(quantidade)
 
-        preco = QLabel(f"<span style='font-size: 30px; color: green'>R$ {pedido.preco:.2f}</span>")
-        preco.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        preco = WidgetHelper.label_preco(f"{pedido.preco:.2f}")
         layout_horizontal_2.addWidget(preco)
         layout_vertical.addLayout(layout_horizontal_2)
 
         layout_horizontal_3 = QHBoxLayout()
 
-        endereco = QLabel(f"<span style='font-size: 25px;n'>Endereço: {pedido.endereco.__str__()}</span>")
-        endereco.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        endereco = WidgetHelper.label_span(f"Endereço: {pedido.endereco.__str__()}", 25)
         layout_horizontal_3.addWidget(endereco)
 
-        data = QLabel(f"<span style='font-size: 25px;'>Data: {pedido.data.strftime('%d/%m/%Y - %H:%M')}</span>")
-        data.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        data = WidgetHelper.label_span(f"Data: {pedido.data.strftime('%d/%m/%Y - %H:%M')}", 25)
         layout_horizontal_3.addWidget(data)
 
         layout_vertical.addLayout(layout_horizontal_3)
