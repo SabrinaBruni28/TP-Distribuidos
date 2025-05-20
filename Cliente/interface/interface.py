@@ -37,7 +37,7 @@ class MarketplaceUI(QMainWindow):
         self.imagem = None
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
-        self.handler.visualizar(self.tela_inicial, "anuncios")
+        self.handler.visualizar_anuncios(self.tela_inicial)
 
     ##############  AUXILIARES  ################
     def substituir_imagem(self):
@@ -154,14 +154,10 @@ class MarketplaceUI(QMainWindow):
         layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: (
-            self.handler.visualizar(
-                lambda: self.tela_editar_anuncio(anuncio), "anuncio", anuncio
-            )
+            self.handler.visualizar_anuncio(self.tela_editar_anuncio, anuncio)
             if editar
             else
-            self.handler.visualizar(
-                lambda: self.tela_detalhes_anuncio(anuncio), "anuncio", anuncio
-            )
+            self.handler.visualizar_anuncio(self.tela_detalhes_anuncio, anuncio)
         )
         return bloco
     
@@ -179,9 +175,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_nome)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.handler.visualizar(
-           lambda: self.tela_editar_produto(produto), "produto", produto
-        )
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_produto(self.tela_editar_produto, produto)
         return bloco
     
     def bloco_pedido(self, pedido: Pedido, largura, altura, botao_confirmar = False, botao_loja = True):
@@ -206,9 +200,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_preco)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.handler.visualizar(
-            lambda: self.tela_detalhes_pedido(pedido, botao_confirmar, botao_loja), "pedido", pedido
-        )
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_pedido(self.tela_detalhes_pedido, pedido, botao_confirmar, botao_loja)
         return bloco
     
     def bloco_loja(self, loja: Loja, largura, altura):
@@ -219,16 +211,14 @@ class MarketplaceUI(QMainWindow):
 
         if loja.imagem:
             imagem_label = WidgetHelper.imagem(loja.imagem, scaled=180)
-            layout.addWidget(imagem_label)
+            layout.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignHCenter)
             layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(loja.nome)
         layout.addWidget(label_nome)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.handler.visualizar(
-            lambda: self.tela_detalhes_minha_loja(loja), "minha_loja", loja
-        )
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_minha_loja(self.tela_detalhes_minha_loja, loja)
         return bloco
     
     ###################  TELAS  ########################
@@ -932,9 +922,7 @@ class MarketplaceUI(QMainWindow):
         botao_endereco = WidgetHelper.botao(
             nome="Meus Endereços",
             largura=180, altura=50,
-            acao=lambda: self.handler.visualizar(
-                self.tela_meus_enderecos, "meus_enderecos"
-            )
+            acao=lambda: self.handler.visualizar_meus_enderecos(self.tela_meus_enderecos)
         )
         layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
 
@@ -1392,6 +1380,7 @@ class MarketplaceUI(QMainWindow):
     def tela_detalhes_minha_loja(self, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
+        print("Loja na tela:", loja)
 
         layout_horizontal = QHBoxLayout()
 
@@ -1481,9 +1470,7 @@ class MarketplaceUI(QMainWindow):
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
             acao=lambda e: (
-                self.handler.visualizar(
-                    lambda: self.tela_detalhes_loja(pedido.produto.loja), "loja", pedido.produto.loja
-                )
+                self.handler.visualizar_loja(self.tela_detalhes_loja, pedido.produto.loja)
                 if loja_existe
                 else
                 WidgetHelper.mostrar_alerta_temporario(
@@ -1620,7 +1607,7 @@ class MarketplaceUI(QMainWindow):
         scroll, grid = WidgetHelper.lista_grid()
 
         for i, loja in enumerate(lojas):
-            bloco = self.bloco_loja(loja, largura, altura)
+            bloco = self.bloco_loja(self.handler.aplicacao.usuario.lojas[i], largura, altura)
             grid.addWidget(bloco, i // 5, i % 5)
 
         return scroll
@@ -1649,20 +1636,16 @@ class MarketplaceUI(QMainWindow):
             nome="Minhas Lojas", 
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
-            acao=lambda: self.handler.visualizar(
-                self.tela_minhas_lojas, "minhas_lojas"
-            )
+            acao=lambda: self.handler.visualizar_minhas_lojas(self.tela_minhas_lojas)
         )
 
         botao_pedidos = WidgetHelper.botao(
             nome="Meus Pedidos", 
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
-            acao= lambda: self.handler.visualizar(
-                self.tela_meus_pedidos, "meus_pedidos"
-            )
+            acao= lambda: self.handler.visualizar_meus_pedidos(self.tela_meus_pedidos)
         )
-    
+
         # Adicionando os botões ao layout da barra lateral
         menu_layout.addWidget(botao_perfil, alignment=Qt.AlignmentFlag.AlignHCenter)
         menu_layout.addWidget(botao_lojas, alignment=Qt.AlignmentFlag.AlignHCenter)
@@ -1717,7 +1700,7 @@ class MarketplaceUI(QMainWindow):
             largura=100, altura=50,
             backcolor="", hover="#3a3a3a", border="",
             pressed='#000000', fontcolor="gray",
-            acao= lambda: (self.handler.visualizar(self.tela_inicial, "anuncios"), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
+            acao= lambda: (self.handler.visualizar_anuncios(self.tela_inicial), self.atualizar_lista_anuncios(self.handler.aplicacao.anuncios))
         )
 
         if self.handler.aplicacao.is_identificado():
@@ -1741,7 +1724,7 @@ class InterfaceHandler:
         self.thread = Threads(stack)
         self.view = ViewHelper()
 
-    def visualizar(self, tela, funcao, *args, **kwargs):
+    def visualizar_anuncios(self, tela):
         def ao_visualizar(resposta):
             if not resposta:
                 WidgetHelper.mostrar_alerta_temporario(
@@ -1750,11 +1733,165 @@ class InterfaceHandler:
                     posicao="superior_direita",
                     mensagem=f"Erro ao visualizar!"
                 )
+            else:
+                loja = resposta[1]
+                self.view.abrir_tela(self.stack, tela)
         # Executa:
-        self.thread.executar_tela(
-            tela=tela,
+        self.thread.executar_mensagem(
             acao=ao_visualizar,
-            requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs),
+            requisicao=self.aplicacao.visualizar_anuncios,
+            atualizar_tela=True
+        ) 
+
+    def visualizar_anuncio(self, tela, anuncio):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                anuncio = resposta[1]
+                self.view.abrir_tela(self.stack, lambda: tela(anuncio))
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=lambda: self.aplicacao.visualizar_anuncio(anuncio),
+            atualizar_tela=True
+        ) 
+
+    def visualizar_produto(self, tela, produto):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                produto = resposta[1]
+                self.view.abrir_tela(self.stack, lambda: tela(produto))
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=lambda: self.aplicacao.visualizar_produto(produto),
+            atualizar_tela=True
+        ) 
+
+    def visualizar_loja(self, tela, loja):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                loja = resposta[1]
+                self.view.abrir_tela(self.stack, lambda: tela(loja))
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=lambda: self.aplicacao.visualizar_loja(loja),
+            atualizar_tela=True
+        ) 
+    
+    def visualizar_minha_loja(self, tela, loja):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                loja = resposta[1]
+                self.view.abrir_tela(self.stack, lambda: tela(loja))
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=lambda: self.aplicacao.visualizar_minha_loja(loja),
+            atualizar_tela=True
+        ) 
+
+    def visualizar_minhas_lojas(self, tela):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                self.aplicacao.usuario.lojas = resposta[1]
+                self.view.abrir_tela(self.stack, tela)
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=self.aplicacao.visualizar_minhas_lojas,
+            atualizar_tela=True
+        ) 
+
+    def visualizar_meus_pedidos(self, tela):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                self.aplicacao.usuario.pedidos = resposta[1]
+                self.view.abrir_tela(self.stack, tela)
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=self.aplicacao.visualizar_meus_pedidos,
+            atualizar_tela=True
+        )
+
+    def visualizar_pedido(self, tela, pedido, botao_confirmar, botao_loja):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                pedido = resposta[1]
+                self.view.abrir_tela(self.stack, lambda: tela(pedido, botao_confirmar, botao_loja))
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=self.aplicacao.visualizar_pedido(pedido),
+            atualizar_tela=True
+        )
+    
+    def visualizar_meus_enderecos(self, tela):
+        def ao_visualizar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem=f"Erro ao visualizar!"
+                )
+            else:
+                self.aplicacao.usuario.enderecos = resposta[1]
+                self.view.abrir_tela(self.stack, tela)
+        # Executa:
+        self.thread.executar_mensagem(
+            acao=ao_visualizar,
+            requisicao=self.aplicacao.visualizar_meus_enderecos,
             atualizar_tela=True
         ) 
 
@@ -1901,7 +2038,6 @@ class InterfaceHandler:
                 )
         # Executa:
         self.thread.executar_mensagem(
-            
             requisicao=lambda: self.aplicacao.criar_pedido(pedido),
             acao=ao_criar_pedido
         )
@@ -2127,7 +2263,7 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Loja Editada com Sucesso!"
                         )
-                        self.view.set_tela(self.stack, -3)
+                        #self.view.set_tela(self.stack, -3)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 

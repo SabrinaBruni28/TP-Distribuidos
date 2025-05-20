@@ -1,6 +1,7 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 import socket
+import errno
 
 class UnixSocketClient:
     def __init__(self, ip, port):
@@ -18,6 +19,7 @@ class UnixSocketClient:
         if self.socket:
             self.socket.close()
             print("Fechar socket:", self.socket)
+            self.socket = None
 
     def send(self, data: str):
         if not self.socket:
@@ -51,6 +53,9 @@ class UnixSocketClient:
             resposta = data.decode()
             print("Resposta:", resposta)
             return resposta
+        except socket.timeout:
+            print("Timeout ao receber tamanho")
+            return False
         except Exception as e:
             print("Erro ao receber mensagem:", e)
             self.close()
@@ -87,6 +92,9 @@ class UnixSocketClient:
                 f.write(data)
                 print("Recebe Imagem:", path)
             return data, path
+        except socket.timeout:
+            print("Timeout ao receber tamanho")
+            return False
         except Exception as e:
             print("Erro ao receber imagem:", e)
             self.close()
@@ -121,17 +129,32 @@ class UnixSocketClient:
             tamanho_total = int.from_bytes(tamanho_bytes, 'big')
             print("Recebe tamanho:", tamanho_total)
             return tamanho_total
-
+        except socket.timeout:
+            print("Timeout ao receber tamanho")
+            return False
         except Exception as e:
             print("Erro ao receber tamanho:", e)
             self.close()
             return False
 
-    def _flush_buffer(self):
-        # lê dados restantes se houver (até esvaziar ou dar timeout rápido)
-        self.socket.settimeout(0.1)
+    def limpar_buffer_socket(self):
+        """
+        Lê e descarta dados pendentes no socket (modo não bloqueante) sem alterar assinaturas externas.
+        """
+        if not self.socket:
+            return False
+
+        self.socket.setblocking(0)  # modo não bloqueante
         try:
-            while self.socket.recv(4096):
-                pass
-        except:
-            pass
+            while True:
+                try:
+                    data = self.socket.recv(4096)
+                    if not data:
+                        break  # conexão encerrada
+                except socket.error as e:
+                    if e.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                        break  # nada mais para ler
+                    else:
+                        raise
+        finally:
+            self.socket.setblocking(1)  # volta ao modo bloqueante

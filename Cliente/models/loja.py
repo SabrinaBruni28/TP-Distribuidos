@@ -104,4 +104,4 @@ class Loja:
         return cls(id, nome, imagem, produtos, anuncios, pedidos_confirmados, pedidos_em_andamento)
     
     def __str__(self):
-        return f"Loja(id={self.id}, nome={self.nome}, imagem={self.imagem})"
+        return f"Loja(id={self.id}, nome={self.nome}, imagem={self.imagem}, produtos={[produto for produto in self.produtos]}, anuncios={[anuncio for anuncio in self.anuncios]}, pedidos_confirmados={[pedido for pedido in self.pedidos_confirmados]}, pedidos_em_andamento={[pedido for pedido in self.pedidos_em_andamento]})"

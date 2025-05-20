@@ -45,7 +45,7 @@ class Usuario_Identificado(Usuario):
         if loja in self.lojas:
             index = self.lojas.index(loja)
             self.lojas[index] = nova_loja
-            return True
+            return self.lojas[index]
         return False
     
     def editar_pedido(self, pedido, novo_pedido):
