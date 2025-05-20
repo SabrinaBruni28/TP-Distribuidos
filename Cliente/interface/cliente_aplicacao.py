@@ -277,9 +277,10 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
             print("Anuncio antes:", anuncio)
-            dict = anuncio.to_dict() | resposta[1]
-            print("Anuncio dicionario:", dict)
-            anuncio = Anuncio.from_dict(dict)
+            dict_resposta = json.loads(resposta[1])
+            dict_anuncio = json.loads(anuncio.to_dict()) | dict_resposta
+            print("Anuncio dicionario:", dict_anuncio)
+            anuncio = Anuncio.from_dict(dict_anuncio)
             print("Anuncio depois:", anuncio)
             anuncio.produto.loja.editar_anuncio(anuncio, Anuncio.from_dict(resposta[1]))
             return True
@@ -305,17 +306,18 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             print("Loja antes:", loja)
-            dict = loja.to_dict() | resposta[1]
-            print("Loja dicionario:", dict)
-            loja = Loja.from_dict(dict)
+            dict_resposta = json.loads(resposta[1])
+            dict_loja = json.loads(loja.to_dict()) | dict_resposta
+            print("Loja dicionario:", dict_loja)
+            self.usuario.editar_loja(loja, Loja.from_dict(dict_loja))
             print("Loja depois:", loja)
-            imagem = resposta[1].get("imagem", 0)
+            imagem = dict_resposta.get("imagem", 0)
             if imagem:
                 print("Loja imagem:", loja.imagem)
                 self.socket.receive_image(path=f"uploads/{loja.imagem}")
             else:
                 print("Não Loja imagem:", loja.imagem)
-            return True
+            return True, loja
         return False
     
     def editar_usuario(self, novos_dados):
@@ -361,7 +363,9 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
+            print("Produto antes:", produto)
             produto.loja.criar_produto(Produto.from_dict(resposta[1]))
+            print("Produto depois:", produto)
 
             for imagem in produto.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")

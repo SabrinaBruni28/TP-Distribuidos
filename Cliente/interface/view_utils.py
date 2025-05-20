@@ -61,9 +61,7 @@ class Threads:
             quando_terminar(resultado)
 
     def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ...", atualizar_tela=True):
-        tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
-            mensagem, gif_path="images/spinner.gif"
-        )
+        tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(mensagem, gif_path="images/spinner.gif")
 
         self.carregar_em_thread(
             funcao_segundo_plano=requisicao,

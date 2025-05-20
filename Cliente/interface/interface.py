@@ -38,7 +38,6 @@ class MarketplaceUI(QMainWindow):
 
         self.handler = InterfaceHandler(parent=self, stack=self.stack)
         self.handler.visualizar(self.tela_inicial, "anuncios")
-        self.view.abrir_tela(self.stack, funcao_criadora=self.tela_inicial)
 
     ##############  AUXILIARES  ################
     def substituir_imagem(self):
@@ -1756,7 +1755,7 @@ class InterfaceHandler:
             tela=tela,
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.chamar(funcao, *args, **kwargs),
-            atualizar_tela=False
+            atualizar_tela=True
         ) 
 
     def confirmar_codigo(self, formulario: Formulario):

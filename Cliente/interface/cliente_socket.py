@@ -31,7 +31,7 @@ class UnixSocketClient:
             return True
         except Exception as e:
             print("Erro ao enviar mensagem:", e)
-            self.socket.close()
+            self.close()
             return False
 
     def receive(self):
@@ -53,7 +53,7 @@ class UnixSocketClient:
             return resposta
         except Exception as e:
             print("Erro ao receber mensagem:", e)
-            self.socket.close()
+            self.close()
             return False
 
     def send_image(self, image_path: str):
@@ -69,7 +69,7 @@ class UnixSocketClient:
             return data
         except Exception as e:
             print("Erro ao enviar imagem:", e)
-            self.socket.close()
+            self.close()
             return False
 
     def receive_image(self, buffer_size=4096, path='received_image.png'):
@@ -89,7 +89,7 @@ class UnixSocketClient:
             return data, path
         except Exception as e:
             print("Erro ao receber imagem:", e)
-            self.socket.close()
+            self.close()
             return False, path
 
     def send_size(self, tamanho: int):
@@ -100,7 +100,7 @@ class UnixSocketClient:
             self.socket.sendall(tamanho.to_bytes(8, 'big'))
         except Exception as e:
             print("Erro ao enviar tamanho:", e)
-            self.socket.close()
+            self.close()
             return False
 
     def receive_size(self):
@@ -124,7 +124,7 @@ class UnixSocketClient:
 
         except Exception as e:
             print("Erro ao receber tamanho:", e)
-            self.socket.close()
+            self.close()
             return False
 
     def _flush_buffer(self):
