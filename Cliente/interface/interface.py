@@ -1304,7 +1304,7 @@ class MarketplaceUI(QMainWindow):
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
             largura=100,
-            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_detalhes_loja(anuncio.produto.loja))
+            acao=lambda: self.handler.visualizar_loja(self.tela_detalhes_loja, anuncio.produto.loja)
         )
         layout_horizontal.addWidget(botao_loja, alignment=Qt.AlignmentFlag.AlignRight)
 

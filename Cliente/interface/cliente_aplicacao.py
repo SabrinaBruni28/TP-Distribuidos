@@ -42,24 +42,6 @@ class ClienteAplicacao():
                 anuncios.append(anuncio)
         loja.anuncios = anuncios 
 
-    def atributos_preenchidos(self, obj, incluir=None):
-        atributos = vars(obj)
-        for nome, valor in atributos.items():
-            if incluir and nome not in incluir:
-                continue  # ignora atributos que não estão na lista
-            if not valor:
-                return False
-        return True
-
-    def _atributos_preenchidos(self, obj, ignorar=None):
-        atributos = vars(obj)
-        for nome, valor in atributos.items():
-            if ignorar and nome in ignorar:
-                continue  # ignora os atributos da lista
-            if not valor:
-                return False
-        return True
-
     def cadastrar(self, usuario: Usuario_Identificado):
         mensagem = f"cadastramento|{usuario.to_dict_cadastramento()}"
         self.socket.send(mensagem)
@@ -126,9 +108,6 @@ class ClienteAplicacao():
         return False   
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        #if self._atributos_preenchidos(anuncio, ignorar=["pausado"]):
-        #    return True
-
         mensagem = f"visualizar|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -142,9 +121,6 @@ class ClienteAplicacao():
         return False
     
     def visualizar_produto(self, produto: Produto):
-        #if self.atributos_preenchidos(produto):
-        #    return True
-
         mensagem = f"visualizar|produto|{produto.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -158,9 +134,6 @@ class ClienteAplicacao():
         return False
     
     def visualizar_loja(self, loja: Loja):
-        #if self.atributos_preenchidos(loja, incluir=['id', 'nome', 'anuncios']):
-        #    return True
-
         mensagem = f"visualizar|loja|{loja.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -178,9 +151,6 @@ class ClienteAplicacao():
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
-        #if self._atributos_preenchidos(loja, ignorar=["imagem"]):
-        #    return True
-
         mensagem = f"visualizar|minha_loja|{loja.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -196,9 +166,6 @@ class ClienteAplicacao():
         return False
     
     def visualizar_minhas_lojas(self):
-        #if self.usuario.lojas:
-        #    return True
-
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -219,9 +186,6 @@ class ClienteAplicacao():
         return False
 
     def visualizar_meus_enderecos(self):
-        #if self.usuario.enderecos:
-        #    return True
-
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -239,9 +203,6 @@ class ClienteAplicacao():
         return False
     
     def visualizar_pedido(self, pedido: Pedido):
-        #if self.atributos_preenchidos(pedido):
-        #    return True
-
         mensagem = f"visualizar|pedido|{pedido.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
@@ -255,9 +216,6 @@ class ClienteAplicacao():
         return False, pedido
 
     def visualizar_meus_pedidos(self):
-        #if self.usuario.pedidos:
-        #    return True
-
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
