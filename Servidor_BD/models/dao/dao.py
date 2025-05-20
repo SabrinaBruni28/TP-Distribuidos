@@ -1,8 +1,14 @@
+import os
+import sys
 import sqlite3
 from models.persistivel import Persistivel
+# Adiciona o diretório raiz ao sys.path
+#CAMINHO_BASE_BANCO = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
+#sys.path.append(CAMINHO_BASE_BANCO)
 
 class DAO():
     def __init__(self, table_names: list, nome_colunas: list):
+        #self.db_path = os.path.join(CAMINHO_BASE_BANCO, 'db/caldeirao.db')
         self.db_path = './db/caldeirao.db'
         self.table_names = table_names
         self.nome_colunas = nome_colunas

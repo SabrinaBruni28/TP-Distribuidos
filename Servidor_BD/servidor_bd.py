@@ -17,7 +17,7 @@ from models.pedido import Pedido
 from models.imagem_produto import Imagem_Produto
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
-espacito = 10
+espacito = 100
 img_path = 'db/img'
 
 class Mensagem():
@@ -69,16 +69,21 @@ class UnixSocketServer:
         try:
             while True:
 
+                respostas = []
+                continua_recebendo = []
+
                 tamanho = self.receive_size(client_socket)
+                print(f"[Handle Server] Tamanho: {tamanho}")
                 requisicao = self.receive_data(client_socket, tamanho)
+                print(f"[Handle Server] Requisição: {str(requisicao.decode())}\n")
 
                 if requisicao:
                     mensagem_principal = Mensagem(requisicao)
                     print(f'Recebido ({tamanho} bytes):', mensagem_principal.stringMensagem, end='\n\n')
 
                     continua_recebendo, respostas = self.decisor(mensagem_principal)
-                    print(respostas)
-                    print(continua_recebendo)
+                    print(f"respostas: {respostas}")
+                    print(f"continua_recebendo: {continua_recebendo}")
                     for caminho_imagem in continua_recebendo:
                         caminho_imagem = os.path.join(CAMINHO_BASE, img_path, caminho_imagem)
                         print(caminho_imagem)
@@ -86,9 +91,10 @@ class UnixSocketServer:
                         print('Imagem salva? ->', salvo)
                         if salvo:
                             respostas.append(Mensagem(imagem))
-                    print('Mensagens a enviar: ',len(respostas))
-                    for resposta in respostas:
-                        self.send(client_socket, resposta.codigoMensagem)
+                    print('Mensagens a enviar: ', len(respostas))
+                    for i in range(len(respostas)):
+                        print(respostas[i].stringMensagem[:100])
+                        self.send(client_socket, respostas[i].codigoMensagem)
                     
                     print()
                     print(espacito*'-')
@@ -155,7 +161,9 @@ class UnixSocketServer:
                         for imagem in produto.imagens:
                             imagem = f'{self.banqueiro.criar(Imagem_Produto(id_produto = produto.id))}_{produto.id}.jpg'
                             imagens_renomeado.append(imagem)
-                            continua_recebendo = [f'produto/{imagem}']
+                            #continua_recebendo = [f'produto/{imagem}']
+                            continua_recebendo.extend([f'produto/{imagem}'])
+
                         produto.imagens = imagens_renomeado
                         respostas = [Mensagem(f"{msg} | {json.dumps(produto.to_dict())}")]
                     case 'anuncio':
@@ -201,8 +209,9 @@ class UnixSocketServer:
                                 imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{loja.id}.jpg'))
                                 respostas.append(Mensagem(imagem))
                             print('debugging:', loja.produtos)
-                            #for produto in loja.produtos:
-                            #   produto.imagens[0]
+                            for produto in loja.produtos:
+                                imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, produto.imagens[0]))
+                                respostas.append(Mensagem(imagem))
                         else:
                             print('Erro fatal: Loja não encontrada!')
                     case 'pedido':
@@ -217,7 +226,9 @@ class UnixSocketServer:
                             if minha_loja.imagem:
                                 imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{minha_loja.id}.jpg'))
                                 respostas.append(Mensagem(imagem))
-                            #if 
+                            for produto in minha_loja.produtos:
+                                imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, produto.imagens[0]))
+                                respostas.append(Mensagem(imagem))
                         else:
                             print('Erro fatal: Loja não encontrada!')
                     case 'minhas_lojas':
@@ -258,17 +269,25 @@ class UnixSocketServer:
                     case 'loja':
                         msg = 'loja'
                         loja_dict = json.loads(requisicao.camposMensagem[2])
-                        if hasattr(loja_dict, 'imagem'):
+                        ### Edição Breno
+                        print(f"[Banco] Loja dict: {loja_dict}")
+                        if 'imagem' in loja_dict:
+                            print(f"[If imagem in loja_dict]")
                             if loja_dict['imagem']:
+                                print(f"[If loja_dict[Imagem]]")
                                 loja_dict['imagem'] = f'{loja_dict["id"]}.jpg'
                                 continua_recebendo = [f'loja/{loja_dict["imagem"]}']
                             else:
+                                print(f"[Else]")
                                 self.remove_image('/'.join((img_path, 'loja', f'{loja_dict["id"]}.jpg')))
-                        if hasattr(loja_dict, 'nome'):
+                        if 'nome' in loja_dict:
+                            print(f"[If nome in loja_dict]")
                             obj = Loja.from_dict(loja_dict)
+                            print("[Banco] Loja from dict: {obj}")
                         else:
+                            print(f"[Big Bad Else]")
                             loja = self.banqueiro.retornarLoja(Loja.from_dict(loja_dict), minha = True)
-                            loja.imagem = loja_dict.get('imagem')
+                            loja.imagem = loja_dict.get('imagem', '')
                             respostas = [Mensagem(f'{msg} | {json.dumps(loja.to_dict())}')]
                     case 'produto':
                         obj = Produto.from_dict(json.loads(requisicao.camposMensagem[2]))
@@ -284,9 +303,15 @@ class UnixSocketServer:
                         #bgl diferente aí
                     case _:
                         print('Erro na mensagem: Segundo cabeçalho não reconhecido!')
+
                 if msg and obj is not None:
+                    print("[Decisor][Editar] Msg e obj is not None.")
+                    print(obj)
                     obj = self.banqueiro.editar(obj)
-                    respostas = [Mensagem(f"{msg} | {json.dumps(obj.to_dict())}")]
+                    #respostas = []
+                    #msg = Mensagem(f"{msg} | {json.dumps(obj.to_dict())}")
+                    #respostas = [Mensagem(f"{msg} | {json.dumps(obj.to_dict())}")]
+                    #respostas.append(msg)
 
             case "excluir":
                 match requisicao.camposMensagem[1]:
@@ -295,12 +320,14 @@ class UnixSocketServer:
                     case 'endereco':
                         obj = Endereco(id = int(requisicao.camposMensagem[2]))
                     case 'loja':
-                        obj = Loja(id = int(requisicao.camposMensagem[2]))
+                        obj = self.banqueiro.retornarLoja(Loja(id = int(requisicao.camposMensagem[2])))
                         self.remove_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{obj.id}.jpg'))
-                        #self.decisor(Mensagem('excluir | produto'))
+                        for produto in obj.produtos:
+                            self.decisor(Mensagem('excluir | produto | {produto.id}'))
                     case 'produto':
                         produto = Produto(id = int(requisicao.camposMensagem[2]))
-                        #excluir todos anúncios dele
+                        for anuncio in self.banqueiro.buscar(Anuncio(produto = produto)):
+                            self.decisor(Mensagem('excluir | anuncio | {anuncio.id}'))
                         #if algum pedido tem produto
                             #zerar atributos externos ao invés de excluir
                         #else
@@ -310,11 +337,6 @@ class UnixSocketServer:
                         obj = Anuncio(id = int(requisicao.camposMensagem[2]))
                     case 'pedido':
                         obj = Pedido(id = int(requisicao.camposMensagem[2]))
-                        #Não precisa implementar:
-                            #confere se confirmado_pedido é false
-                                #se sim, obj = pedido
-                            #else
-                                #erro | pedido já foi confirmado
                     case 'imagem':
                         obj = Imagem_Produto(id = int(requisicao.camposMensagem[2]))
                     case _:
@@ -409,11 +431,10 @@ class UnixSocketServer:
         tamanho = len(data)
         self.send_size(soquete, tamanho)
         soquete.sendall(data)
-        print(f'Enviando {tamanho} bytes: ', data)
+        print(f'Enviando {tamanho} bytes: ', data[:50], '...')
 
 server = UnixSocketServer(host='192.168.1.15')
 server.start()
-
 
 ################################# testes locais #################################
 
