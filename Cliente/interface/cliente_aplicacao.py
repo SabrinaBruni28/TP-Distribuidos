@@ -119,13 +119,11 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
 
         quantidade = self.socket.receive_size()
-        print("Quantidade de anuncios:", quantidade)
         if self.is_inteiro(quantidade):
             for i in range(quantidade):
                 resposta = self.divide_mensagem(self.socket.receive())
                 if resposta[0] == "anuncios":
                     anuncio = Anuncio.from_dict(resposta[1])
-                    print(anuncio)
                     self.anuncios.append(anuncio)
                     for imagem in anuncio.produto.imagens:
                         self.socket.receive_image(path=f"uploads/{imagem}")
@@ -135,8 +133,8 @@ class ClienteAplicacao():
         return False   
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        #if self._atributos_preenchidos(anuncio, ignorar=["pausado"]):
-         #   return True
+        if self._atributos_preenchidos(anuncio, ignorar=["pausado"]):
+            return True
 
         mensagem = f"visualizar|anuncio|{anuncio.id}"
         self.socket.send(mensagem)
@@ -150,8 +148,8 @@ class ClienteAplicacao():
         return False
     
     def visualizar_produto(self, produto: Produto):
-        #if self.atributos_preenchidos(produto):
-         #   return True
+        if self.atributos_preenchidos(produto):
+            return True
 
         mensagem = f"visualizar|produto|{produto.id}"
         self.socket.send(mensagem)
@@ -165,8 +163,8 @@ class ClienteAplicacao():
         return False
     
     def visualizar_loja(self, loja: Loja):
-        #if self.atributos_preenchidos(loja, incluir=['id', 'nome', 'anuncios']):
-        #    return True
+        if self.atributos_preenchidos(loja, incluir=['id', 'nome', 'anuncios']):
+            return True
 
         mensagem = f"visualizar|loja|{loja.id}"
         self.socket.send(mensagem)
@@ -184,15 +182,15 @@ class ClienteAplicacao():
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
-        #if self._atributos_preenchidos(loja, ignorar=["imagem"]):
-         #   return True
+        if self._atributos_preenchidos(loja, ignorar=["imagem"]):
+            return True
 
         mensagem = f"visualizar|minha_loja|{loja.id}"
         self.socket.send(mensagem)
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "minha_loja":
-            loja = Loja.from_dict(resposta[1])
+            self.usuario.editar_loja(loja, Loja.from_dict(resposta[1]))
             for produto in loja.produtos:
                 for imagem in produto.imagens:
                     self.socket.receive_image(path=f"uploads/{imagem}")
@@ -200,30 +198,31 @@ class ClienteAplicacao():
         return False
     
     def visualizar_minhas_lojas(self):
-        #if self.usuario.lojas:
-         #   return True
+        if self.usuario.lojas:
+            return True
 
         mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
         self.socket.send(mensagem)
 
         quantidade = self.socket.receive_size()
-        print("Quantidade de lojas:", quantidade)
         if self.is_inteiro(quantidade):
             for i in range(quantidade):
+                lojas = []
                 resposta = self.divide_mensagem(self.socket.receive())
                 if resposta[0] == "minhas_lojas":
                     loja = Loja.from_dict(resposta[1])
-                    self.usuario.lojas.append(loja)
+                    lojas.append(loja)
                     if loja.imagem:
                         self.socket.receive_image(path=f"uploads/{loja.imagem}")
                 else:
                     return False
+            self.usuario.lojas = lojas
             return True
         return False
 
     def visualizar_meus_enderecos(self):
-        #if self.usuario.enderecos:
-         #   return True
+        if self.usuario.enderecos:
+            return True
 
         mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -239,8 +238,8 @@ class ClienteAplicacao():
         return False
     
     def visualizar_pedido(self, pedido: Pedido):
-        #if self.atributos_preenchidos(pedido):
-         #   return True
+        if self.atributos_preenchidos(pedido):
+            return True
 
         mensagem = f"visualizar|pedido|{pedido.id}"
         self.socket.send(mensagem)
@@ -254,8 +253,8 @@ class ClienteAplicacao():
         return False
 
     def visualizar_meus_pedidos(self):
-        #if self.usuario.pedidos:
-         #   return True
+        if self.usuario.pedidos:
+            return True
 
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
         self.socket.send(mensagem)
@@ -276,12 +275,9 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
-            print("Anuncio antes:", anuncio)
             dict_resposta = json.loads(resposta[1])
             dict_anuncio = json.loads(anuncio.to_dict()) | dict_resposta
-            print("Anuncio dicionario:", dict_anuncio)
             anuncio = Anuncio.from_dict(dict_anuncio)
-            print("Anuncio depois:", anuncio)
             anuncio.produto.loja.editar_anuncio(anuncio, Anuncio.from_dict(resposta[1]))
             return True
         return False
@@ -305,18 +301,12 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
-            print("Loja antes:", loja)
             dict_resposta = json.loads(resposta[1])
             dict_loja = json.loads(loja.to_dict()) | dict_resposta
-            print("Loja dicionario:", dict_loja)
             self.usuario.editar_loja(loja, Loja.from_dict(dict_loja))
-            print("Loja depois:", loja)
             imagem = dict_resposta.get("imagem", 0)
             if imagem:
-                print("Loja imagem:", loja.imagem)
-                self.socket.receive_image(path=f"uploads/{loja.imagem}")
-            else:
-                print("Não Loja imagem:", loja.imagem)
+                self.socket.receive_image(path=f"uploads/{imagem}")
             return True, loja
         return False
     
@@ -363,11 +353,10 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
-            print("Produto antes:", produto)
-            produto.loja.criar_produto(Produto.from_dict(resposta[1]))
-            print("Produto depois:", produto)
+            produto_resposta = Produto.from_dict(resposta[1])
+            produto.loja.criar_produto(produto_resposta)
 
-            for imagem in produto.imagens:
+            for imagem in produto_resposta.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
 
             return True

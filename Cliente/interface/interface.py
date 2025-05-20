@@ -2120,7 +2120,6 @@ class InterfaceHandler:
                 valores_alterados["id"] = loja.id
                 valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
                 def ao_editar_loja(resposta):
-                    print("Loja", loja)
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2128,6 +2127,7 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Loja Editada com Sucesso!"
                         )
+                        self.view.set_tela(self.stack, -3)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
