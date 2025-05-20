@@ -120,11 +120,11 @@ class Utils:
         chave = chave.strip()
 
         # CPF: 11 dígitos numéricos
-        if re.fullmatch(r"\d{11}", chave):
+        if re.fullmatch(r"\d{3}\.\d{3}\.\d{3}-\d{2}", chave):
             return True
 
         # CNPJ: 14 dígitos numéricos
-        if re.fullmatch(r"\d{14}", chave):
+        if re.fullmatch(r"\d{2}\.\d{3}\.\d{3}/\d{4}-\d{2}", chave):
             return True
 
         # Email: verificação básica

@@ -81,6 +81,8 @@ class UnixSocketClient:
         if not self.socket:
             return False
         tamanho_total = self.receive_size()
+        if not tamanho_total:
+            return False
         try:
             with open(path, 'wb') as f:
                 data = b''
@@ -128,7 +130,7 @@ class UnixSocketClient:
 
             tamanho_total = int.from_bytes(tamanho_bytes, 'big')
             print("Recebe tamanho:", tamanho_total)
-            return tamanho_total
+            return int(tamanho_total)
         except socket.timeout:
             print("Timeout ao receber tamanho")
             return False

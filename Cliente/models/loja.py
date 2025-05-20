@@ -44,17 +44,17 @@ class Loja:
         return False
     
     def editar_produto(self, produto, novo_produto):
-        if produto in self.produtos:
-            index = self.produtos.index(produto)
-            self.produtos[index] = novo_produto
-            return True
+        for i, p in enumerate(self.produtos):
+            if p.id == produto.id:
+                self.produtos[i] = novo_produto
+                return novo_produto
         return False
     
     def editar_anuncio(self, anuncio, novo_anuncio):
-        if anuncio in self.anuncios:
-            index = self.anuncios.index(anuncio)
-            self.anuncios[index] = novo_anuncio
-            return True
+        for i, a in enumerate(self.anuncios):
+            if a.id == anuncio.id:
+                self.anuncios[i] = novo_anuncio
+                return novo_anuncio
         return False
     
     def confirmar_pedido(self, id_pedido):

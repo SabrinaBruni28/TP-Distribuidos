@@ -35,24 +35,24 @@ class Usuario_Identificado(Usuario):
         return pedido
     
     def editar_endereco(self, endereco, novo_endereco):
-        if endereco in self.enderecos:
-            index = self.enderecos.index(endereco)
-            self.enderecos[index] = novo_endereco
-            return True
+        for i, p in enumerate(self.enderecos):
+            if p.id == endereco.id:
+                self.enderecos[i] = novo_endereco
+                return novo_endereco
         return False
     
     def editar_loja(self, loja, nova_loja):
-        if loja in self.lojas:
-            index = self.lojas.index(loja)
-            self.lojas[index] = nova_loja
-            return self.lojas[index]
+        for i, p in enumerate(self.lojas):
+            if p.id == loja.id:
+                self.lojas[i] = nova_loja
+                return nova_loja
         return False
     
     def editar_pedido(self, pedido, novo_pedido):
-        if pedido in self.pedidos:
-            index = self.pedidos.index(pedido)
-            self.pedidos[index] = novo_pedido
-            return True
+        for i, p in enumerate(self.pedidos):
+            if p.id == pedido.id:
+                self.pedidos[i] = novo_pedido
+                return novo_pedido
         return False
     
     def apagar_endereco(self, endereco):

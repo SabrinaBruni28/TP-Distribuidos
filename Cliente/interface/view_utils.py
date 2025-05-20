@@ -27,7 +27,7 @@ class Threads:
         self.stack = stack
         self.view = ViewHelper()
 
-    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, atualizar=True):
+    def carregar_em_thread(self, funcao_segundo_plano, quando_terminar=None, tela_loading=None, abrir_tela=None, voltar_tela=None, atualizar=True):
         thread = QThread()
         worker = WorkerGenerico(funcao_segundo_plano)
         worker.moveToThread(thread)
@@ -35,14 +35,14 @@ class Threads:
         thread.started.connect(worker.run)
 
         worker.terminado.connect(lambda resultado: self._finalizar_thread(
-            thread, worker, quando_terminar, abrir_tela, voltar_tela, nova_tela_callback, resultado, atualizar
+            thread, worker, quando_terminar, voltar_tela, resultado, atualizar
         ))
         
         thread.start()
         if abrir_tela and tela_loading:
             self.view.abrir_tela(stack=self.stack, funcao_criadora=tela_loading, salvar_tela=False)
 
-    def _finalizar_thread(self, thread, worker, quando_terminar=None, abrir_tela=None, voltar_tela=None, nova_tela_callback=None, resultado=None, atualizar=True):
+    def _finalizar_thread(self, thread, worker, quando_terminar=None, voltar_tela=None, resultado=None, atualizar=True):
         thread.quit()
         thread.wait()
         thread.deleteLater()
@@ -51,28 +51,10 @@ class Threads:
         if voltar_tela:
             self.view.voltar_tela(self.stack, excluir_funcao=False, atualizar_tela=atualizar)
 
-        if abrir_tela and nova_tela_callback:
-            if resultado or self.stack.count() == 1:
-                self.view.abrir_tela(self.stack, nova_tela_callback, excluir_anterior=True)
-            else:
-                self.view.voltar_tela(self.stack, excluir_funcao=False, atualizar_tela=atualizar)
-
         if quando_terminar:
             quando_terminar(resultado)
 
-    def executar_tela(self, acao, requisicao, tela = None, mensagem="Carregando ...", atualizar_tela=True):
-        tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(mensagem, gif_path="images/spinner.gif")
-
-        self.carregar_em_thread(
-            funcao_segundo_plano=requisicao,
-            tela_loading=tela_carregando,
-            abrir_tela=True,
-            nova_tela_callback=tela,
-            quando_terminar=acao,
-            atualizar=atualizar_tela
-        )
-
-    def executar_mensagem(self, requisicao, acao, mensagem="Salvando ...", atualizar_tela=True):
+    def executar_mensagem(self, requisicao, acao, mensagem="Carregando ...", atualizar_tela=True):
         tela_carregando = lambda: ViewHelper.tela_carregando_com_spinner(
             mensagem, gif_path="images/spinner.gif"
         )

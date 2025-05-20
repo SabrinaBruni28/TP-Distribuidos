@@ -117,7 +117,8 @@ class ClienteAplicacao():
                 if resposta[0] == "anuncios":
                     anuncio = Anuncio.from_dict(resposta[1])
                     anuncios.append(anuncio)
-                    for imagem in anuncio.produto.imagens:
+                    imagem = anuncio.produto.imagens[0]
+                    if imagem:
                         self.socket.receive_image(path=f"uploads/{imagem}")
                 else:
                     return False
@@ -282,7 +283,7 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
             dict_resposta = json.loads(resposta[1])
-            dict_anuncio = json.loads(anuncio.to_dict()) | dict_resposta
+            dict_anuncio = json.loads(anuncio.to_dict()) | {k: v for k, v in dict_resposta.items() if k != "produto"}
             anuncio = Anuncio.from_dict(dict_anuncio)
             return True, anuncio
         return False
@@ -303,16 +304,17 @@ class ClienteAplicacao():
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
 
-        if novos_dados.get("imagem", 0):
-            self.socket.send_image(f"uploads/{novos_dados['imagem']}")
+        editar_imagem = novos_dados.get("imagem", 0)
+        if editar_imagem:
+            self.socket.send_image(f"uploads/{editar_imagem}")
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             dict_resposta = json.loads(resposta[1])
-            dict_loja = json.loads(loja.to_dict()) | dict_resposta
+            dict_loja = json.loads(loja.to_dict()) | {k: dict_resposta[k] for k in ["nome", "imagem"] if k in dict_resposta}
             loja = Loja.from_dict(dict_loja)
             imagem = dict_resposta.get("imagem", 0)
-            if imagem:
+            if editar_imagem and imagem:
                 self.socket.receive_image(path=f"uploads/{imagem}")
             return True, loja
         return False
@@ -421,7 +423,7 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "imagem":
             produto.criar_imagem(resposta[1])
-            self.socket.receive_image(resposta[1])
+            self.socket.receive_image(path=f"uploads/{resposta[1]}")
             return True
         return False
     
