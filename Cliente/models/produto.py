@@ -32,7 +32,7 @@ class Produto:
             "nome": self.nome,
             "descricao": self.descricao,
             "imagens": self.imagens,
-            "loja": "{" + f"id: {self.loja.id if self.loja else None}" +"}",
+            "loja": {"id": f"{self.loja.id if self.loja else None}"}
         })
     
     @classmethod

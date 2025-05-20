@@ -31,10 +31,10 @@ class Pedido:
     def to_dict_personalizado(self):
         return json.dumps({
             "data": self.data.isoformat() if self.data else datetime.datetime.now().isoformat(),
-            "produto": "{" + f"id: {self.produto.id if self.produto else None}" +"}",
+            "produto": {"id": f"{self.produto.id}"} if self.produto else None,
             "quantidade": self.quantidade,
             "preco": self.preco,
-            "endereco": self.endereco.id if self.endereco else None,
+            "endereco": {"id": f"{self.endereco.id}"} if self.endereco else None,
         })
     
     @classmethod

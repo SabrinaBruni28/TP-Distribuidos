@@ -567,7 +567,6 @@ class MarketplaceUI(QMainWindow):
         # Adiciona os blocos no layout do conteúdo do scroll
         blocos = self.tela_lista_lojas(self.handler.aplicacao.usuario.lojas)
         layout_loja.addWidget(blocos)
-        layout_loja.addStretch()
 
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
@@ -833,7 +832,7 @@ class MarketplaceUI(QMainWindow):
 
         # Botão para adicionar nova imagem
         botao_adicionar = WidgetHelper.botao(
-            nome="Adicionar imagem", largura=500,
+            nome="Adicionar imagem", largura=200,
             acao=lambda: (
                 self.substituir_imagem(),
                 imagens.append(self.imagem) if self.imagem else None,
