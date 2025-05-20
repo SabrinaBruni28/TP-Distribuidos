@@ -284,8 +284,7 @@ class ClienteAplicacao():
             dict_resposta = json.loads(resposta[1])
             dict_anuncio = json.loads(anuncio.to_dict()) | dict_resposta
             anuncio = Anuncio.from_dict(dict_anuncio)
-            anuncio.produto.loja.editar_anuncio(anuncio, Anuncio.from_dict(resposta[1]))
-            return True
+            return True, anuncio
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
@@ -295,8 +294,8 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
-            produto.loja.editar_produto(produto, Produto.from_dict(resposta[1]))
-            return True
+            produto = Produto.from_dict(resposta[1])
+            return True, produto
         return False
     
     def editar_loja(self, loja: Loja, novos_dados):
@@ -311,11 +310,11 @@ class ClienteAplicacao():
         if resposta[0] == "loja":
             dict_resposta = json.loads(resposta[1])
             dict_loja = json.loads(loja.to_dict()) | dict_resposta
-            self.usuario.editar_loja(loja, Loja.from_dict(dict_loja))
+            loja = Loja.from_dict(dict_loja)
             imagem = dict_resposta.get("imagem", 0)
             if imagem:
                 self.socket.receive_image(path=f"uploads/{imagem}")
-            return True
+            return True, loja
         return False
     
     def editar_usuario(self, novos_dados):
@@ -340,8 +339,8 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "endereco":
-            self.usuario.editar_endereco(endereco, Endereco.from_dict(resposta[1]))
-            return True
+            endereco = Endereco.from_dict(resposta[1])
+            return True, endereco
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):

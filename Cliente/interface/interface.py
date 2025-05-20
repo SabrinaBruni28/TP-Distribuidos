@@ -1146,8 +1146,7 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignLeft)
 
         botao_criar = WidgetHelper.botao(
-            nome="Criar Anúncio",
-            largura=500,
+            nome="Criar Anúncio", largura=200,
             acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_criar_anuncio(produto))
         )
         layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
@@ -1380,7 +1379,6 @@ class MarketplaceUI(QMainWindow):
     def tela_detalhes_minha_loja(self, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
-        print("Loja na tela:", loja)
 
         layout_horizontal = QHBoxLayout()
 
@@ -1734,13 +1732,13 @@ class InterfaceHandler:
                     mensagem=f"Erro ao visualizar!"
                 )
             else:
-                loja = resposta[1]
+                self.aplicacao.anuncios = resposta[1]
                 self.view.abrir_tela(self.stack, tela)
         # Executa:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_anuncios,
-            atualizar_tela=True
+            atualizar_tela=False
         ) 
 
     def visualizar_anuncio(self, tela, anuncio):
@@ -1759,7 +1757,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_anuncio(anuncio),
-            atualizar_tela=True
+            atualizar_tela=False
         ) 
 
     def visualizar_produto(self, tela, produto):
@@ -1778,7 +1776,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_produto(produto),
-            atualizar_tela=True
+            atualizar_tela=False
         ) 
 
     def visualizar_loja(self, tela, loja):
@@ -1797,7 +1795,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_loja(loja),
-            atualizar_tela=True
+            atualizar_tela=False
         ) 
     
     def visualizar_minha_loja(self, tela, loja):
@@ -1816,7 +1814,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_minha_loja(loja),
-            atualizar_tela=True
+            atualizar_tela=False
         ) 
 
     def visualizar_minhas_lojas(self, tela):
@@ -1835,7 +1833,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_minhas_lojas,
-            atualizar_tela=True
+            atualizar_tela=False
         ) 
 
     def visualizar_meus_pedidos(self, tela):
@@ -1854,7 +1852,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_meus_pedidos,
-            atualizar_tela=True
+            atualizar_tela=False
         )
 
     def visualizar_pedido(self, tela, pedido, botao_confirmar, botao_loja):
@@ -1873,7 +1871,7 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_pedido(pedido),
-            atualizar_tela=True
+            atualizar_tela=False
         )
     
     def visualizar_meus_enderecos(self, tela):
@@ -1892,8 +1890,8 @@ class InterfaceHandler:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_meus_enderecos,
-            atualizar_tela=True
-        ) 
+            atualizar_tela=False
+        )
 
     def confirmar_codigo(self, formulario: Formulario):
         erro = formulario.validar_tipos({"Código": int})
@@ -2221,6 +2219,8 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Produto Editado com Sucesso!"
                         )
+                        produto.loja.editar_produto(produto, resposta[1])
+                        self.view.atualiza_tela(self.stack)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2263,7 +2263,8 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Loja Editada com Sucesso!"
                         )
-                        #self.view.set_tela(self.stack, -3)
+                        loja = self.aplicacao.usuario.editar_loja(loja, resposta[1])
+                        self.view.atualiza_tela(self.stack)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2310,6 +2311,8 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Endereço Editado com Sucesso!"
                         )
+                        self.usuario.editar_endereco(endereco, resposta[1])
+                        self.view.atualiza_tela(self.stack)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2409,6 +2412,8 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Anúncio Editado com Sucesso!"
                         )
+                        anuncio.produto.loja.editar_anuncio(anuncio, resposta[1])
+                        self.view.atualiza_tela(self.stack)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
