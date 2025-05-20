@@ -276,6 +276,11 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
+            print("Anuncio antes:", anuncio)
+            dict = anuncio.to_dict() | resposta[1]
+            print("Anuncio dicionario:", dict)
+            anuncio = Anuncio.from_dict(dict)
+            print("Anuncio depois:", anuncio)
             anuncio.produto.loja.editar_anuncio(anuncio, Anuncio.from_dict(resposta[1]))
             return True
         return False
@@ -300,9 +305,12 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             print("Loja antes:", loja)
-            loja = Loja.from_dict(resposta[1])
+            dict = loja.to_dict() | resposta[1]
+            print("Loja dicionario:", dict)
+            loja = Loja.from_dict(dict)
             print("Loja depois:", loja)
-            if loja.imagem:
+            imagem = resposta[1].get("imagem", 0)
+            if imagem:
                 print("Loja imagem:", loja.imagem)
                 self.socket.receive_image(path=f"uploads/{loja.imagem}")
             else:
