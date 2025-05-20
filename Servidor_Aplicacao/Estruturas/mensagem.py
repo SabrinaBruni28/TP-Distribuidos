@@ -1,7 +1,6 @@
 import socket
 from Operacoes import server_operation as op
-# Estrutura de mensagem para organizar melhor uma mensagem do cliente
-# Ela carrega a string original, os campos da mensagem e o tamanho
+
 class Mensagem:
     def __init__(self, mensagem, tamanho: int, binario=False):
         self.stringMensagem = mensagem
@@ -18,39 +17,31 @@ class Mensagem:
             self.bytesMensagem = op.codifica(str(mensagem))
             self.camposMensagem = self._divideString()
 
-
-    # Função para dividir os campos da mensagem
-    # o strip limpa os expaços extras das mensagens,
-    # mas mantém os espaços que fazem parte da mensagem, se for o caso
     def _divideString(self):
+        # Divide a string da mensagem em campos, removendo espaços extras em cada campo
         return [ws.strip() for ws in self.stringMensagem.split('|')]
-    
-    
 
-    
-    # Função para receber apenas a mensagem. Usada em casos onde o tamanho da mensagem é conhecido.
     @classmethod
     def receptorMensagem(cls, socket_cliente: socket.socket, tamanho: int):
         stringMensagem = cls._recebeMensagem(socket_cliente, tamanho)
-        
         mensagemServidor = Mensagem(stringMensagem, tamanho)
         return mensagemServidor
 
-    # Função para o Servidor criar suas mensagens. Recebe como parâmetro apenas a string.
-    # bin serve para casos em que a mensagem é para uma imagem.
     @classmethod
     def produtorMensagem(cls, string, bin=False):
-        stringMensagemServidor = string
-        tamanhoMensagem = len(stringMensagemServidor)
+        # Ajusta o cálculo do tamanho dependendo se é string ou bytes
+        if bin:
+            tamanhoMensagem = len(string)  # string aqui é bytes
+        else:
+            tamanhoMensagem = len(op.codifica(string))  # tamanho em bytes da string codificada
 
-        mensagemServidor = Mensagem(stringMensagemServidor, tamanhoMensagem, binario=bin)
+        mensagemServidor = Mensagem(string, tamanhoMensagem, binario=bin)
         if len(mensagemServidor.stringMensagem):
             print(f"[Servidor][MENSAGEM] Mensagem produzida: {mensagemServidor.stringMensagem[-100:]}")
         else:
             print(f"[Servidor][MENSAGEM] Mensagem produzida: {mensagemServidor.stringMensagem}")
         return mensagemServidor
-    
-    # Receptor mensagem é o equivalente ao receptorMensagemETamanho, mas para uma imagem.
+
     @classmethod
     def receptorImagem(cls, socket_cliente: socket.socket):
         print("[Servidor] Esperando imagem.")
@@ -64,7 +55,6 @@ class Mensagem:
         mensagemImagem = Mensagem.produtorMensagem(imagem_bytes, bin=True)
         return mensagemImagem
 
-    # Recebe bytes é a função resposável por receber um bytestring de uma imagem. Essa função lida com as mensagens vindo em pedaços e tal.
     @staticmethod
     def _recebeBytes(socket_cliente: socket.socket, tamanho: int):
         print(f"[Servidor] Recebendo {tamanho} bytes de dados brutos.")
@@ -78,21 +68,21 @@ class Mensagem:
 
         return dados
 
-        # Função para receber mensagens que vêm com o tamanho delas antes
+    # Função para receber mensagens que vêm com o tamanho delas antes
     @classmethod
     def receptorMensagemETamanho(cls, socket_cliente: socket.socket):
         print("[Servidor] Entrou em receptorMensagemETamanho().")
         tamanho = cls._recebeTamanhoDaMensagem(socket_cliente)
         print(f"[Servidor][Receptor Mensagem] Tamanho da mensagem do cliente a receber: {tamanho}")
-    
+
         if tamanho == 0:
             return None
-    
+
         stringMensagem = cls._recebeMensagem(socket_cliente, tamanho)
         mensagemCliente = Mensagem(stringMensagem, tamanho)
         print(f"[Servidor][Receptor Mensagem] Mensagem: {mensagemCliente.stringMensagem}")
         return mensagemCliente
-    
+
     @staticmethod
     def _recebeTamanhoDaMensagem(socket_cliente: socket.socket):
         print(f"[Servidor] Entrou em _recebeMensagemTamanho().")
@@ -104,7 +94,7 @@ class Mensagem:
             dados += parte
         tamanho = int.from_bytes(dados, "big")
         return tamanho
-    
+
     @staticmethod
     def _recebeMensagem(socket_cliente: socket.socket, tamanho: int):
         print(f"[Servidor] Entrou em _recebeMensagem().")
@@ -116,4 +106,26 @@ class Mensagem:
             dados += parte
         mensagem = op.decodifica(dados)
         return mensagem
-    
+
+    @staticmethod
+    def limpar_buffer_socket(sock):
+        """
+        Lê e descarta dados pendentes no socket (modo não bloqueante) sem alterar assinaturas externas.
+        """
+        import errno
+        import socket
+
+        sock.setblocking(0)  # modo não bloqueante
+        try:
+            while True:
+                try:
+                    data = sock.recv(4096)
+                    if not data:
+                        break  # conexão encerrada
+                except socket.error as e:
+                    if e.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                        break  # nada mais para ler
+                    else:
+                        raise
+        finally:
+            sock.setblocking(1)  # volta ao modo bloqueante

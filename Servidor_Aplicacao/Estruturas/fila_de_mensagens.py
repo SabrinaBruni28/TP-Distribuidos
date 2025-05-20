@@ -178,14 +178,17 @@ class FilaDeMensagens(threading.Thread):
                         op.enviaImagem(self.socketBD, imagem)
 
 
-                self.socketBD.settimeout(30)
+                #self.socketBD.settimeout(30)
+                Mensagem.limpar_buffer_socket(self.socketBD)
                 resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
-                self.socketBD.settimeout(None)
+                #resposta = Mensagem.receptorImagem(self.socketBD)
+                #self.socketBD.settimeout(None)
 
                 if imagens != None:
                     quantImg = len(imagens)
                     imagens = []
                     for i in range(quantImg):
+                        #imagens.append(Mensagem.receptorImagem(self.socketBD))
                         imagens.append(Mensagem.receptorImagem(self.socketBD))
 
 
