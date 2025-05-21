@@ -33,3 +33,10 @@ class DAOPedido(DAO):
     
     def zerar(self, obj: Pedido):
         pass
+
+    def confirmarPedido(self, obj: Pedido):
+        obj.quantidade = -1
+        obj.preco = -3
+        pedido_tupla = super().update(obj)
+        return (self._from_tuple(pedido_tupla[:6]), bool(pedido_tupla[6]))
+

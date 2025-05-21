@@ -3,6 +3,7 @@ import socket
 import threading
 import logging
 import sys, os
+from time import time
 
 # Adiciona o diretório raiz ao sys.path
 CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
@@ -67,7 +68,6 @@ class UnixSocketServer:
 
     def handle_server(self, client_socket):
         try:
-            import time
             while True:
 
                 respostas = []
@@ -91,21 +91,20 @@ class UnixSocketServer:
                         caminho_imagem = os.path.join(CAMINHO_BASE, img_path, caminho_imagem)
                         print(caminho_imagem)
                         salvo, imagem = self.receive_image(client_socket, image_path = caminho_imagem)
-                        print('Imagem salva? ->', salvo)
+                        print('Imagem salva? ->', imagem)
                         if salvo:
                             respostas.append(Mensagem(imagem))
                     print('Mensagens a enviar: ', len(respostas))
-                    for i in range(len(respostas)):
-                        self.send(client_socket, respostas[i].codigoMensagem)
-                        print(respostas[i].stringMensagem[:50])
-                        time.sleep(0.01)  # Pequeno delay para evitar congestionamento do buffer
+                    for resposta in respostas:
+                        self.send(client_socket, resposta.codigoMensagem)
+                        #time.sleep(0.01)  # Pequeno delay para evitar congestionamento do buffer
 
                     print()
                     print(espacito*'-')
                     # Limpa variáveis para liberar memória
                     self.limpar_buffer_socket(client_socket)
-                    respostas.clear()
-                    continua_recebendo.clear()
+                    respostas = []
+                    continua_recebendo = []
                 else:
                     print('Cliente desconectado'.center(espacito, '='))
                     break
@@ -271,10 +270,8 @@ class UnixSocketServer:
                                     anuncio.produto.imagens.append(imagem_produto.caminho())
                                 if anuncio.produto.imagens[0] not in imagens_usadas:
                                     imagens_usadas.append(anuncio.produto.imagens[0])
-                            print(loja)
                             loja.produtos = []
                             respostas = [Mensagem(f'{cabecalho2} | {json.dumps(loja.to_dict())}')]
-                            print(loja)
                             print(imagens_usadas)
                             if loja.imagem:
                                 imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{loja.id}.jpg'))
@@ -285,22 +282,36 @@ class UnixSocketServer:
                         else:
                             print('Erro fatal: Loja não encontrada!')
                     case 'pedido':
-                        pass
+                        pedido = Pedido(id = int(requisicao.camposMensagem[2]))
+                        pedido = self.banqueiro.encontrar(pedido)
+                        if isinstance(pedido, Pedido) and isinstance(pedido.produto, Produto) and isinstance(pedido.endereco, Endereco):
+                            pedido.endereco = self.banqueiro.encontrar(pedido.endereco)
+                            pedido.produto = self.banqueiro.encontrar(pedido.produto)
+                            pedido.produto.imagens = [imagem_produto.caminho() for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = pedido.produto.id))]
+                            respostas = [Mensagem(f'produto | {json.dumps(pedido)}')]
+                            for imagem in pedido.produto.imagens:
+                                respostas.append(Mensagem(f'produto/{imagem}'))
+                        else:
+                            print("Objeto 'pedido' não possui os atributos esperados ou não é do tipo Pedido.")
                     case 'minha_loja':
                         if minha_loja := self.banqueiro.retornarLoja(Loja(id = int(requisicao.camposMensagem[2])), minha = True):
                             print(minha_loja)
                             caminho_imagem = os.path.join(CAMINHO_BASE, img_path, f'loja/{minha_loja.id}.jpg')
                             if os.path.exists(caminho_imagem):
                                 minha_loja.imagem = f'{minha_loja.id}.jpg'
+                            
                             for produto in minha_loja.produtos:
                                 produto.imagens = []
                                 for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = produto.id)):
                                     produto.imagens.append(imagem_produto.caminho())
+
+                            for anuncio in minha_loja.anuncios:
+                                produto = anuncio.produto
+                                produto.imagens = []
+                                for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = produto.id)):
+                                    produto.imagens.append(imagem_produto.caminho())
+
                             respostas = [Mensagem(f'{cabecalho2} | {json.dumps(minha_loja.to_dict())}')]
-                            #Não precisava:
-                            #if minha_loja.imagem:
-                            #    imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{minha_loja.id}.jpg'))
-                            #    respostas.append(Mensagem(imagem))
                             for produto in minha_loja.produtos:
                                 if produto.imagens:
                                     imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{produto.imagens[0]}'))
@@ -420,10 +431,19 @@ class UnixSocketServer:
                 if obj is not None:
                     ans = self.banqueiro.excluir(obj)
                     respostas = [Mensagem(f'{requisicao.camposMensagem[1]} | {ans}')]
+
+            case 'pedido':
+                match requisicao.camposMensagem[1]:
+                    case 'confirmar':
+                        self.banqueiro.confirmarPedido(Pedido(id = int(requisicao.camposMensagem[2])))
+                        ans = 'ok'
+                    case 'cancelar':
+                        ans = self.banqueiro.excluir(Pedido(id = int(requisicao.camposMensagem[2])))
+                respostas = [Mensagem(f'pedido | {ans}')]
             case _:
                 print('Erro na mensagem: Primeiro cabeçalho não reconhecido!')
             
-        return (continua_recebendo, respostas)
+        return continua_recebendo, respostas
 
     def send_size(self, soquete, tamanho: int):
         soquete.sendall(tamanho.to_bytes(8, 'big'))

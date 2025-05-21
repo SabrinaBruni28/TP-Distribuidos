@@ -42,6 +42,10 @@ class Pedido(Persistivel):
     
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
+        if self.quantidade == -1 and self.preco == -3:
+            #modo especial de confirmação
+            obj_bd = {'confirmacao_pedido': True}
+            return obj_bd
         atributos_bd = ('id_produto', 'id_endereco', 'quantidade', 'preco', 'data')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):
             valor = getattr(self, attr, None)

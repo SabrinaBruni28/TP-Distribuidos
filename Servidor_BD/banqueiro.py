@@ -107,6 +107,8 @@ class Banqueiro():
             ans = self.excluir(obj)
         return imagens_a_remover, ans
 
+    def confirmarPedido(self, obj: Pedido):
+        return self.__daoPedido.confirmarPedido(obj)
     
     def retornarLoja(self, obj: Loja, minha=False):
         loja = self.encontrar(obj)
@@ -114,19 +116,20 @@ class Banqueiro():
             dummy_produto = Produto(loja = loja)
             produtos_da_loja = self.buscar(dummy_produto)
 
-            ids_produtos_da_loja = [produto.id for produto in produtos_da_loja]
-
             anuncios_da_loja = []
-            for id_produto in ids_produtos_da_loja:
-                dummy_produto = Produto(id = id_produto)
+            for produto in produtos_da_loja:
+                dummy_produto = Produto(id = produto.id)
                 dummy_anuncio = Anuncio(produto = dummy_produto)
                 anuncios_do_produto = self.buscar(dummy_anuncio)
+                for anuncio in anuncios_do_produto:
+                    anuncio.produto.nome = produto.nome
                 anuncios_da_loja.extend(anuncios_do_produto)
+
             
             pedidos_confirmados = []
             pedidos_em_andamento = []
-            for id_produto in ids_produtos_da_loja:
-                dummy_produto = Produto(id = id_produto)
+            for produto in produtos_da_loja:
+                dummy_produto = Produto(id = produto.id)
                 dummy_pedido = Pedido(produto = dummy_produto)
                 pedidos_do_produto = self.buscar(dummy_pedido)
                 for pedido, confirmacao in pedidos_do_produto:
@@ -144,11 +147,11 @@ class Banqueiro():
                 print(pc)
             for pa in pedidos_em_andamento:
                 print(pa)
-            
-            loja.produtos = produtos_da_loja.copy()
-            loja.anuncios = anuncios_da_loja.copy()
-            loja.pedidos_confirmados = pedidos_confirmados.copy()
-            loja.pedidos_em_andamento = pedidos_em_andamento.copy()
+            loja.anuncios = anuncios_da_loja
+            if minha:
+                loja.produtos = produtos_da_loja
+                loja.pedidos_confirmados = pedidos_confirmados
+                loja.pedidos_em_andamento = pedidos_em_andamento
             
             return loja
         else:
