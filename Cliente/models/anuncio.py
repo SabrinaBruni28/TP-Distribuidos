@@ -57,7 +57,7 @@ class Anuncio:
         if isinstance(data, str):
             data = json.loads(data)
         id = data.get("id", 0)
-        produto = Produto.from_dict(data["produto"]) if "produto" in data else None
+        produto = Produto.from_dict(data["produto"]) if data.get("produto", "") else None
         preco = data.get("preco", 0)
         quantidade_disponivel = data.get("quantidade_disponivel", 0)
         chave_pix = data.get("chave_pix", "")

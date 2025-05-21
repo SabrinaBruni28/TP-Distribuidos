@@ -19,6 +19,12 @@ class Loja:
         self.pedidos_confirmados = pedidos_confirmados
         self.pedidos_em_andamento = pedidos_em_andamento
 
+    def anuncio_produto(self, produto):
+        for anuncio in self.anuncios:
+            if anuncio.produto.id == produto.id:
+                return anuncio
+        return None
+
     def criar_produto(self, produto):
         self.produtos.append(produto)
         return produto

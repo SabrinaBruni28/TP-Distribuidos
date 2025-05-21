@@ -162,9 +162,10 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
-        layout.addWidget(imagem_label)
-        layout.addSpacing(5)
+        if anuncio.produto.imagens:
+            imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
+            layout.addWidget(imagem_label)
+            layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(anuncio.produto.nome)
         layout.addWidget(label_nome)
@@ -1744,7 +1745,7 @@ class InterfaceHandler:
             if tela:
                 self.view.abrir_tela(self.stack, tela)
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_anuncios,
             atualizar_tela=False
@@ -1767,7 +1768,7 @@ class InterfaceHandler:
                 else:
                     self.view.abrir_tela(self.stack, lambda: tela(anuncio))
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_anuncio(anuncio),
             atualizar_tela=False
@@ -1787,7 +1788,7 @@ class InterfaceHandler:
                 produto = resposta[1]
                 self.view.abrir_tela(self.stack, lambda: tela(produto, loja))
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_produto(produto),
             atualizar_tela=False
@@ -1807,7 +1808,7 @@ class InterfaceHandler:
                 loja = resposta[1]
                 self.view.abrir_tela(self.stack, lambda: tela(loja))
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_loja(loja),
             atualizar_tela=False
@@ -1827,7 +1828,7 @@ class InterfaceHandler:
                 loja = resposta[1]
                 self.view.abrir_tela(self.stack, lambda: tela(loja))
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_minha_loja(loja),
             atualizar_tela=False
@@ -1847,7 +1848,7 @@ class InterfaceHandler:
                 self.aplicacao.usuario.lojas = resposta[1]
                 self.view.abrir_tela(self.stack, tela)
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_minhas_lojas,
             atualizar_tela=False
@@ -1867,7 +1868,7 @@ class InterfaceHandler:
                 self.aplicacao.usuario.pedidos = resposta[1]
                 self.view.abrir_tela(self.stack, tela)
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_meus_pedidos,
             atualizar_tela=False
@@ -1887,7 +1888,7 @@ class InterfaceHandler:
                 pedido = resposta[1]
                 self.view.abrir_tela(self.stack, lambda: tela(pedido, botao_confirmar, botao_loja))
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=lambda: self.aplicacao.visualizar_pedido(pedido),
             atualizar_tela=False
@@ -1907,7 +1908,7 @@ class InterfaceHandler:
                 self.aplicacao.usuario.enderecos = resposta[1]
                 self.view.abrir_tela(self.stack, tela)
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_meus_enderecos,
             atualizar_tela=False
@@ -1959,7 +1960,7 @@ class InterfaceHandler:
                         mensagem="Erro ao confirmar código!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.email_confirmacao(valores["Código"]),
                 acao=ao_confirmar_codigo,
                 atualizar_tela=False
@@ -1994,7 +1995,7 @@ class InterfaceHandler:
                         mensagem="Erro ao realizar cadastramento!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.cadastrar(usuario),
                 acao=ao_cadastrar,
                 atualizar_tela=False
@@ -2030,7 +2031,7 @@ class InterfaceHandler:
                         mensagem="Erro ao realizar login!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.login(usuario),
                 acao=ao_login,
                 atualizar_tela=False
@@ -2055,7 +2056,7 @@ class InterfaceHandler:
                     mensagem="Erro ao criar pedido!"
                 )
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             requisicao=lambda: self.aplicacao.criar_pedido(pedido),
             acao=ao_criar_pedido
         )
@@ -2088,7 +2089,7 @@ class InterfaceHandler:
                         mensagem="Erro ao criar loja!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_loja(loja),
                 acao=ao_criar_loja
             )          
@@ -2120,7 +2121,7 @@ class InterfaceHandler:
                         mensagem="Erro ao criar endereço!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_endereco(endereco),
                 acao=ao_criar_endereco
             )
@@ -2160,7 +2161,7 @@ class InterfaceHandler:
                     )
 
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_produto(produto),
                 acao=ao_criar_produto
             )
@@ -2203,7 +2204,7 @@ class InterfaceHandler:
                         mensagem="Erro ao criar anúncio!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_anuncio(anuncio),
                 acao=ao_criar_anuncio
             )
@@ -2218,7 +2219,7 @@ class InterfaceHandler:
                     mensagem="Erro ao criar imagem!"
                 )
         # Executa:
-        self.thread.executar_mensagem(
+        self.thread.executar(
             acao=ao_criar_imagem,
             requisicao=lambda: self.aplicacao.criar_imagem(produto, imagem),
         )
@@ -2233,7 +2234,7 @@ class InterfaceHandler:
             if valores_alterados:
                 valores_alterados["id"] = produto.id
                 def ao_editar_produto(resposta):
-                    nonlocal produto, tela
+                    nonlocal  tela, loja, produto
                     if resposta:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2243,7 +2244,10 @@ class InterfaceHandler:
                         )
                         produto = loja.editar_produto(produto, resposta[1])
                         self.view.abrir_tela(self.stack, lambda: tela(produto, loja), excluir_anterior=True)
-                        self.visualizar_minha_loja(loja)
+                        self.thread.executar(
+                            requisicao=lambda: self.aplicacao.visualizar_minha_loja(loja),
+                            abrir_tela=False, voltar_tela=False
+                        )
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2252,7 +2256,7 @@ class InterfaceHandler:
                             mensagem="Erro ao editar produto!"
                         )
                 # Executa:
-                self.thread.executar_mensagem(
+                self.thread.executar(
                     requisicao=lambda: self.aplicacao.editar_produto(produto, valores_alterados),
                     acao=ao_editar_produto
                 )
@@ -2297,7 +2301,7 @@ class InterfaceHandler:
                             mensagem="Erro ao editar loja!"
                         )
                 # Executa:
-                self.thread.executar_mensagem(
+                self.thread.executar(
                     requisicao=lambda: self.aplicacao.editar_loja(loja, valores_alterados),
                     acao=ao_editar_loja
                 )
@@ -2346,7 +2350,7 @@ class InterfaceHandler:
                             mensagem="Erro ao editar endereço!"
                         )
                 # Executa:
-                self.thread.executar_mensagem(
+                self.thread.executar(
                     requisicao=lambda: self.aplicacao.editar_endereco(endereco, valores_alterados),
                     acao=ao_editar_endereco
                 )
@@ -2402,7 +2406,7 @@ class InterfaceHandler:
                         )
                         self.view.atualiza_tela(self.stack)
                 # Executa:
-                self.thread.executar_mensagem(
+                self.thread.executar(
                     requisicao=lambda: self.aplicacao.editar_usuario(valores_alterados),
                     acao=ao_editar_perfil,
                     atualizar_tela=False
@@ -2457,7 +2461,7 @@ class InterfaceHandler:
                             mensagem="Erro ao editar anúncio!"
                         )
                 # Executa:
-                self.thread.executar_mensagem(
+                self.thread.executar(
                     requisicao=lambda: self.aplicacao.editar_anuncio(anuncio, valores_alterados),
                     acao=ao_editar_anuncio
                 )
@@ -2496,7 +2500,7 @@ class InterfaceHandler:
                         mensagem="Erro ao excluir loja!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.excluir_loja(loja),
                 acao=ao_excluir_loja,
                 atualizar_tela=False
@@ -2533,7 +2537,7 @@ class InterfaceHandler:
                         mensagem="Erro ao excluir produto!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.excluir_produto(produto),
                 acao=ao_excluir_produto,
                 atualizar_tela=False
@@ -2570,7 +2574,7 @@ class InterfaceHandler:
                         mensagem="Erro ao excluir anúncio!"
                     )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.excluir_anuncio(anuncio),
                 acao=ao_excluir_anuncio,
                 atualizar_tela=False
@@ -2606,7 +2610,7 @@ class InterfaceHandler:
                             mensagem="Erro ao excluir endereço!"
                         )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.excluir_endereco(endereco),
                 acao=ao_excluir_endereco,
                 atualizar_tela=False
@@ -2633,7 +2637,7 @@ class InterfaceHandler:
             )
         else:
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 acao=ao_excluir_imagem,
                 requisicao=lambda: self.aplicacao.excluir_imagem(produto, imagem),
             )
@@ -2665,7 +2669,7 @@ class InterfaceHandler:
                             mensagem="Erro ao cancelar pedido!"
                         )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.cancelar_pedido(pedido, pedido.produto.loja),
                 acao=ao_cancelar_pedido,
                 atualizar_tela=False
@@ -2701,7 +2705,7 @@ class InterfaceHandler:
                             mensagem="Erro ao confirmar pedido!"
                         )
             # Executa:
-            self.thread.executar_mensagem(
+            self.thread.executar(
                 requisicao=lambda: self.aplicacao.confirmar_pedido(pedido, pedido.produto.loja),
                 acao=ao_confirmar_pedido,
                 atualizar_tela=False
