@@ -5,7 +5,6 @@ from Estruturas.mensagem import Mensagem
 from Estruturas.dados_confirmacao import DadosTemporariosConfirmacao
 from Operacoes import server_operation as op
 from queue import Queue, Empty
-#from Operacoes.login import Login
 from Operacoes import callback as cb
 from Operacoes import imagem as img
 
@@ -64,6 +63,12 @@ class FilaDeMensagens(threading.Thread):
 
         if resposta == None:
             print(f"[Fila de Mensagens] Erro ao receber resposta do Banco de Dados.\n[Fila de Mensagens] Mensagem não processada: {mensagem.stringMensagem}")
+            self.socketBD = None
+            return
+        
+        if resposta.stringMensagem == "erro | falha desconhecida":
+            print(f"[Fila de Mensagens][Erro] {resposta.stringMensagem}")
+            op.enviaMensagem(connect, resposta)
             return
 
         match tipo:
@@ -110,6 +115,13 @@ class FilaDeMensagens(threading.Thread):
             if self.socketBD is None:
                 self.conectaBanco()
 
+            if self.socketBD and not op.is_socket_alive(self.socketBD):
+                print("[Fila de Mensagens] Conexão com o Banco de Dados perdida. Reconectando...")
+                self.socketBD = None
+                self.conectaBanco()
+
+
+
             # Envia a mensagem e retorna a resposta do banco
             if self.socketBD:
 
@@ -141,9 +153,9 @@ class FilaDeMensagens(threading.Thread):
             if self.socketBD:
                 op.enviaMensagem(self.socketBD, mensagem)
 
-                self.socketBD.settimeout(30)
+                Mensagem.limpar_buffer_socket(self.socketBD)
                 resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
-                self.socketBD.settimeout(None)
+                
                 print(f"[Fila de Mensagens] Resposta do Banco: {resposta.stringMensagem}")
                 if not resposta:
                     return None
@@ -178,14 +190,17 @@ class FilaDeMensagens(threading.Thread):
                         op.enviaImagem(self.socketBD, imagem)
 
 
-                self.socketBD.settimeout(30)
+                #self.socketBD.settimeout(30)
+                #Mensagem.limpar_buffer_socket(self.socketBD)
                 resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
-                self.socketBD.settimeout(None)
+                #resposta = Mensagem.receptorImagem(self.socketBD)
+                #self.socketBD.settimeout(None)
 
                 if imagens != None:
                     quantImg = len(imagens)
                     imagens = []
                     for i in range(quantImg):
+                        #imagens.append(Mensagem.receptorImagem(self.socketBD))
                         imagens.append(Mensagem.receptorImagem(self.socketBD))
 
 
@@ -207,10 +222,7 @@ class FilaDeMensagens(threading.Thread):
     # Função que faz a conexão com o servidor de banco de dados, cria seu socket
     def conectaBanco(self):
         try:
-            #self.socketBD = socket.create_connection(('localhost', 6000))
-            self.socketBD = socket.create_connection(('192.168.1.15', 6000))
-            #self.socketBD = socket.create_connection(('192.168.1.106', 6000))
-            #self.socketBD = socket.create_connection(('177.137.215.46', 6000))
+            self.socketBD = socket.create_connection(('localhost', 6000))
             logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
@@ -300,7 +312,7 @@ class FilaDeMensagens(threading.Thread):
                 callback(resposta, connect, imagens)
 
             case "anuncio":
-                callback(resposta, connect, imagens)
+                callback(resposta, connect)
 
     def decisorExcluir(self, resposta_banco: Mensagem, connect: socket.socket, callback):
         resposta = resposta_banco.camposMensagem
@@ -322,7 +334,7 @@ class FilaDeMensagens(threading.Thread):
 
     def decisorPedido(self, resposta_banco: Mensagem, connect: socket.socket, callback, mensagemServidor: Mensagem):
         resposta = resposta_banco.camposMensagem
-        callback(resposta, connect)
+        callback(connect)
 
         
     def mensagemProBancoCriar(self, mensagem: Mensagem, imagens: list):
@@ -368,4 +380,4 @@ class FilaDeMensagens(threading.Thread):
             logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return f"[Fila de Mensagens][Erro] Falha ao enviar ao banco: {e}"
-        
+        1

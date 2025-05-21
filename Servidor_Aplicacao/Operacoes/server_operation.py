@@ -20,6 +20,8 @@ def codifica(mensagemEmString: str):
 def carrega(resposta):
     return resposta.decode("utf-8")
 
+
+
 def fazMensagemServidor(string):
     stringMensagemServidor = codifica(string)
     tamanhoMensagem = len(stringMensagemServidor)
@@ -41,6 +43,7 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
 
         print(f"[Servidor][ENVIA MENSAGEM][TAMANHO] Enviado: {mensagem.tamanho}")
         print(f"[Servidor][ENVIA MENSAGEM][MENSAGEM] Enviado: {mensagem.stringMensagem}")
+        Mensagem.limpar_buffer_socket(socket)
         return True
 
     except (BrokenPipeError, ConnectionResetError) as e:
@@ -51,22 +54,6 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
         print(f"[Erro] Erro inesperado ao enviar mensagem: {e}\nMensagem: {mensagem.stringMensagem}")
 
     return False
-
-    
-def receive_image(self, buffer_size=4096, path='received_image.png'):
-        if not self.socket:
-            raise RuntimeError("Socket not connected")
-        tamanho_total = self.receive_size()
-        with open(path, 'wb') as f:
-            data = b''
-            while len(data) < tamanho_total:
-                chunk = self.socket.recv(buffer_size)
-                if not chunk:
-                    break
-                data += chunk
-            f.write(data)
-        return data, path
-
 
 def enviaImagem(socket: socket.socket, mensagem: Mensagem):
     try:
@@ -85,6 +72,7 @@ def enviaImagem(socket: socket.socket, mensagem: Mensagem):
         socket.sendall(tamanho.to_bytes(8, "big"))
         socket.sendall(dados)
         print(f"[Envio] Imagem enviada: {dados[-20:]}")
+        Mensagem.limpar_buffer_socket(socket)
         return True
 
     except Exception as e:
@@ -94,6 +82,34 @@ def enviaImagem(socket: socket.socket, mensagem: Mensagem):
 
 def messageHandler(socket_cliente):
     return None
+
+
+import errno
+
+def is_socket_alive(sock: socket.socket) -> bool:
+    """
+    Verifica se o socket está conectado.
+    Retorna True se a conexão parece ativa, False caso contrário.
+    """
+    try:
+        sock.setblocking(0)  # Modo não bloqueante
+        try:
+            data = sock.recv(1, socket.MSG_PEEK)
+            # Se retornou b'', conexão foi encerrada normalmente
+            if data == b'':
+                return False
+            return True
+        except BlockingIOError:
+            # Nada para ler, mas sem exceção grave — provavelmente ativo
+            return True
+        except socket.error as e:
+            # Conexão com problema
+            if e.errno in [errno.ECONNRESET, errno.ECONNABORTED, errno.ENOTCONN, errno.EBADF]:
+                return False
+            return False
+    finally:
+        sock.setblocking(1)  # Sempre volta ao modo bloqueante
+
 
 def recebeMensagemTamanho(socket_cliente):
     tamanhoEmBytes = socket_cliente.recv(4)

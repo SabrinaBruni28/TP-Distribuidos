@@ -39,7 +39,7 @@ class Pedido(operacao.Operacao):
     def cancelar(self):
         print("[Servidor][Pedido] Operação de cancelar pedido recebida.")
         idPedido = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = op.codifica(f"excluir | pedido | {idPedido}")
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | pedido | {idPedido}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.pedidoCanceladoCallback, self.conexaoCliente, "pedido")

@@ -50,7 +50,7 @@ class Editar(operacao.Operacao):
     def produto(self):
         print("[Servidor][Editar] Operação de editar produto recebida.")
         dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
+        mensagemServidor = Mensagem.produtorMensagem(f"editar | produto | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar")
