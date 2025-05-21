@@ -41,7 +41,6 @@ class UnixSocketClient:
         print("Tamanho:", tamanho)
         if not tamanho:
             return False
-        print("Tentando receber mensagem")
         data = b''
         self.socket.settimeout(15)
         try:
@@ -116,14 +115,11 @@ class UnixSocketClient:
     def receive_size(self):
         if not self.socket:
             return False
-        print("Tentar receber tamanho (8 bytes)")
         self.socket.settimeout(15)
         try:
             tamanho_bytes = b''
             while len(tamanho_bytes) < 8:
-                print("Recebendo tamanho:", len(tamanho_bytes))
                 chunk = self.socket.recv(8 - len(tamanho_bytes))
-                print("Chunk:", chunk)
                 if not chunk:
                     raise ConnectionError("Socket fechado antes de receber os 8 bytes de tamanho")
                 tamanho_bytes += chunk

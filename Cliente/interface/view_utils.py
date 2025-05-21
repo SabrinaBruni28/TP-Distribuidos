@@ -98,7 +98,7 @@ class WidgetHelper(QWidget):
     
     @staticmethod
     def label_span(label, tamanho, aligment=Qt.AlignmentFlag.AlignCenter):
-        label_span = QLabel(f"<span style='font-size: {tamanho}px'>{label}</span>")
+        label_span = QLabel(f"<span style='font-size: {tamanho}px; font-weight: bold'>{label}</span>")
         label_span.setAlignment(aligment)
         return label_span
 
@@ -317,26 +317,36 @@ class ViewHelper(QWidget):
         if excluir_funcao:
             del self.__class__.funcoes_telas[index]
 
-    def sobrescrever_tela(self, stack, funcao_criadora: QWidget, index: int = None):
+    def sobrescrever_tela(self, stack, funcao_criadora: QWidget, index: int = None, atualizar_tela=True):
         if index is None:
             index = stack.currentIndex()
+
+        total = stack.count()
+
+        # Converte índice negativo em positivo
+        if index < 0:
+            index = total + index
+
+        if index < 0 or index >= total:
+            return
 
         if 0 <= index < stack.count():
             self.excluir_tela(stack, index, excluir_funcao=False)
             tela = funcao_criadora()
             stack.insertWidget(index, tela)
-            stack.setCurrentIndex(index)
             if index < len(self.__class__.funcoes_telas):
                 self.__class__.funcoes_telas[index] = funcao_criadora
             else:
                 self.__class__.funcoes_telas.insert(index, funcao_criadora)
-            # Remove widgets e funções após o índice atual
-            for i in range(len(self.__class__.funcoes_telas) - 1, index, -1):
-                if i < stack.count():
-                    self.excluir_tela(stack, i, excluir_funcao=True)
-                else:
-                    # Só remove da lista de funções, caso não exista mais o widget
-                    del self.__class__.funcoes_telas[i]
+            if atualizar_tela:
+                stack.setCurrentIndex(index)
+                # Remove widgets e funções após o índice atual
+                for i in range(len(self.__class__.funcoes_telas) - 1, index, -1):
+                    if i < stack.count():
+                        self.excluir_tela(stack, i, excluir_funcao=True)
+                    else:
+                        # Só remove da lista de funções, caso não exista mais o widget
+                        del self.__class__.funcoes_telas[i]
 
     def atualiza_tela(self, stack):
         index = stack.currentIndex()

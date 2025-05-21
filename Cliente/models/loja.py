@@ -58,6 +58,13 @@ class Loja:
                 return novo_produto
         return False
     
+    def atualiza_anuncio(self, produto):
+        for i, a in enumerate(self.anuncios):
+            if a.produto.id == produto.id:
+                a.produto = produto
+                return produto
+        return False
+
     def editar_anuncio(self, anuncio, novo_anuncio):
         for i, a in enumerate(self.anuncios):
             if a.id == anuncio.id:

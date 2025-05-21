@@ -141,16 +141,16 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
-        layout.addWidget(imagem_label)
+        imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0], scaled=170)
+        layout.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(anuncio.produto.nome)
-        layout.addWidget(label_nome)
+        layout.addWidget(label_nome, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_preco = WidgetHelper.label_preco(anuncio.preco)
-        layout.addWidget(label_preco)
+        layout.addWidget(label_preco, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar_anuncio(self.tela_detalhes_anuncio, anuncio)
@@ -163,16 +163,16 @@ class MarketplaceUI(QMainWindow):
         layout.setContentsMargins(10, 10, 10, 10)
 
         if anuncio.produto.imagens:
-            imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0])
-            layout.addWidget(imagem_label)
+            imagem_label = WidgetHelper.imagem(anuncio.produto.imagens[0], scaled=170)
+            layout.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignHCenter)
             layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(anuncio.produto.nome)
-        layout.addWidget(label_nome)
+        layout.addWidget(label_nome, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_preco = WidgetHelper.label_preco(anuncio.preco)
-        layout.addWidget(label_preco)
+        layout.addWidget(label_preco, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar_anuncio(self.tela_editar_anuncio, anuncio, loja)
@@ -185,11 +185,11 @@ class MarketplaceUI(QMainWindow):
         layout.setContentsMargins(10, 10, 10, 10)
 
         imagem_label = WidgetHelper.imagem(produto.imagens[0])
-        layout.addWidget(imagem_label)
+        layout.addWidget(imagem_label, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(produto.nome)
-        layout.addWidget(label_nome)
+        layout.addWidget(label_nome, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar_produto(self.tela_editar_produto, produto, loja)
@@ -202,19 +202,19 @@ class MarketplaceUI(QMainWindow):
         layout.setContentsMargins(10, 10, 10, 10)
 
         label_data = WidgetHelper.label_b(pedido.data)
-        layout.addWidget(label_data)
+        layout.addWidget(label_data, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(pedido.produto.nome)
-        layout.addWidget(label_nome)
+        layout.addWidget(label_nome, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_qnt = WidgetHelper.label_b(pedido.quantidade)
-        layout.addWidget(label_qnt)
+        layout.addWidget(label_qnt, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         label_preco = WidgetHelper.label_preco(pedido.quantidade * pedido.preco)
-        layout.addWidget(label_preco)
+        layout.addWidget(label_preco, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar_pedido(self.tela_detalhes_pedido, pedido, botao_confirmar, botao_loja)
@@ -232,7 +232,7 @@ class MarketplaceUI(QMainWindow):
             layout.addSpacing(5)
 
         label_nome = WidgetHelper.label_b(loja.nome)
-        layout.addWidget(label_nome)
+        layout.addWidget(label_nome, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
         bloco.mousePressEvent = lambda e: self.handler.visualizar_minha_loja(loja, self.tela_detalhes_minha_loja)
@@ -408,9 +408,9 @@ class MarketplaceUI(QMainWindow):
             acao=lambda: self.view.voltar_tela(self.stack)
         )
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
-        layout_vertical.addSpacing(50)
+        layout_vertical.addSpacing(30)
 
-        titulo = WidgetHelper.label_span("Cadastramento", 50)
+        titulo = WidgetHelper.label_span("Cadastramento", 60)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -442,9 +442,9 @@ class MarketplaceUI(QMainWindow):
         )
         layout_vertical.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        layout_vertical.addSpacing(50)
+        layout_vertical.addSpacing(30)
 
-        titulo = WidgetHelper.label_span("Login", 50)
+        titulo = WidgetHelper.label_span("Login", 60)
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(50)
 
@@ -1135,7 +1135,7 @@ class MarketplaceUI(QMainWindow):
 
         formulario.preencher_campos({"Nome": produto.nome, "Descrição": produto.descricao})
 
-        botao_editar.clicked.connect(lambda: self.handler.editar_produto(self.tela_editar_produto, formulario, produto, loja))
+        botao_editar.clicked.connect(lambda: self.handler.editar_produto(self.tela_editar_produto, self.tela_detalhes_minha_loja, formulario, produto, loja))
         layout_conteudo.addWidget(formulario)
 
         botao_imagens = WidgetHelper.botao(
@@ -1748,7 +1748,7 @@ class InterfaceHandler:
         self.thread.executar(
             acao=ao_visualizar,
             requisicao=self.aplicacao.visualizar_anuncios,
-            atualizar_tela=False
+            atualizar_tela=False, abrir_tela=tela, voltar_tela=tela
         ) 
 
     def visualizar_anuncio(self, tela, anuncio, loja = None):
@@ -2195,7 +2195,8 @@ class InterfaceHandler:
                     anuncio = resposta[1]
                     loja.criar_anuncio(anuncio)
                     self.view.set_tela(self.stack, -3)
-                    self.visualizar_anuncios()
+                    self.aplicacao.anuncios.append(anuncio)
+                    self.aplicacao.atualiza_anuncios()
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2224,7 +2225,7 @@ class InterfaceHandler:
             requisicao=lambda: self.aplicacao.criar_imagem(produto, imagem),
         )
 
-    def editar_produto(self, tela, formulario: Formulario, produto: Produto, loja: Loja):
+    def editar_produto(self, tela, tela_anterior, formulario: Formulario, produto: Produto, loja: Loja):
         erro = formulario.validar_tipos({"Nome": str, "Descrição": str})
         if erro:
             formulario.exibir_erros()
@@ -2243,11 +2244,9 @@ class InterfaceHandler:
                             mensagem="Produto Editado com Sucesso!"
                         )
                         produto = loja.editar_produto(produto, resposta[1])
+                        loja.atualiza_anuncio(produto)
                         self.view.abrir_tela(self.stack, lambda: tela(produto, loja), excluir_anterior=True)
-                        self.thread.executar(
-                            requisicao=lambda: self.aplicacao.visualizar_minha_loja(loja),
-                            abrir_tela=False, voltar_tela=False
-                        )
+                        self.aplicacao.atualiza_anuncio_produto(produto)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2292,6 +2291,7 @@ class InterfaceHandler:
                             mensagem="Loja Editada com Sucesso!"
                         )
                         loja = self.aplicacao.usuario.editar_loja(loja, resposta[1])
+                        
                         self.view.abrir_tela(self.stack, lambda: tela(loja), excluir_anterior=True)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
@@ -2437,7 +2437,6 @@ class InterfaceHandler:
                     valores_alterados["Pausado"] = False
                     
             valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
-            print("valores_alterados", valores_alterados)
 
             if valores_alterados:
                 valores_alterados["id"] = anuncio.id
@@ -2452,7 +2451,7 @@ class InterfaceHandler:
                         )
                         anuncio = loja.editar_anuncio(anuncio, resposta[1])
                         self.view.abrir_tela(self.stack, lambda: tela(anuncio, loja), excluir_anterior=True)
-                        self.visualizar_anuncios()
+                        self.aplicacao.atualiza_anuncio(anuncio)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2653,21 +2652,20 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_cancelar_pedido(resposta):
                 if resposta:
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="inferior_esquerda",
-                            mensagem="Pedido Cancelado com Sucesso!"
-                        )
-                        self.view.set_tela(self.stack, -2)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="inferior_esquerda",
-                            mensagem="Erro ao cancelar pedido!"
-                        )
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="inferior_esquerda",
+                        mensagem="Pedido Cancelado com Sucesso!"
+                    )
+                    self.view.set_tela(self.stack, -2)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="inferior_esquerda",
+                        mensagem="Erro ao cancelar pedido!"
+                    )
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.cancelar_pedido(pedido, pedido.produto.loja),
@@ -2689,21 +2687,20 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_confirmar_pedido(resposta):
                 if resposta:
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="inferior_direita",
-                            mensagem="Pedido Confirmado com Sucesso!"
-                        )
-                        self.view.set_tela(self.stack, -2)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="inferior_direita",
-                            mensagem="Erro ao confirmar pedido!"
-                        )
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="inferior_direita",
+                        mensagem="Pedido Confirmado com Sucesso!"
+                    )
+                    self.view.set_tela(self.stack, -2)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="inferior_direita",
+                        mensagem="Erro ao confirmar pedido!"
+                    )
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.confirmar_pedido(pedido, pedido.produto.loja),

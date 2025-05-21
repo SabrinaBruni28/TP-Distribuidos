@@ -12,7 +12,6 @@ import json
 
 class ClienteAplicacao():
     def __init__(self, ip, porta):
-        print("IP:", ip, "Porta:", porta)
         self.anuncios = []
         self.usuario = Usuario()
         self.socket = UnixSocketClient(ip, porta)
@@ -41,6 +40,20 @@ class ClienteAplicacao():
             if anuncio.quantidade_disponivel:
                 anuncios.append(anuncio)
         loja.anuncios = anuncios 
+
+    def atualiza_anuncio_produto(self, produto):
+        for i, a in enumerate(self.anuncios):
+            if a.produto.id == produto.id:
+                a.produto = produto
+                return produto
+        return False
+
+    def atualiza_anuncio(self, anuncio):
+        for i, a in enumerate(self.anuncios):
+            if a.id == anuncio.id:
+                self.anuncios[i] = anuncio
+                return anuncio
+        return False
 
     def cadastrar(self, usuario: Usuario_Identificado):
         mensagem = f"cadastramento|{usuario.to_dict_cadastramento()}"
