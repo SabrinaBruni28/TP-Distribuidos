@@ -122,8 +122,8 @@ def visualizarAnuncioCallback(resposta_banco: list, socket_cliente, socket_banco
     mensagemAoCliente = Mensagem.produtorMensagem(f"anuncio | {resposta_banco[1]}")
     op.enviaMensagem(socket_cliente, mensagemAoCliente)
 
-    byteQ = quantidadeImagensAnuncio.to_bytes(8, 'big')
-    socket_cliente.sendall(byteQ)
+    #byteQ = quantidadeImagensAnuncio.to_bytes(8, 'big')
+    #socket_cliente.sendall(byteQ)
 
     enviaSequencialmenteImagens(socket_cliente, imagens)
     print("[Servidor][Visualizar] ANÚNCIO RETORNADO COM SUCESSO!\n")
@@ -132,9 +132,9 @@ def enviaSequencialmenteImagens(socket_cliente, imagens):
     if imagens == None or len(imagens) <= 0:
          return
 
-
     for imagem in imagens:
         op.enviaImagem(socket_cliente, imagem)
+        
 
 def visualizarProdutoCallback(resposta_banco: list, socket_cliente, socket_banco):
     produto = json.loads(resposta_banco[1])
@@ -185,7 +185,7 @@ def visualizarPedidoCallback(resposta_banco, socket_cliente, socket_banco):
 
 def visualizarLojaCallback(resposta_banco, socket_cliente, socket_banco):
     loja = json.loads(resposta_banco[1])
-    produtoLoja = loja.get("produtos")
+    produtoLoja = loja.get("anuncios")
 
     imagens = []
 

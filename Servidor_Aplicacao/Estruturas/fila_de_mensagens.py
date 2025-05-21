@@ -192,7 +192,7 @@ class FilaDeMensagens(threading.Thread):
 
 
                 #self.socketBD.settimeout(30)
-                Mensagem.limpar_buffer_socket(self.socketBD)
+                #Mensagem.limpar_buffer_socket(self.socketBD)
                 resposta = Mensagem.receptorMensagemETamanho(self.socketBD)
                 #resposta = Mensagem.receptorImagem(self.socketBD)
                 #self.socketBD.settimeout(None)
@@ -338,7 +338,7 @@ class FilaDeMensagens(threading.Thread):
 
     def decisorPedido(self, resposta_banco: Mensagem, connect: socket.socket, callback, mensagemServidor: Mensagem):
         resposta = resposta_banco.camposMensagem
-        callback(resposta, connect)
+        callback(connect)
 
         
     def mensagemProBancoCriar(self, mensagem: Mensagem, imagens: list):
@@ -384,4 +384,4 @@ class FilaDeMensagens(threading.Thread):
             logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return f"[Fila de Mensagens][Erro] Falha ao enviar ao banco: {e}"
-        
+        1

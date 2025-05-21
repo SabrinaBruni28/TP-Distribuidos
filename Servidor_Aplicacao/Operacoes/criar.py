@@ -69,8 +69,9 @@ class Criar(operacao.Operacao):
 
     def pedido(self):
         print("[Servidor][Criar] Operação de criar anúncio recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"criar | pedido | " + str(dados))
+        idUsuario = self.mensagemCliente.camposMensagem[2]
+        dados = self.mensagemCliente.camposMensagem[3]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | pedido | {idUsuario} | {dados}")
 
         print("[Servidor] Enviando requisição para fila...")
         self.fila.enfileira(mensagemServidor, cb.criarPedidoCallback, self.conexaoCliente, "criar")

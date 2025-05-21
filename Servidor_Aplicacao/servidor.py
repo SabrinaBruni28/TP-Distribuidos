@@ -193,6 +193,6 @@ def rodarServidorT(endereco_ip, porta, fila):
 
 # Inicialização do socket servidor
 #rodarServidor('localhost', 5000, filaDeMensagem)
-rodarServidor('192.168.1.17', 5000, filaDeMensagem)
+rodarServidor('192.168.1.12', 5000, filaDeMensagem)
 #rodarServidor('192.168.1.110', 5000, filaDeMensagem)
 #rodarServidor('192.168.19.146', 5000, filaDeMensagem)

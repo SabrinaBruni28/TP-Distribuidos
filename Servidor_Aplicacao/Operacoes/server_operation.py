@@ -43,6 +43,7 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
 
         print(f"[Servidor][ENVIA MENSAGEM][TAMANHO] Enviado: {mensagem.tamanho}")
         print(f"[Servidor][ENVIA MENSAGEM][MENSAGEM] Enviado: {mensagem.stringMensagem}")
+        Mensagem.limpar_buffer_socket(socket)
         return True
 
     except (BrokenPipeError, ConnectionResetError) as e:
@@ -53,22 +54,6 @@ def enviaMensagem(socket: socket.socket, mensagem: Mensagem):
         print(f"[Erro] Erro inesperado ao enviar mensagem: {e}\nMensagem: {mensagem.stringMensagem}")
 
     return False
-
-    
-def receive_image(self, buffer_size=4096, path='received_image.png'):
-        if not self.socket:
-            raise RuntimeError("Socket not connected")
-        tamanho_total = self.receive_size()
-        with open(path, 'wb') as f:
-            data = b''
-            while len(data) < tamanho_total:
-                chunk = self.socket.recv(buffer_size)
-                if not chunk:
-                    break
-                data += chunk
-            f.write(data)
-        return data, path
-
 
 def enviaImagem(socket: socket.socket, mensagem: Mensagem):
     try:
@@ -87,6 +72,7 @@ def enviaImagem(socket: socket.socket, mensagem: Mensagem):
         socket.sendall(tamanho.to_bytes(8, "big"))
         socket.sendall(dados)
         print(f"[Envio] Imagem enviada: {dados[-20:]}")
+        Mensagem.limpar_buffer_socket(socket)
         return True
 
     except Exception as e:

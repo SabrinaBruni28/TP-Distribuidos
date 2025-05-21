@@ -42,7 +42,7 @@ class Visualizar(operacao.Operacao):
                 self.minhasListaLojas()
 
             case "pedido":
-                self.pedidos()
+                self.pedido()
 
             case "meus_pedidos":
                 self.meusPedidos()
