@@ -4,13 +4,13 @@ import datetime, json
 
 class Pedido:
     def __init__(
-            self, id: int = 0, quantidade: int = 0, preco: float = 0, data: datetime = None, 
+            self, id: int = 0, quantidade: int = 0, preco: float = 0, data: str = None, 
             produto: Produto = None, endereco: Endereco = None
         ):
         self.id = id
         self.quantidade = quantidade
         self.preco = preco
-        self.data = data if data else datetime.datetime.now()
+        self.data = data if data else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         self.produto = produto
         self.endereco = endereco
 
@@ -21,7 +21,7 @@ class Pedido:
     def to_dict(self):
         return json.dumps({
             "id": self.id,
-            "data": self.data.isoformat() if self.data else "",
+            "data": self.data if self.data else "",
             "produto": self.produto.to_dict() if self.produto else None,
             "quantidade": self.quantidade,
             "preco": self.preco,
@@ -30,7 +30,7 @@ class Pedido:
     
     def to_dict_personalizado(self):
         return json.dumps({
-            "data": self.data.isoformat() if self.data else datetime.datetime.now().isoformat(),
+            "data": self.data,
             "produto": {"id": f"{self.produto.id}", "loja": {"id": f"{self.produto.loja.id}"}} if self.produto and self.produto.loja else None,
             "quantidade": self.quantidade,
             "preco": self.preco,
@@ -42,7 +42,7 @@ class Pedido:
         if isinstance(dados, str):
             dados = json.loads(dados)
         id = dados.get("id", 0)
-        data = datetime.datetime.fromisoformat(dados["data"]) if "data" in dados else ""
+        data = dados.get("data", "")
         produto = Produto.from_dict(dados["produto"]) if "produto" in dados else []
         quantidade = dados.get("quantidade", 0)
         preco = dados.get("preco", 0)

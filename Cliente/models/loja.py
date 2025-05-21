@@ -98,10 +98,10 @@ class Loja:
         id = data.get("id", 0)
         nome = data.get("nome", "")
         imagem = data.get("imagem", "")
-        produtos = [Produto.from_dict(produto) for produto in data["produtos"]] if "produtos" in data else []
-        anuncios = [Anuncio.from_dict(anuncio) for anuncio in data["anuncios"]] if "anuncios" in data else []
-        pedidos_confirmados = [Pedido.from_dict(pedido) for pedido in data["pedidos_confirmados"]] if "pedidos_confirmados" in data else []
-        pedidos_em_andamento = [Pedido.from_dict(pedido) for pedido in data["pedidos_em_andamento"]] if "pedidos_em_andamento" in data else []
+        produtos = [Produto.from_dict(produto) for produto in data.get("produtos", [])]
+        anuncios = [Anuncio.from_dict(anuncio) for anuncio in data.get("anuncios", [])]
+        pedidos_confirmados = [Pedido.from_dict(pedido) for pedido in data.get("pedidos_confirmados", [])]
+        pedidos_em_andamento = [Pedido.from_dict(pedido) for pedido in data.get("pedidos_em_andamento", [])]
 
         return cls(id, nome, imagem, produtos, anuncios, pedidos_confirmados, pedidos_em_andamento)
     

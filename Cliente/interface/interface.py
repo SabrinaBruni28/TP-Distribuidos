@@ -200,7 +200,7 @@ class MarketplaceUI(QMainWindow):
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.setContentsMargins(10, 10, 10, 10)
 
-        label_data = WidgetHelper.label_b(pedido.data.strftime('%d/%m/%Y - %H:%M'))
+        label_data = WidgetHelper.label_b(pedido.data)
         layout.addWidget(label_data)
         layout.addSpacing(5)
 
@@ -234,7 +234,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_nome)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.handler.visualizar_minha_loja(self.tela_detalhes_minha_loja, loja)
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_minha_loja(loja, self.tela_detalhes_minha_loja)
         return bloco
     
     ###################  TELAS  ########################
@@ -597,7 +597,6 @@ class MarketplaceUI(QMainWindow):
         # Adiciona os blocos no layout do conteúdo do scroll
         blocos = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos, botao_loja=True)
         layout_pedido.addWidget(blocos)
-        layout_pedido.addStretch()
 
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
@@ -836,8 +835,8 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(botao_adicionar, alignment=Qt.AlignmentFlag.AlignLeft)
 
         return tela
-    
-    def tela_criar_anuncio(self, produto: Produto):
+
+    def tela_criar_anuncio(self, produto: Produto, loja: Loja):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -877,7 +876,7 @@ class MarketplaceUI(QMainWindow):
         )
         formularioOp.adicionar_opcao(campo="Pausado", opcao="Sim")
         formularioOp.adicionar_opcao(campo="Pausado", opcao="Não")
-        botao_confirmar.clicked.connect(lambda: self.handler.criar_anuncio(formulario, formularioOp, produto))
+        botao_confirmar.clicked.connect(lambda: self.handler.criar_anuncio(formulario, formularioOp, produto, loja))
 
         layout_form = QVBoxLayout()  # Lado a lado (horizontal)
         layout_form.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -1160,7 +1159,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_criar = WidgetHelper.botao(
             nome="Criar Anúncio", largura=200,
-            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_criar_anuncio(produto))
+            acao=lambda: self.view.abrir_tela(self.stack, lambda: self.tela_criar_anuncio(produto, loja))
         )
         layout_horizontal_2.addWidget(botao_criar, alignment=Qt.AlignmentFlag.AlignRight)
         layout_vertical.addLayout(layout_horizontal_2)
@@ -1278,7 +1277,7 @@ class MarketplaceUI(QMainWindow):
                 largura=100, altura=30,
                 acao=lambda _, img=img: (
                     self.excluir_imagem(img),
-                    self.handler.excluir_imagem(self.tela_editar_imagens, produto, img) if self.imagem == "" else None
+                    self.handler.excluir_imagem(produto, img) if self.imagem == "" else None
                 )
             )
             layout_linha.addWidget(botao_excluir)
@@ -1516,7 +1515,7 @@ class MarketplaceUI(QMainWindow):
         endereco = WidgetHelper.label_span(f"Endereço: {pedido.endereco.__str__()}", 25)
         layout_horizontal_3.addWidget(endereco)
 
-        data = WidgetHelper.label_span(f"Data: {pedido.data.strftime('%d/%m/%Y - %H:%M')}", 25)
+        data = WidgetHelper.label_span(f"Data: {pedido.data}", 25)
         layout_horizontal_3.addWidget(data)
 
         layout_vertical.addLayout(layout_horizontal_3)
@@ -1729,7 +1728,7 @@ class InterfaceHandler:
         self.thread = Threads(stack)
         self.view = ViewHelper()
 
-    def visualizar_anuncios(self, tela):
+    def visualizar_anuncios(self, tela = None):
         def ao_visualizar(resposta):
             nonlocal tela
             if not resposta:
@@ -1741,7 +1740,9 @@ class InterfaceHandler:
                 )
             else:
                 self.aplicacao.anuncios = resposta[1]
-            self.view.abrir_tela(self.stack, tela)
+
+            if tela:
+                self.view.abrir_tela(self.stack, tela)
         # Executa:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
@@ -1811,8 +1812,8 @@ class InterfaceHandler:
             requisicao=lambda: self.aplicacao.visualizar_loja(loja),
             atualizar_tela=False
         ) 
-    
-    def visualizar_minha_loja(self, tela, loja):
+
+    def visualizar_minha_loja(self, loja: Loja, tela = None):
         def ao_visualizar(resposta):
             nonlocal tela
             if not resposta:
@@ -1822,7 +1823,7 @@ class InterfaceHandler:
                     posicao="superior_direita",
                     mensagem=f"Erro ao visualizar!"
                 )
-            else:
+            elif tela:
                 loja = resposta[1]
                 self.view.abrir_tela(self.stack, lambda: tela(loja))
         # Executa:
@@ -1872,7 +1873,7 @@ class InterfaceHandler:
             atualizar_tela=False
         )
 
-    def visualizar_pedido(self, tela, pedido, botao_confirmar, botao_loja):
+    def visualizar_pedido(self, tela, pedido: Pedido, botao_confirmar, botao_loja):
         def ao_visualizar(resposta):
             nonlocal tela, botao_confirmar, botao_loja
             if not resposta:
@@ -1888,7 +1889,7 @@ class InterfaceHandler:
         # Executa:
         self.thread.executar_mensagem(
             acao=ao_visualizar,
-            requisicao=self.aplicacao.visualizar_pedido(pedido),
+            requisicao=lambda: self.aplicacao.visualizar_pedido(pedido),
             atualizar_tela=False
         )
     
@@ -2164,11 +2165,12 @@ class InterfaceHandler:
                 acao=ao_criar_produto
             )
 
-    def criar_anuncio(self, formulario: Formulario, formularioOp: FormularioOpcoes, produto: Produto):
+    def criar_anuncio(self, formulario: Formulario, formularioOp: FormularioOpcoes, produto: Produto, loja: Loja):
         erro = formulario.validar_tipos({"Preço": float, "Quantidade Disponível": int, "Chave Pix": str})
         valores = formulario.obter_valores()
-        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
         valores = valores | formularioOp.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+        valores["pausado"] = True if valores["pausado"] == "Sim" else False
 
         if erro:
             formulario.exibir_erros()
@@ -2181,6 +2183,7 @@ class InterfaceHandler:
             anuncio = Anuncio.from_dict(valores)
             anuncio.produto = produto
             def ao_criar_anuncio(resposta):
+                nonlocal anuncio, loja
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2188,7 +2191,10 @@ class InterfaceHandler:
                         posicao="superior_direita",
                         mensagem="Anúncio Criado com Sucesso!"
                     )
+                    anuncio = resposta[1]
+                    loja.criar_anuncio(anuncio)
                     self.view.set_tela(self.stack, -3)
+                    self.visualizar_anuncios()
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2235,11 +2241,9 @@ class InterfaceHandler:
                             posicao="superior_direita",
                             mensagem="Produto Editado com Sucesso!"
                         )
-                        print("resposta", resposta[1])
-                        print("produto", produto)
                         produto = loja.editar_produto(produto, resposta[1])
-                        print("Produto", produto)
                         self.view.abrir_tela(self.stack, lambda: tela(produto, loja), excluir_anterior=True)
+                        self.visualizar_minha_loja(loja)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2444,6 +2448,7 @@ class InterfaceHandler:
                         )
                         anuncio = loja.editar_anuncio(anuncio, resposta[1])
                         self.view.abrir_tela(self.stack, lambda: tela(anuncio, loja), excluir_anterior=True)
+                        self.visualizar_anuncios()
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 

@@ -240,8 +240,11 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
             dict_resposta = json.loads(resposta[1])
-            dict_anuncio = json.loads(anuncio.to_dict()) | {k: v for k, v in dict_resposta.items() if k != "produto"}
-            anuncio = Anuncio.from_dict(dict_anuncio)
+            anuncio.preco = dict_resposta.get("preco", anuncio.preco)
+            anuncio.quantidade_disponivel = dict_resposta.get("quantidade_disponivel", anuncio.quantidade_disponivel)
+            anuncio.chave_pix = dict_resposta.get("chave_pix", anuncio.chave_pix)
+            anuncio.pausado = dict_resposta.get("pausado", anuncio.pausado)
+
             return True, anuncio
         return False
     
@@ -268,8 +271,9 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             dict_resposta = json.loads(resposta[1])
-            dict_loja = json.loads(loja.to_dict()) | {k: dict_resposta[k] for k in ["nome", "imagem"] if k in dict_resposta}
-            loja = Loja.from_dict(dict_loja)
+            loja.nome = dict_resposta.get("nome", loja.nome)
+            loja.imagem = dict_resposta.get("imagem", loja.imagem)
+
             imagem = dict_resposta.get("imagem", 0)
             if editar_imagem and imagem:
                 self.socket.receive_image(path=f"uploads/{imagem}")
@@ -309,8 +313,8 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "anuncio":
-            anuncio.produto.loja.criar_anuncio(Anuncio.from_dict(resposta[1]))
-            return True
+            anuncio = Anuncio.from_dict(resposta[1])
+            return True, anuncio
         return False
     
     def criar_produto(self, produto: Produto):
@@ -328,7 +332,6 @@ class ClienteAplicacao():
 
             for imagem in produto_resposta.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
-
             return True
         return False
     
