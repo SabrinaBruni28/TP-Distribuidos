@@ -14,11 +14,15 @@
 
 3. **Ativar ambiente virtual** (sempre que necessário):
    ```bash
-   make ativar_ambiente
+   source .venv/bin/activate
    ```
    > Você saberá que o ambiente está ativo quando o terminal mostrar algo como:
    ```
    (.venv) $
+   ```
+   > Para desativar o ambiente depois:
+   ```
+   deactivate
    ```
 
 4. **Instalar bibliotecas** (executar **uma vez**):
@@ -54,7 +58,7 @@
 
 3. **Ativar ambiente virtual** (sempre que necessário):
    ```bash
-   make ativar_ambiente
+   source .venv/bin/activate
    ```
 
 4. **Instalar bibliotecas** (executar **uma vez**):

@@ -1,11 +1,5 @@
-criar_ambiente:
+ccriar_ambiente:
 	python3 -m venv .venv
-
-ativar_ambiente:
-	source .venv/bin/activate
-
-desativar_ambiente:
-	deactivate
 
 salvar_bibliotecas:
 	pip freeze > requirements.txt
