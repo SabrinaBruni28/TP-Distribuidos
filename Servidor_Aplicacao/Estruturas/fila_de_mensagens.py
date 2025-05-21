@@ -5,7 +5,6 @@ from Estruturas.mensagem import Mensagem
 from Estruturas.dados_confirmacao import DadosTemporariosConfirmacao
 from Operacoes import server_operation as op
 from queue import Queue, Empty
-#from Operacoes.login import Login
 from Operacoes import callback as cb
 from Operacoes import imagem as img
 
@@ -223,10 +222,7 @@ class FilaDeMensagens(threading.Thread):
     # Função que faz a conexão com o servidor de banco de dados, cria seu socket
     def conectaBanco(self):
         try:
-            #self.socketBD = socket.create_connection(('localhost', 6000))
-            self.socketBD = socket.create_connection(('192.168.1.15', 6000))
-            #self.socketBD = socket.create_connection(('192.168.1.106', 6000))
-            #self.socketBD = socket.create_connection(('177.137.215.46', 6000))
+            self.socketBD = socket.create_connection(('localhost', 6000))
             logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
