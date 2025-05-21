@@ -551,5 +551,5 @@ class UnixSocketServer:
         finally:
             sock.setblocking(1)  # volta ao modo bloqueante
 
-server = UnixSocketServer(host='192.168.1.15')
+server = UnixSocketServer(host='localhost', port=6000)
 server.start()
