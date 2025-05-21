@@ -6,9 +6,9 @@ class DAOAnuncio(DAO):
     def __init__(self):
         super().__init__(
             ['anuncio'],
-            ["id_produto", "preco_anuncio", "quantidade_anuncio", "chave_pix", "pausado"])
+            ['id_produto', 'preco_anuncio', 'quantidade_produto', 'chave_pix', 'pausado'])
     
-    def _from_tuple(self, tupla = (0, 0, 0, 0, "", 0)):
+    def _from_tuple(self, tupla = (0, 0, 0, 0, '', 0)):
         return Anuncio(
             id = tupla[0],
             produto = Produto(id = tupla[1]),

@@ -17,14 +17,15 @@ class DAOLoja(DAO):
         obj.id = super().insert(obj)
         if obj.imagem:
             obj.imagem = f'{obj.id}.jpg'
-            print('Estamos no momento da criação da loja. Ela tem imagem, e seu nome é:', obj.imagem)
         return obj.id
 
     def select(self, obj: Loja, logic = 'OR'):
         return [self._from_tuple(tupla) for tupla in super().select(obj, logic)]
 
     def update(self, obj: Loja):
-        return self._from_tuple(super().update(obj))
+        loja = self._from_tuple(super().update(obj))
+        loja.imagem = obj.imagem
+        return loja
 
     def delete(self, id_obj: int):
         return super().delete(id_obj)

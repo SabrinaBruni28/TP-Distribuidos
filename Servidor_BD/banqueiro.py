@@ -109,22 +109,47 @@ class Banqueiro():
 
     
     def retornarLoja(self, obj: Loja, minha=False):
-        result = self.encontrar(obj)
-        if isinstance(result, Loja):
-            obj = result
-            obj.produtos = self.buscar(Produto(loja=obj))
-            for produto in obj.produtos:
-                obj.anuncios += self.buscar(Anuncio(produto=produto)) 
-            if minha:
-                for produto in obj.produtos:
-                    for pedidos in self.buscar(Pedido(produto = produto)):
-                        print(pedidos)
-                        for pedido, confirmacao in pedidos:
-                            if confirmacao:
-                                obj.pedidos_confirmados.append(pedido)
-                            else:
-                                obj.pedidos_em_andamento.append(pedido)
-            else:
-                produtos = []
-        return obj
-    
+        loja = self.encontrar(obj)
+        if isinstance(loja, Loja):
+            dummy_produto = Produto(loja = loja)
+            produtos_da_loja = self.buscar(dummy_produto)
+
+            ids_produtos_da_loja = [produto.id for produto in produtos_da_loja]
+
+            anuncios_da_loja = []
+            for id_produto in ids_produtos_da_loja:
+                dummy_produto = Produto(id = id_produto)
+                dummy_anuncio = Anuncio(produto = dummy_produto)
+                anuncios_do_produto = self.buscar(dummy_anuncio)
+                anuncios_da_loja.extend(anuncios_do_produto)
+            
+            pedidos_confirmados = []
+            pedidos_em_andamento = []
+            for id_produto in ids_produtos_da_loja:
+                dummy_produto = Produto(id = id_produto)
+                dummy_pedido = Pedido(produto = dummy_produto)
+                pedidos_do_produto = self.buscar(dummy_pedido)
+                for pedido, confirmacao in pedidos_do_produto:
+                    if confirmacao:
+                        pedidos_confirmados.append(pedido)
+                    else:
+                        pedidos_em_andamento.append(pedido)
+            
+            print(loja)
+            for produto in produtos_da_loja:
+                print(produto)
+            for anuncio in anuncios_da_loja:
+                print(anuncio)
+            for pc in pedidos_confirmados:
+                print(pc)
+            for pa in pedidos_em_andamento:
+                print(pa)
+            
+            loja.produtos = produtos_da_loja.copy()
+            loja.anuncios = anuncios_da_loja.copy()
+            loja.pedidos_confirmados = pedidos_confirmados.copy()
+            loja.pedidos_em_andamento = pedidos_em_andamento.copy()
+            
+            return loja
+        else:
+            return False #loja não encontrada

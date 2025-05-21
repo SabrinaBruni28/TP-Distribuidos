@@ -18,7 +18,7 @@ class Produto(Persistivel):
             'nome': self.nome,
             'descricao': self.descricao,
             'imagens': self.imagens,
-            'loja': self.loja.to_dict_personalisado() if self.loja else None,
+            'loja': self.loja.to_dict_personalisado() if self.loja else '',
         }
     
     def to_dict_personalisado(self):
@@ -26,7 +26,7 @@ class Produto(Persistivel):
             'nome': self.nome,
             'descricao': self.descricao,
             'imagens': self.imagens,
-            'loja': '{' + f'id: {self.loja.id if self.loja else None}' +'}',
+            'loja': {"id": f"{self.loja.id if self.loja else ''}"},
         }
     
     def to_dict_bd(self, nome_colunas):
@@ -50,7 +50,7 @@ class Produto(Persistivel):
         descricao = dados.get('descricao', '')
         imagens = dados.get('imagens', [])
         print('here')
-        loja = Loja.from_dict(dados['loja']) if 'loja' in dados else []
+        loja = Loja.from_dict(dados['loja']) if 'loja' in dados else None
 
         return cls(id, nome, descricao, imagens, loja)
     

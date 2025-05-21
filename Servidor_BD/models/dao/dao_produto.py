@@ -22,7 +22,9 @@ class DAOProduto(DAO):
         return [self._from_tuple(tupla) for tupla in super().select(obj, logic)]
 
     def update(self, obj: Produto):
-        return self._from_tuple(super().update(obj))
+        produto = self._from_tuple(super().update(obj))
+        produto.imagens = obj.imagens
+        return produto
 
     def delete(self, id_obj: int):
         return super().delete(id_obj)

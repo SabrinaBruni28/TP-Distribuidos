@@ -24,7 +24,7 @@ class Pedido(Persistivel):
     def to_dict(self):
         return {
             'id': self.id,
-            'data': self.data.isoformat() if self.data else '',
+            'data': self.data if self.data else '',
             'produto': self.produto.to_dict() if self.produto else None,
             'quantidade': self.quantidade,
             'preco': self.preco,
@@ -36,12 +36,13 @@ class Pedido(Persistivel):
             'produto': {'id': self.produto.id, 'nome': self.produto.nome} if self.produto else None,
             'preco': self.preco,
             'quantidade': self.quantidade,
-            'data': self.data.isoformat() if self.data else ''
+            'data': self.data if self.data else '',
+            'endereco': {'id': self.endereco.id} if self.endereco else None
             }
     
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
-        atributos_bd = ('id_produto', 'id_endereco', 'quantidade', 'preco', 'data_pedido')
+        atributos_bd = ('id_produto', 'id_endereco', 'quantidade', 'preco', 'data')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):
             valor = getattr(self, attr, None)
             if valor:
@@ -54,7 +55,7 @@ class Pedido(Persistivel):
     @classmethod
     def from_dict(cls, dados):
         id = dados.get('id', 0)
-        data = datetime.datetime.fromisoformat(dados['data']) if 'data' in dados else None
+        data = dados.get('data', None)
         produto = Produto.from_dict(dados['produto']) if 'produto' in dados else None
         quantidade = dados.get('quantidade', 0)
         preco = dados.get('preco', 0)
