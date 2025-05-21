@@ -3,6 +3,7 @@ import socket
 import threading
 import logging
 import sys, os
+from time import time
 
 # Adiciona o diretório raiz ao sys.path
 CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
@@ -17,7 +18,7 @@ from models.pedido import Pedido
 from models.imagem_produto import Imagem_Produto
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
-espacito = 10
+espacito = 100
 img_path = 'db/img'
 
 class Mensagem():
@@ -69,29 +70,41 @@ class UnixSocketServer:
         try:
             while True:
 
-                tamanho = self.receive_size(client_socket)
-                requisicao = self.receive_data(client_socket, tamanho)
+                respostas = []
+                continua_recebendo = []
+
+                try:
+                    tamanho = self.receive_size(client_socket)
+                    requisicao = self.receive_data(client_socket, tamanho)
+                except Exception as e:
+                    print(f"Erro ao receber dados: {e}")
+                    break
 
                 if requisicao:
                     mensagem_principal = Mensagem(requisicao)
                     print(f'Recebido ({tamanho} bytes):', mensagem_principal.stringMensagem, end='\n\n')
 
                     continua_recebendo, respostas = self.decisor(mensagem_principal)
-                    print(respostas)
-                    print(continua_recebendo)
+                    print(f"respostas: {respostas}")
+                    print(f"continua_recebendo: {continua_recebendo}")
                     for caminho_imagem in continua_recebendo:
                         caminho_imagem = os.path.join(CAMINHO_BASE, img_path, caminho_imagem)
                         print(caminho_imagem)
                         salvo, imagem = self.receive_image(client_socket, image_path = caminho_imagem)
-                        print('Imagem salva? ->', salvo)
+                        print('Imagem salva? ->', imagem)
                         if salvo:
                             respostas.append(Mensagem(imagem))
-                    print('Mensagens a enviar: ',len(respostas))
+                    print('Mensagens a enviar: ', len(respostas))
                     for resposta in respostas:
                         self.send(client_socket, resposta.codigoMensagem)
-                    
+                        #time.sleep(0.01)  # Pequeno delay para evitar congestionamento do buffer
+
                     print()
                     print(espacito*'-')
+                    # Limpa variáveis para liberar memória
+                    self.limpar_buffer_socket(client_socket)
+                    respostas = []
+                    continua_recebendo = []
                 else:
                     print('Cliente desconectado'.center(espacito, '='))
                     break
@@ -139,85 +152,170 @@ class UnixSocketServer:
                         loja = Loja.from_dict(json.loads(requisicao.camposMensagem[3]))
                         loja.id_usuario = int(requisicao.camposMensagem[2])
                         loja.id = self.banqueiro.criar(loja)
-                        print(loja)
                         respostas = [Mensagem(f"{msg} | {json.dumps(loja.to_dict())}")]
-                        print(loja.imagem, bool(loja.imagem))
                         if loja.imagem:
                             continua_recebendo = [f'loja/{loja.id}.jpg']
                     case 'produto':
                         msg = 'produto'
-                        produto_dict = json.loads(requisicao.camposMensagem[2])
-                        print(produto_dict)
-                        produto = Produto.from_dict(produto_dict)
-                        print(produto)
+                        produto = Produto.from_dict(json.loads(requisicao.camposMensagem[2]))
                         produto.id = self.banqueiro.criar(produto)
                         imagens_renomeado = []
                         for imagem in produto.imagens:
                             imagem = f'{self.banqueiro.criar(Imagem_Produto(id_produto = produto.id))}_{produto.id}.jpg'
                             imagens_renomeado.append(imagem)
-                            continua_recebendo = [f'produto/{imagem}']
+                            continua_recebendo.append(f'produto/{imagem}')
                         produto.imagens = imagens_renomeado
                         respostas = [Mensagem(f"{msg} | {json.dumps(produto.to_dict())}")]
                     case 'anuncio':
                         msg = 'anuncio'
-                        obj = Anuncio.from_dict(json.loads(requisicao.camposMensagem[2]))
+                        result = Anuncio.from_dict(json.loads(requisicao.camposMensagem[2]))
+                        if isinstance(result, Anuncio):
+                            if isinstance(result.produto, Produto):
+                                result.produto = self.banqueiro.encontrar(Produto(id = result.produto.id))
+                                if isinstance(result.produto, Produto):
+                                    for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = result.produto.id)):
+                                        result.produto.imagens.append(imagem_produto.caminho())
+                                    obj = result
+                                else:
+                                    print('Erro fatal: Produto não encontrado no anúncio', result)
+                            else:
+                                print('Erro fatal: Não há produto no anuncio', result)
+                        else:
+                            print('Erro fatal: Anuncio não encontrado!')
                     case 'pedido':
                         msg = 'pedido'
                         obj = Pedido.from_dict(json.loads(requisicao.camposMensagem[3]))
-                        obj.endereco.id_usuario = int(requisicao.camposMensagem[2])
+                        if isinstance(obj.endereco, Endereco):
+                            obj.endereco.id_usuario = int(requisicao.camposMensagem[2])
                     case 'imagem':
                         msg = 'imagem'
                         imagem_produto = Imagem_Produto(
                             id_produto = int(requisicao.camposMensagem[2]))
                         imagem_produto.id = self.banqueiro.criar(imagem_produto)
                         respostas = [Mensagem(f"{msg} | {imagem_produto.caminho()}")]
+                        continua_recebendo = [f'produto/{imagem_produto.caminho()}']
                     case _:
                         print('Erro na mensagem: Segundo cabeçalho não reconhecido!')
                 if msg and obj is not None:
-                    print('fodeu')
                     obj.id = self.banqueiro.criar(obj)
+                    print(obj)
                     respostas = [Mensagem(f"{msg} | {json.dumps(obj.to_dict())}")]
                     
             case 'retornar':
                 cabecalho2 = requisicao.camposMensagem[1]
                 match cabecalho2:
                     case 'anuncios':
-                        anuncios = self.banqueiro.buscar(Anuncio())
+                        anuncios = self.banqueiro.buscar(Anuncio(pausado = False))
+                        for anuncio in anuncios:
+                            anuncio.produto = self.banqueiro.encontrar(anuncio.produto)
+                            if isinstance(anuncio.produto, Produto):
+                                anuncio.produto.imagens = []
+                                for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = anuncio.produto.id)):
+                                    anuncio.produto.imagens.append(imagem_produto.caminho())
+                            else:
+                                print('Erro fatal: Produto não encontrado no anuncio:', anuncio)
                         respostas = [Mensagem(f'anuncios | {len(anuncios)}')]
                         for anuncio in anuncios:
                             respostas.append(Mensagem(json.dumps(anuncio.to_dict())))
+                            imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{anuncio.produto.imagens[0]}'))
+                            respostas.append(Mensagem(imagem))
                         print("Resposta:", respostas)
                     case 'anuncio':
-                        pass
+                        if anuncio := self.banqueiro.encontrar(Anuncio(id = int(requisicao.camposMensagem[2]))):
+                            if isinstance(anuncio, Anuncio):
+                                if anuncio.produto:
+                                    if produto := self.banqueiro.encontrar(Produto(id = anuncio.produto.id)):
+                                        if isinstance(produto, Produto):
+                                            produto.imagens = []
+                                            for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = produto.id)):
+                                                produto.imagens.append(imagem_produto.caminho())
+                                            anuncio.produto = produto
+                                            respostas = [Mensagem(f'{cabecalho2} | {json.dumps(anuncio.to_dict())}')]
+                                            for imagem in produto.imagens:
+                                                respostas.append(Mensagem(self.read_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{imagem}'))))
+                                        else:
+                                            print('Erro fatal: Produto não é do tipo Produto!')
+                                    else:
+                                        print('Erro fatal: Anuncio sem produto!')
+                                else:
+                                    print('Erro fatal: Anuncio sem produto!')
+                            else:
+                                print('Erro fatal: Anuncio não é do tipo Anuncio!')
+                        else:
+                            print('Erro fatal: Anuncio não encontrado!')
                     case 'produto':
-                        pass
+                        if produto := self.banqueiro.encontrar(Produto(id = int(requisicao.camposMensagem[2]))):
+                            if isinstance(produto, Produto):
+                                print(produto)
+                                produto.imagens = []
+                                for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = produto.id)):
+                                    print(imagem_produto)
+                                    produto.imagens.append(imagem_produto.caminho())
+                                respostas = [Mensagem(f'{cabecalho2} | {json.dumps(produto.to_dict())}')]
+                                for imagem in produto.imagens:
+                                    respostas.append(Mensagem(self.read_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{imagem}'))))
+                            else:
+                                print('Erro fatal: Produto não é do tipo Produto!')
+                        else:
+                            print('Erro fatal: Produto não encontrado!')
                     case 'loja':
                         if loja := self.banqueiro.retornarLoja(Loja(id = int(requisicao.camposMensagem[2]))):
                             caminho_imagem = os.path.join(CAMINHO_BASE, img_path, f'loja/{loja.id}.jpg')
                             if os.path.exists(caminho_imagem):
                                 loja.imagem = f'{loja.id}.jpg'
+                            imagens_usadas = []
+                            for anuncio in loja.anuncios:
+                                anuncio.produto.imagens = []
+                                for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = anuncio.produto.id)):
+                                    anuncio.produto.imagens.append(imagem_produto.caminho())
+                                if anuncio.produto.imagens[0] not in imagens_usadas:
+                                    imagens_usadas.append(anuncio.produto.imagens[0])
+                            loja.produtos = []
                             respostas = [Mensagem(f'{cabecalho2} | {json.dumps(loja.to_dict())}')]
+                            print(imagens_usadas)
                             if loja.imagem:
                                 imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{loja.id}.jpg'))
                                 respostas.append(Mensagem(imagem))
-                            print('debugging:', loja.produtos)
-                            #for produto in loja.produtos:
-                            #   produto.imagens[0]
+                            for imagem in imagens_usadas:
+                                imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{imagem}'))
+                                respostas.append(Mensagem(imagem))
                         else:
                             print('Erro fatal: Loja não encontrada!')
                     case 'pedido':
-                        pass
+                        pedido = Pedido(id = int(requisicao.camposMensagem[2]))
+                        pedido = self.banqueiro.encontrar(pedido)
+                        if isinstance(pedido, Pedido) and isinstance(pedido.produto, Produto) and isinstance(pedido.endereco, Endereco):
+                            pedido.endereco = self.banqueiro.encontrar(pedido.endereco)
+                            pedido.produto = self.banqueiro.encontrar(pedido.produto)
+                            pedido.produto.imagens = [imagem_produto.caminho() for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = pedido.produto.id))]
+                            respostas = [Mensagem(f'produto | {json.dumps(pedido)}')]
+                            for imagem in pedido.produto.imagens:
+                                respostas.append(Mensagem(f'produto/{imagem}'))
+                        else:
+                            print("Objeto 'pedido' não possui os atributos esperados ou não é do tipo Pedido.")
                     case 'minha_loja':
                         if minha_loja := self.banqueiro.retornarLoja(Loja(id = int(requisicao.camposMensagem[2])), minha = True):
+                            print(minha_loja)
                             caminho_imagem = os.path.join(CAMINHO_BASE, img_path, f'loja/{minha_loja.id}.jpg')
                             if os.path.exists(caminho_imagem):
                                 minha_loja.imagem = f'{minha_loja.id}.jpg'
-                            print(minha_loja)
+                            
+                            for produto in minha_loja.produtos:
+                                produto.imagens = []
+                                for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = produto.id)):
+                                    produto.imagens.append(imagem_produto.caminho())
+
+                            for anuncio in minha_loja.anuncios:
+                                produto = anuncio.produto
+                                produto.imagens = []
+                                for imagem_produto in self.banqueiro.buscar(Imagem_Produto(id_produto = produto.id)):
+                                    produto.imagens.append(imagem_produto.caminho())
+
                             respostas = [Mensagem(f'{cabecalho2} | {json.dumps(minha_loja.to_dict())}')]
-                            if minha_loja.imagem:
-                                imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{minha_loja.id}.jpg'))
-                                respostas.append(Mensagem(imagem))
-                            #if 
+                            for produto in minha_loja.produtos:
+                                if produto.imagens:
+                                    imagem = self.read_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{produto.imagens[0]}'))
+                                    respostas.append(Mensagem(imagem))
                         else:
                             print('Erro fatal: Loja não encontrada!')
                     case 'minhas_lojas':
@@ -237,7 +335,19 @@ class UnixSocketServer:
                         for endereco in meus_enderecos:
                             respostas.append(Mensagem(f'{cabecalho2} | {json.dumps(endereco.to_dict())}'))
                     case 'meus_pedidos':
-                        respostas = [Mensagem(f'{cabecalho2} | {2}')]
+                        meus_pedidos = []
+                        for endereco in self.banqueiro.buscar(Endereco(int(requisicao.camposMensagem[2]))):
+                            meus_pedidos += self.banqueiro.buscar(Pedido(endereco = endereco))
+                        for pedido, _ in meus_pedidos:
+                            result = self.banqueiro.encontrar(Produto(id = pedido.produto.id))
+                            if isinstance(result, Produto):
+                                pedido.produto.nome = result.nome
+                                pedido.produto.loja = result.loja
+                            else:
+                                print('Falha: Não foi possível encontrar produto do pedido', pedido)
+                        respostas = [Mensagem(f'{cabecalho2} | {len(meus_pedidos)}')]
+                        for pedido, _ in meus_pedidos:
+                            respostas.append(Mensagem(f'{cabecalho2} | {json.dumps(pedido.to_dict_personalisado())}'))
                     case _:
                         print('Erro na mensagem: Segundo cabeçalho não reconhecido!')
                 #else:
@@ -247,44 +357,47 @@ class UnixSocketServer:
                     case 'usuario':
                         usuarioConferindo = Usuario_Identificado.from_dict(json.loads(requisicao.camposMensagem[2]))
                         msg, validacao = self.banqueiro.conferir(usuarioConferindo, ['cpf', 'email'])
-                        print(msg, validacao)
+                        print('Validação do usuário:', msg, validacao)
                         if msg == 'erro':
                             respostas = [Mensagem(f'{msg} | {validacao}')]
                         else:
                             obj = usuarioConferindo
                     case 'endereco':
-                        obj = Endereco.from_dict(json.loads(requisicao.camposMensagem[2]))
                         msg = 'endereco'
+                        obj = Endereco.from_dict(json.loads(requisicao.camposMensagem[2]))
                     case 'loja':
                         msg = 'loja'
                         loja_dict = json.loads(requisicao.camposMensagem[2])
-                        if hasattr(loja_dict, 'imagem'):
+                        if 'imagem' in loja_dict:
                             if loja_dict['imagem']:
                                 loja_dict['imagem'] = f'{loja_dict["id"]}.jpg'
                                 continua_recebendo = [f'loja/{loja_dict["imagem"]}']
                             else:
-                                self.remove_image('/'.join((img_path, 'loja', f'{loja_dict["id"]}.jpg')))
-                        if hasattr(loja_dict, 'nome'):
+                                self.remove_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{loja_dict["id"]}.jpg'))
+                        if 'nome' in loja_dict:
+                            loja_dict['imagem'] = f'{loja_dict["id"]}.jpg'
                             obj = Loja.from_dict(loja_dict)
                         else:
-                            loja = self.banqueiro.retornarLoja(Loja.from_dict(loja_dict), minha = True)
-                            loja.imagem = loja_dict.get('imagem')
-                            respostas = [Mensagem(f'{msg} | {json.dumps(loja.to_dict())}')]
+                            loja = self.banqueiro.encontrar(Loja.from_dict(loja_dict))
+                            if isinstance(loja, Loja):
+                                loja.imagem = loja_dict.get('imagem', '')
+                                respostas = [Mensagem(f'{msg} | {json.dumps(loja.to_dict())}')]
+                            else:
+                                print('Erro fatal: Loja não pôde ser recuperada!')
                     case 'produto':
-                        obj = Produto.from_dict(json.loads(requisicao.camposMensagem[2]))
                         msg = 'produto'
+                        obj = Produto.from_dict(json.loads(requisicao.camposMensagem[2]))
+                        obj.imagens = [imagem.caminho() for imagem in self.banqueiro.buscar(Imagem_Produto(id_produto = obj.id))]
                     case 'anuncio':
-                        obj = Anuncio.from_dict(json.loads(requisicao.camposMensagem[2]))
                         msg = 'anuncio'
+                        obj = Anuncio.from_dict(json.loads(requisicao.camposMensagem[2]))
                     case 'pedido':
                         obj = Pedido.from_dict(json.loads(requisicao.camposMensagem[2]))
                         msg = 'pedido'
-                    case 'imagem':
-                        pass
-                        #bgl diferente aí
                     case _:
                         print('Erro na mensagem: Segundo cabeçalho não reconhecido!')
                 if msg and obj is not None:
+                    print(obj)
                     obj = self.banqueiro.editar(obj)
                     respostas = [Mensagem(f"{msg} | {json.dumps(obj.to_dict())}")]
 
@@ -295,38 +408,42 @@ class UnixSocketServer:
                     case 'endereco':
                         obj = Endereco(id = int(requisicao.camposMensagem[2]))
                     case 'loja':
-                        obj = Loja(id = int(requisicao.camposMensagem[2]))
+                        obj = self.banqueiro.retornarLoja(Loja(id = int(requisicao.camposMensagem[2])))
                         self.remove_image(os.path.join(CAMINHO_BASE, img_path, f'loja/{obj.id}.jpg'))
-                        #self.decisor(Mensagem('excluir | produto'))
+                        for produto in obj.produtos:
+                            self.decisor(Mensagem(f'excluir | produto | {produto.id}'))
                     case 'produto':
                         produto = Produto(id = int(requisicao.camposMensagem[2]))
-                        #excluir todos anúncios dele
-                        #if algum pedido tem produto
-                            #zerar atributos externos ao invés de excluir
-                        #else
-                            #obj = produto (apaga normalmente)
-                            #excluir todas as imagens do produto
+                        for anuncio in self.banqueiro.buscar(Anuncio(produto = produto)):
+                            self.decisor(Mensagem(f'excluir | anuncio | {anuncio.id}'))
+                        imagens_a_remover, ans = self.banqueiro.excluirProduto(produto)
+                        for imagem in imagens_a_remover:
+                            self.remove_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{imagem}'))
                     case 'anuncio':
                         obj = Anuncio(id = int(requisicao.camposMensagem[2]))
                     case 'pedido':
                         obj = Pedido(id = int(requisicao.camposMensagem[2]))
-                        #Não precisa implementar:
-                            #confere se confirmado_pedido é false
-                                #se sim, obj = pedido
-                            #else
-                                #erro | pedido já foi confirmado
                     case 'imagem':
-                        obj = Imagem_Produto(id = int(requisicao.camposMensagem[2]))
+                        obj = Imagem_Produto(id = int(requisicao.camposMensagem[2].split('_')[0]))
+                        self.remove_image(os.path.join(CAMINHO_BASE, img_path, f'produto/{requisicao.camposMensagem[2]}'))
                     case _:
                         print('Erro na mensagem: Segundo cabeçalho não reconhecido!')
                 if obj is not None:
                     ans = self.banqueiro.excluir(obj)
                     respostas = [Mensagem(f'{requisicao.camposMensagem[1]} | {ans}')]
 
+            case 'pedido':
+                match requisicao.camposMensagem[1]:
+                    case 'confirmar':
+                        self.banqueiro.confirmarPedido(Pedido(id = int(requisicao.camposMensagem[2])))
+                        ans = 'ok'
+                    case 'cancelar':
+                        ans = self.banqueiro.excluir(Pedido(id = int(requisicao.camposMensagem[2])))
+                respostas = [Mensagem(f'pedido | {ans}')]
             case _:
                 print('Erro na mensagem: Primeiro cabeçalho não reconhecido!')
             
-        return (continua_recebendo, respostas)
+        return continua_recebendo, respostas
 
     def send_size(self, soquete, tamanho: int):
         soquete.sendall(tamanho.to_bytes(8, 'big'))
@@ -409,44 +526,30 @@ class UnixSocketServer:
         tamanho = len(data)
         self.send_size(soquete, tamanho)
         soquete.sendall(data)
-        print(f'Enviando {tamanho} bytes: ', data)
+        print(f'Enviando {tamanho} bytes: ', data[:50], '...')
+
+    @staticmethod
+    def limpar_buffer_socket(sock):
+        """
+        Lê e descarta dados pendentes no socket (modo não bloqueante) sem alterar assinaturas externas.
+        """
+        import errno
+        import socket
+
+        sock.setblocking(0)  # modo não bloqueante
+        try:
+            while True:
+                try:
+                    data = sock.recv(4096)
+                    if not data:
+                        break  # conexão encerrada
+                except socket.error as e:
+                    if e.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
+                        break  # nada mais para ler
+                    else:
+                        raise
+        finally:
+            sock.setblocking(1)  # volta ao modo bloqueante
 
 server = UnixSocketServer(host='192.168.1.15')
 server.start()
-
-
-################################# testes locais #################################
-
-'''
-banqueiro = Banqueiro()
-
-# montando objeto de envio
-objT0 = Usuario_Identificado(
-    #id = 1,
-    nome='Teste 0',
-    cpf='111.111.111-11',
-    email='john.lennon@ufv.br',
-    senha='seinha'
-)
-print(objT0)
-print(objT0.to_dict())
-
-# montando mensagem de envio
-request0 = Mensagem('criar | usuario | ' + json.dumps(objT0.to_dict()))
-print(request0.stringMensagem)
-
-# recebendo envio
-objR0 = Usuario_Identificado.from_dict(json.loads(request0.camposMensagem[2]))
-
-# obtendo objeto de resposta
-objR0 = banqueiro.buscar(objR0)
-print(objR0)
-
-montando mensagem de resposta
-if objR0:
-    response0 = Mensagem('ok | ' + json.dumps(objR0.to_dict()))
-else:
-    response0 = Mensagem('erro | ' + 'o nome dos campos que deu ruim aí')
-print(response0.stringMensagem)
-
-#'''

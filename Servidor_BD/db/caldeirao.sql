@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "usuario" (
 DROP TABLE IF EXISTS "endereco";
 CREATE TABLE IF NOT EXISTS "endereco" (
 	"id_endereco"	INTEGER NOT NULL,
-	"id_usuario"	INTEGER NOT NULL,
+	"id_usuario"	INTEGER,
 	"rua_endereco"	TEXT NOT NULL,
 	"numero_endereco"	INTEGER NOT NULL,
 	"bairro_endereco"	TEXT NOT NULL,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS "pedido" (
 DROP TABLE IF EXISTS "produto";
 CREATE TABLE IF NOT EXISTS "produto" (
 	"id_produto"	INTEGER NOT NULL,
-	"id_loja"	INTEGER NOT NULL,
+	"id_loja"	INTEGER,
 	"nome_produto"	TEXT NOT NULL,
 	"descricao_produto"	TEXT,
 	PRIMARY KEY("id_produto" AUTOINCREMENT),

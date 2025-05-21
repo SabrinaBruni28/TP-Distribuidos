@@ -90,22 +90,69 @@ class Banqueiro():
     def excluir(self, obj: Persistivel):
         return self._dao(obj).delete(obj.id)
     
-    def retornarLoja(self, obj: Loja, minha=False):
-        result = self.encontrar(obj)
-        if result:
-            obj = result
-            obj.produtos = self.buscar(Produto(loja=obj))
-            obj.anuncios = [self.buscar(Anuncio(produto=produto)) for produto in obj.produtos]
-            if minha:
-                for produto in obj.produtos:
-                    for pedidos in self.buscar(Pedido(produto = produto)):
-                        print(pedidos)
-                        for pedido, confirmacao in pedidos:
-                            if confirmacao:
-                                obj.pedidos_confirmados.append(pedido)
-                            else:
-                                obj.pedidos_em_andamento.append(pedido)
-            else:
-                produtos = []
-        return obj
+    def excluirProduto(self, obj: Produto):
+        imagens_a_remover = []
+        ans = 'erro'
+        pedidos = self.buscar(Pedido(produto = obj))
+        if pedidos:
+            result = self.encontrar(obj)
+            if isinstance(result, Produto):
+                obj = result
+                self.__daoProduto.zerar(Produto(id = obj.id))
+                ans = 'ok'
+        else:
+            for imagem_produto in self.buscar(Imagem_Produto(id_produto = obj.id)):
+                if self.excluir(imagem_produto) == 'ok':
+                    imagens_a_remover.append(imagem_produto.caminho())
+            ans = self.excluir(obj)
+        return imagens_a_remover, ans
+
+    def confirmarPedido(self, obj: Pedido):
+        return self.__daoPedido.confirmarPedido(obj)
     
+    def retornarLoja(self, obj: Loja, minha=False):
+        loja = self.encontrar(obj)
+        if isinstance(loja, Loja):
+            dummy_produto = Produto(loja = loja)
+            produtos_da_loja = self.buscar(dummy_produto)
+
+            anuncios_da_loja = []
+            for produto in produtos_da_loja:
+                dummy_produto = Produto(id = produto.id)
+                dummy_anuncio = Anuncio(produto = dummy_produto)
+                anuncios_do_produto = self.buscar(dummy_anuncio)
+                for anuncio in anuncios_do_produto:
+                    anuncio.produto.nome = produto.nome
+                anuncios_da_loja.extend(anuncios_do_produto)
+
+            
+            pedidos_confirmados = []
+            pedidos_em_andamento = []
+            for produto in produtos_da_loja:
+                dummy_produto = Produto(id = produto.id)
+                dummy_pedido = Pedido(produto = dummy_produto)
+                pedidos_do_produto = self.buscar(dummy_pedido)
+                for pedido, confirmacao in pedidos_do_produto:
+                    if confirmacao:
+                        pedidos_confirmados.append(pedido)
+                    else:
+                        pedidos_em_andamento.append(pedido)
+            
+            print(loja)
+            for produto in produtos_da_loja:
+                print(produto)
+            for anuncio in anuncios_da_loja:
+                print(anuncio)
+            for pc in pedidos_confirmados:
+                print(pc)
+            for pa in pedidos_em_andamento:
+                print(pa)
+            loja.anuncios = anuncios_da_loja
+            if minha:
+                loja.produtos = produtos_da_loja
+                loja.pedidos_confirmados = pedidos_confirmados
+                loja.pedidos_em_andamento = pedidos_em_andamento
+            
+            return loja
+        else:
+            return False #loja não encontrada

@@ -2,7 +2,7 @@ from models.persistivel import Persistivel
 from models.produto import Produto
 
 class Anuncio(Persistivel):
-    def __init__(self, id = 0, produto = None, preco = 0, quantidade_disponivel = 0, chave_pix = "", pausado = False):
+    def __init__(self, id = 0, produto = None, preco = 0, quantidade_disponivel = 0, chave_pix = '', pausado = None):
         # Atributos próprios
         self.id = id
         self.preco = preco
@@ -18,7 +18,7 @@ class Anuncio(Persistivel):
         if self.pausado:
             return 0
         if quantidade > self.quantidade_disponivel:
-            raise ValueError("Quantidade solicitada maior que a disponível.")
+            raise ValueError('Quantidade solicitada maior que a disponível.')
         
         self.quantidade_disponivel -= quantidade
         if self.quantidade_disponivel == 0:
@@ -33,30 +33,32 @@ class Anuncio(Persistivel):
 
     def to_dict(self):
         return {
-            "id": self.id,
-            "produto": self.produto.to_dict() if self.produto else None,
-            "preco": self.preco,
-            "quantidade_disponivel": self.quantidade_disponivel,
-            "chave_pix": self.chave_pix,
-            "pausado": self.pausado
+            'id': self.id,
+            'produto': self.produto.to_dict() if self.produto else '',
+            'preco': self.preco,
+            'quantidade_disponivel': self.quantidade_disponivel,
+            'chave_pix': self.chave_pix,
+            'pausado': self.pausado
         }
     
     def to_dict_personalisado(self):
         return {
-            "produto": "{" + f"id: {self.produto.id if self.produto else None}" +"}",
-            "preco": self.preco,
-            "quantidade_disponivel": self.quantidade_disponivel,
-            "chave_pix": self.chave_pix,
-            "pausado": self.pausado
+            'produto': {"id": f"{self.produto.id if self.produto else ''}"},
+            'preco': self.preco,
+            'quantidade_disponivel': self.quantidade_disponivel,
+            'chave_pix': self.chave_pix,
+            'pausado': self.pausado
         }
     
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
-        atributos_bd = ("id_produto", "preco", "quantidade_disponivel", "chave_pix", "pausado")
+        atributos_bd = ('id_produto', 'preco', 'quantidade_disponivel', 'chave_pix', 'pausado')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):
             valor = getattr(self, attr, None)
             if valor:
                 obj_bd[nome_coluna] = valor
+        if self.pausado is not None:
+            obj_bd['pausado'] = self.pausado
         return obj_bd
     
     def clone_zerado(self):
@@ -64,14 +66,14 @@ class Anuncio(Persistivel):
     
     @classmethod
     def from_dict(cls, dados):
-        id = dados.get("id", 0)
-        produto = Produto.from_dict(dados["produto"]) if "produto" in dados else None
-        preco = dados.get("preco", 0)
-        quantidade_disponivel = dados.get("quantidade_disponivel", 0)
-        chave_pix = dados.get("chave_pix", "")
-        pausado = dados.get("pausado", False)
+        id = dados.get('id', 0)
+        produto = Produto.from_dict(dados['produto']) if 'produto' in dados else None
+        preco = dados.get('preco', 0)
+        quantidade_disponivel = dados.get('quantidade_disponivel', 0)
+        chave_pix = dados.get('chave_pix', '')
+        pausado = dados.get('pausado', False)
         
         return cls(id, produto, preco, quantidade_disponivel, chave_pix, pausado)
     
     def __str__(self):
-        return f"Anuncio(id={self.id}, produto={self.produto.__str__()}, preco={self.preco}, quantidade_disponivel={self.quantidade_disponivel}, chave_pix={self.chave_pix}, pausado={self.pausado})"
+        return f'Anuncio(id={self.id}, produto={self.produto.__str__()}, preco={self.preco}, quantidade_disponivel={self.quantidade_disponivel}, chave_pix={self.chave_pix}, pausado={self.pausado})'

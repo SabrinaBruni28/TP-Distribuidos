@@ -72,6 +72,7 @@ class Loja(Persistivel):
     
     def to_dict(self):
         print([produto.to_dict() for produto in self.produtos])
+        print([anuncio for anuncio in self.anuncios])
         return {
             "id": self.id,
             "nome": self.nome,
@@ -114,4 +115,4 @@ class Loja(Persistivel):
         return cls(id, nome, imagem, produtos, anuncios, pedidos_confirmados, pedidos_em_andamento)
     
     def __str__(self):
-        return f"Loja(id={self.id}, nome={self.nome}, imagem={self.imagem})"
+        return f"Loja(id={self.id}, nome={self.nome}, imagem={self.imagem}, id_usuario={self.id_usuario}, produtos={self.produtos}, anuncios={self.anuncios}, pedidos_confirmados={self.pedidos_confirmados}, pedidos_em_andamento={self.pedidos_em_andamento})"

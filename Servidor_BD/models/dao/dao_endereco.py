@@ -30,3 +30,6 @@ class DAOEndereco(DAO):
 
     def delete(self, id_obj: int):
         return super().delete(id_obj)
+    
+    def zerar(self, obj: Endereco):
+        return self._from_tuple(super().zerar(obj, ['id_usuario']))

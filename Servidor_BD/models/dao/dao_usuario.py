@@ -27,4 +27,7 @@ class DAOUsuario(DAO):
     def delete(self, id_obj: int):
         print('Operação inválida: Usuário não é capaz de se apagar')
         return ''
+    
+    def zerar(self, obj: Usuario_Identificado):
+        pass
 

@@ -62,6 +62,6 @@ class Endereco(Persistivel):
         return cls(id, rua, numero, complemento, bairro, cidade, estado)
 
     def __str__(self):
-        return f'Endereco(rua={self.rua}, numero={self.numero}, complemento={self.complemento}, bairro={self.bairro}, cidade={self.cidade}, estado={self.estado})'
+        return f'Endereco(id={self.id}, rua={self.rua}, numero={self.numero}, complemento={self.complemento}, bairro={self.bairro}, cidade={self.cidade}, estado={self.estado})'
 
 

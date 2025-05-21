@@ -23,3 +23,6 @@ class DAOImagem_Produto(DAO):
 
     def delete(self, id_obj: int):
         return super().delete(id_obj)
+    
+    def zerar(self, obj: Imagem_Produto):
+        pass
