@@ -7,7 +7,7 @@ salvar_bibliotecas:
 	pip freeze > requirements.txt
 
 instalar_bibliotecas:
-	pip install -r requirements.txt
+	pip install -r Cliente/requirements.txt -r Servidor_Aplicacao/requirements.txt -r Servidor_BD/requirements.txt
 	python3 -m pip install --upgrade pip
 
 cliente:
