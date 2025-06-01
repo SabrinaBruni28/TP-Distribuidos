@@ -76,6 +76,12 @@ class Usuario_Identificado(Usuario):
                 return end
         return None
     
+    def get_loja(self, loja: Loja) -> Loja:
+        for l in self.lojas:
+            if l.id == loja.id:
+                return l
+        return None
+    
     def to_dict(self):
         return json.dumps({
             "id": self.id,

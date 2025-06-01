@@ -19,12 +19,6 @@ class Loja:
         self.pedidos_confirmados = pedidos_confirmados
         self.pedidos_em_andamento = pedidos_em_andamento
 
-    def anuncio_produto(self, produto):
-        for anuncio in self.anuncios:
-            if anuncio.produto.id == produto.id:
-                return anuncio
-        return None
-
     def criar_produto(self, produto):
         self.produtos.append(produto)
         return produto
@@ -80,12 +74,20 @@ class Loja:
                 return True
         return False
     
-    def cancelar_pedido(self, pedido):
+    def cancelar_pedido(self, pedido: Pedido):
         for p in self.pedidos_em_andamento:
             if p.id == pedido.id:
                 self.pedidos_em_andamento.remove(p)
+                anuncio = self.get_anuncio(p.anuncio)
+                anuncio.quantidade_disponivel += p.quantidade
                 return True
         return False
+    
+    def get_anuncio(self, anuncio: Anuncio):
+        for a in self.anuncios:
+            if a.id == anuncio.id:
+                return a
+        return None
     
     def to_dict(self):
         return json.dumps({
