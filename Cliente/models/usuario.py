@@ -1,6 +1,7 @@
 from models.endereco import Endereco
 from models.pedido import Pedido
 from models.loja import Loja
+from typing import Optional
 import json
 
 class Usuario:
@@ -10,7 +11,7 @@ class Usuario:
 class Usuario_Identificado(Usuario):
     def __init__(
             self, id: int = 0, nome: str = "", cpf: str = "", email: str = "", senha: str = "", 
-            lojas: Loja = [], enderecos: Endereco = [], pedidos: Pedido = []
+            lojas: Optional[Loja] = [], enderecos: Optional[Endereco] = [], pedidos: Optional[Pedido] = []
         ):
         self.id = id
         self.nome = nome

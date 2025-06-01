@@ -1,13 +1,14 @@
 from models.produto import Produto
 from models.anuncio import Anuncio
 from models.pedido import Pedido
+from typing import Optional
 import json
 
 class Loja:
     def __init__(
             self, id: int = 0, nome: str = "", imagem: str = "", 
-            produtos: Produto = [], anuncios: Anuncio = [], 
-            pedidos_confirmados: Pedido = [], pedidos_em_andamento: Pedido = []
+            produtos: Optional[Produto] = [], anuncios: Optional[Anuncio] = [], 
+            pedidos_confirmados: Optional[Pedido] = [], pedidos_em_andamento: Optional[Pedido] = []
         ):
         self.id = id
         self.nome = nome

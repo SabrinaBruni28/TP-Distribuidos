@@ -1,11 +1,12 @@
 from models.endereco import Endereco
 from models.anuncio import Anuncio
+from typing import Optional
 import datetime, json
 
 class Pedido:
     def __init__(
             self, id: int = 0, quantidade: int = 0, data: str = None, 
-            anuncio: Anuncio = None, endereco: Endereco = None
+            anuncio: Optional[Anuncio] = None, endereco: Optional[Endereco] = None
         ):
         self.id = id
         self.quantidade = quantidade
