@@ -72,18 +72,18 @@ class Loja:
                 return novo_anuncio
         return False
     
-    def confirmar_pedido(self, id_pedido):
-        for pedido in self.pedidos_em_andamento:
-            if pedido.id == id_pedido:
-                self.pedidos_confirmados.append(pedido)
-                self.pedidos_em_andamento.remove(pedido)
+    def confirmar_pedido(self, pedido):
+        for p in self.pedidos_em_andamento:
+            if p.id == pedido.id:
+                self.pedidos_confirmados.append(p)
+                self.pedidos_em_andamento.remove(p)
                 return True
         return False
     
-    def cancelar_pedido(self, id_pedido):
-        for pedido in self.pedidos_em_andamento:
-            if pedido.id == id_pedido:
-                self.pedidos_em_andamento.remove(pedido)
+    def cancelar_pedido(self, pedido):
+        for p in self.pedidos_em_andamento:
+            if p.id == pedido.id:
+                self.pedidos_em_andamento.remove(p)
                 return True
         return False
     

@@ -37,13 +37,6 @@ class ClienteAplicacao():
                 anuncios.append(anuncio)
         self.anuncios = anuncios 
 
-    def atualiza_anuncios_loja(self, loja: Loja):
-        anuncios =[]
-        for anuncio in loja.anuncios:
-            if anuncio.quantidade_disponivel:
-                anuncios.append(anuncio)
-        loja.anuncios = anuncios 
-
     def atualiza_anuncio_produto(self, produto):
         for i, a in enumerate(self.anuncios):
             if a.produto.id == produto.id:
@@ -163,7 +156,7 @@ class ClienteAplicacao():
 
             lista_imagens = [anuncio.produto.imagens[0] for anuncio in loja.anuncios]
             for imagem in lista_imagens:
-                    self.socket.receive_image(path=f"uploads/{imagem}")
+                self.socket.receive_image(path=f"uploads/{imagem}")
             return True, loja
         return False
     
@@ -457,24 +450,22 @@ class ClienteAplicacao():
             return True
         return False
 
-    def confirmar_pedido(self, pedido: Pedido, loja: Loja):
+    def confirmar_pedido(self, pedido: Pedido):
         mensagem = f"pedido|confirmar|{pedido.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "ok":
-            loja.confirmar_pedido(pedido)
             return True
         return False
     
-    def cancelar_pedido(self, pedido: Pedido, loja: Loja):
+    def cancelar_pedido(self, pedido: Pedido):
         mensagem = f"pedido|cancelar|{pedido.id}"
         self.socket.send(mensagem)
         self.socket.limpar_buffer_socket()
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "ok":
-            loja.cancelar_pedido(pedido)
             return True
         return False

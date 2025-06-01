@@ -10,7 +10,7 @@ class Pedido:
         self.id = id
         self.quantidade = quantidade
         self.preco = preco
-        self.data = data if data else datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        self.data = data if data else datetime.datetime.now().strftime("%H:%M:%S %d/%m/%Y")
         self.produto = produto
         self.endereco = endereco
 

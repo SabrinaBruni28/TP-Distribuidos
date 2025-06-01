@@ -1,6 +1,6 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
-
+from datetime import datetime
 from models.loja import Loja
 from models.pedido import Pedido
 from models.produto import Produto
@@ -195,7 +195,7 @@ class MarketplaceUI(QMainWindow):
         bloco.mousePressEvent = lambda e: self.handler.visualizar_produto(self.tela_editar_produto, produto, loja)
         return bloco
     
-    def bloco_pedido(self, pedido: Pedido, largura, altura, botao_confirmar = False, botao_loja = True):
+    def bloco_pedido(self, pedido: Pedido, loja: Loja, largura, altura, botao_confirmar = False, botao_loja = True):
         bloco = WidgetHelper.bloco(largura, altura)
         layout = QVBoxLayout(bloco)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -217,7 +217,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_preco, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.handler.visualizar_pedido(self.tela_detalhes_pedido, pedido, botao_confirmar, botao_loja)
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_pedido(self.tela_detalhes_pedido, pedido, loja, botao_confirmar, botao_loja)
         return bloco
     
     def bloco_loja(self, loja: Loja, largura, altura):
@@ -1375,7 +1375,6 @@ class MarketplaceUI(QMainWindow):
         return tela
 
     def tela_detalhes_loja(self, loja: Loja):
-        self.handler.aplicacao.atualiza_anuncios_loja(loja)
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1454,8 +1453,8 @@ class MarketplaceUI(QMainWindow):
 
         lista_anuncios = self.tela_lista_anuncios_loja(loja.anuncios, loja)
         lista_produtos = self.tela_lista_produtos(loja, loja.produtos, adicionar=True)
-        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, botao_loja=False)
-        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, botao_confirmar=True, botao_loja=False)
+        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, loja, botao_loja=False)
+        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, loja, botao_confirmar=True, botao_loja=False)
 
         # Container para trocar os conteúdos
         container_listas = QStackedWidget()
@@ -1475,7 +1474,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_detalhes_pedido(self, pedido: Pedido, adicionar_botao_confirmar = False, adicionar_botao_loja = True):
+    def tela_detalhes_pedido(self, pedido: Pedido, loja: Loja, adicionar_botao_confirmar = False, adicionar_botao_loja = True):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -1543,12 +1542,12 @@ class MarketplaceUI(QMainWindow):
 
         botao_cancelar = WidgetHelper.botao(
             nome="Cancelar",
-            acao=lambda: self.handler.cancelar_pedido(pedido)
+            acao=lambda: self.handler.cancelar_pedido(pedido, loja)
         )
 
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar",
-            acao=lambda: self.handler.confirmar_pedido(pedido)
+            acao=lambda: self.handler.confirmar_pedido(pedido, loja)
         )
 
         if adicionar_botao_confirmar:
@@ -1617,11 +1616,11 @@ class MarketplaceUI(QMainWindow):
 
         return scroll
     
-    def tela_lista_pedidos(self, pedidos, botao_confirmar = False, botao_loja = True, largura=250, altura=250):
+    def tela_lista_pedidos(self, pedidos, loja: Loja = None, botao_confirmar = False, botao_loja = True, largura=250, altura=250):
         scroll, grid = WidgetHelper.lista_grid()
 
         for i, pedido in enumerate(pedidos):
-            bloco = self.bloco_pedido(pedido, largura, altura, botao_confirmar, botao_loja)
+            bloco = self.bloco_pedido(pedido, loja, largura, altura, botao_confirmar, botao_loja)
             grid.addWidget(bloco, i // 5, i % 5)
 
         return scroll
@@ -1913,7 +1912,7 @@ class InterfaceHandler:
             atualizar_tela=False
         )
 
-    def visualizar_pedido(self, tela, pedido: Pedido, botao_confirmar, botao_loja):
+    def visualizar_pedido(self, tela, pedido: Pedido, loja: Loja, botao_confirmar, botao_loja):
         def ao_visualizar(resposta):
             nonlocal tela, botao_confirmar, botao_loja
             if not resposta:
@@ -1925,7 +1924,7 @@ class InterfaceHandler:
                 )
             else:
                 pedido = resposta[1]
-                self.view.abrir_tela(self.stack, lambda: tela(pedido, botao_confirmar, botao_loja))
+                self.view.abrir_tela(self.stack, lambda: tela(pedido, loja, botao_confirmar, botao_loja))
         # Executa:
         self.thread.executar(
             acao=ao_visualizar,
@@ -2679,7 +2678,7 @@ class InterfaceHandler:
                 requisicao=lambda: self.aplicacao.excluir_imagem(produto, imagem),
             )
 
-    def cancelar_pedido(self, pedido: Pedido):
+    def cancelar_pedido(self, pedido: Pedido, loja: Loja):
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar cancelamento", 
             mensagem=f"Você tem certeza que deseja cancelar pedido {pedido.id}?",
@@ -2689,6 +2688,7 @@ class InterfaceHandler:
 
         if escolha == QDialog.DialogCode.Accepted:
             def ao_cancelar_pedido(resposta):
+                nonlocal pedido, loja
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2696,6 +2696,7 @@ class InterfaceHandler:
                         posicao="inferior_esquerda",
                         mensagem="Pedido Cancelado com Sucesso!"
                     )
+                    loja.cancelar_pedido(pedido)
                     self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -2706,7 +2707,7 @@ class InterfaceHandler:
                     )
             # Executa:
             self.thread.executar(
-                requisicao=lambda: self.aplicacao.cancelar_pedido(pedido, pedido.produto.loja),
+                requisicao=lambda: self.aplicacao.cancelar_pedido(pedido),
                 acao=ao_cancelar_pedido,
                 atualizar_tela=False
             )
@@ -2714,7 +2715,7 @@ class InterfaceHandler:
         else:
             dialogo.close()
 
-    def confirmar_pedido(self, pedido: Pedido):
+    def confirmar_pedido(self, pedido: Pedido, loja: Loja):
         dialogo = CaixaConfirmacao(
             self.parent, titulo="Confirmar", 
             mensagem=f"Você tem certeza que deseja confirmar pedido {pedido.id}?",
@@ -2724,6 +2725,7 @@ class InterfaceHandler:
 
         if escolha == QDialog.DialogCode.Accepted:
             def ao_confirmar_pedido(resposta):
+                nonlocal pedido, loja
                 if resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2731,6 +2733,7 @@ class InterfaceHandler:
                         posicao="inferior_direita",
                         mensagem="Pedido Confirmado com Sucesso!"
                     )
+                    loja.confirmar_pedido(pedido)
                     self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -2741,7 +2744,7 @@ class InterfaceHandler:
                     )
             # Executa:
             self.thread.executar(
-                requisicao=lambda: self.aplicacao.confirmar_pedido(pedido, pedido.produto.loja),
+                requisicao=lambda: self.aplicacao.confirmar_pedido(pedido),
                 acao=ao_confirmar_pedido,
                 atualizar_tela=False
             )
