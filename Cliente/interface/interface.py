@@ -2235,7 +2235,6 @@ class InterfaceHandler:
                     loja.criar_anuncio(anuncio)
                     self.view.set_tela(self.stack, -3)
                     self.aplicacao.anuncios.append(anuncio)
-                    self.aplicacao.atualiza_anuncios()
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 

@@ -33,7 +33,7 @@ class ClienteAplicacao():
     def atualiza_anuncios(self):
         anuncios =[]
         for anuncio in self.anuncios:
-            if anuncio.quantidade_disponivel:
+            if anuncio.quantidade_disponivel and not anuncio.pausado:
                 anuncios.append(anuncio)
         self.anuncios = anuncios 
 
@@ -51,11 +51,12 @@ class ClienteAplicacao():
                 return produto
         return False
 
-    def atualiza_anuncio(self, anuncio):
+    def atualiza_anuncio(self, anuncio: Anuncio):
         for i, a in enumerate(self.anuncios):
             if a.id == anuncio.id:
                 self.anuncios[i] = anuncio
                 return anuncio
+        self.anuncios.append(anuncio)
         return False
 
     def cadastrar(self, usuario: Usuario_Identificado):
@@ -227,8 +228,8 @@ class ClienteAplicacao():
             pedido = Pedido.from_dict(resposta[1])
             for imagem in pedido.produto.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
-            return True
-        return False, pedido
+            return True, pedido
+        return False
 
     def visualizar_meus_pedidos(self):
         mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
