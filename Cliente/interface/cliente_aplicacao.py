@@ -21,6 +21,9 @@ class ClienteAplicacao():
             return [""]
         return [ws.strip() for ws in stringMensagem.split('|')]
     
+    def logout(self):
+        self.usuario = Usuario()
+    
     def is_identificado(self):
         return isinstance(self.usuario, Usuario_Identificado)
 

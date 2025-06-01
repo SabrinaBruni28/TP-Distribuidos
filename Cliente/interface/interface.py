@@ -358,7 +358,15 @@ class MarketplaceUI(QMainWindow):
             nome="Copiar chave", fonte=15,
             backcolor="",
             hover='#D3D3D3', pressed='#000000',
-            acao=WidgetHelper.copiar_texto(string)
+            acao=lambda: (
+                WidgetHelper.copiar_texto(string),
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self, 
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Chave pix copiada!"
+                )
+            )
         )
         layout_vertical.addWidget(botao_copiar, alignment=Qt.AlignmentFlag.AlignCenter)
         layout_vertical.addSpacing(10)
@@ -935,18 +943,28 @@ class MarketplaceUI(QMainWindow):
         layout_conteudo.addWidget(formulario)
         layout_conteudo.addStretch()
 
+        layout_horizontal_2 = QHBoxLayout()
+
         botao_endereco = WidgetHelper.botao(
             nome="Meus Endereços",
-            largura=180, altura=50,
+            largura=180,
             acao=lambda: self.handler.visualizar_meus_enderecos(self.tela_meus_enderecos)
         )
-        layout_conteudo.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
+        layout_horizontal_2.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
+
+        botao_logout = WidgetHelper.botao(
+            nome="Logout",
+            largura=100,
+            acao=lambda: self.handler.logout()
+        )
+        layout_horizontal_2.addWidget(botao_logout, alignment=Qt.AlignmentFlag.AlignRight)
 
         # Scroll area com o título e formulário
         scroll_area = QScrollArea()
         scroll_area.setWidgetResizable(True)
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
+        layout_vertical.addLayout(layout_horizontal_2)
 
         return tela
 
@@ -1631,21 +1649,21 @@ class MarketplaceUI(QMainWindow):
         menu_layout.setContentsMargins(0, 0, 0, 0)  # Remove as margens
 
         botao_perfil = WidgetHelper.botao(
-            nome="Meu Perfil", 
+            nome="Meu Perfil", fontcolor="gray",
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
             acao= lambda: self.view.abrir_tela(self.stack, self.tela_editar_perfil)
         )
 
         botao_lojas = WidgetHelper.botao(
-            nome="Minhas Lojas", 
+            nome="Minhas Lojas", fontcolor="gray",
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
             acao=lambda: self.handler.visualizar_minhas_lojas(self.tela_minhas_lojas)
         )
 
         botao_pedidos = WidgetHelper.botao(
-            nome="Meus Pedidos", 
+            nome="Meus Pedidos", fontcolor="gray",
             backcolor="", hover="#3a3a3a", border="", pressed='#000000',
             largura=250, altura=100,
             acao= lambda: self.handler.visualizar_meus_pedidos(self.tela_meus_pedidos)
@@ -1728,6 +1746,27 @@ class InterfaceHandler:
         self.aplicacao = ClienteAplicacao(ip, porta)
         self.thread = Threads(stack)
         self.view = ViewHelper()
+
+    def logout(self):
+        dialogo = CaixaConfirmacao(
+            self.parent, titulo="Confirmar logout",
+            mensagem=f"Você tem certeza que deseja deslogar?",
+            largura=450
+        )
+        escolha = dialogo.exec()
+
+        if escolha == QDialog.DialogCode.Accepted:
+            self.aplicacao.logout()
+            self.view.set_tela(self.stack, 0)
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent, 
+                backcolor="#4CAF50",
+                posicao="superior_direita",
+                mensagem="Logout realizado com Sucesso!"
+            )
+
+        else:
+            dialogo.close()
 
     def visualizar_anuncios(self, tela = None):
         def ao_visualizar(resposta):
