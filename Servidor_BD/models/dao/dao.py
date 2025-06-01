@@ -39,7 +39,7 @@ class DAO():
                 persistivel[f'id_{self.table_names[0]}'] = obj.id
             print(persistivel, bool(persistivel))
             logic = ' '+logic+' '
-            sql = f'''SELECT * FROM {self.table_names[0]}
+            sql = f'''SELECT * FROM {' NATURAL JOIN '.join(self.table_names)}
             {' WHERE ' if persistivel else ''}
             {logic.join([f'{column} = ?' for column in persistivel.keys()])};'''
             print(sql, end='\n\n')

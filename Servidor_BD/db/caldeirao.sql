@@ -35,15 +35,14 @@ CREATE TABLE IF NOT EXISTS "anuncio" (
 DROP TABLE IF EXISTS "pedido";
 CREATE TABLE IF NOT EXISTS "pedido" (
 	"id_pedido"	INTEGER NOT NULL,
-	"id_produto"	INTEGER NOT NULL,
+	"id_anuncio"	INTEGER NOT NULL,
 	"id_endereco"	INTEGER NOT NULL,
 	"quantidade_pedido"	INTEGER NOT NULL,
-	"preco_anuncio"	NUMERIC NOT NULL,
 	"data_pedido"	INTEGER NOT NULL,
 	"confirmacao_pedido"	INTEGER NOT NULL DEFAULT 0,
 	PRIMARY KEY("id_pedido" AUTOINCREMENT),
 	FOREIGN KEY("id_endereco") REFERENCES "endereco"("id_endereco"),
-	FOREIGN KEY("id_produto") REFERENCES "produto"("id_produto")
+	FOREIGN KEY("id_anuncio") REFERENCES "anuncio"("id_anuncio")
 );
 DROP TABLE IF EXISTS "produto";
 CREATE TABLE IF NOT EXISTS "produto" (
