@@ -127,9 +127,8 @@ class MarketplaceUI(QMainWindow):
             return
 
         pedido = Pedido(
-            produto=anuncio.produto, 
+            anuncio=anuncio, 
             quantidade=int(valores["Quantidade"]),
-            preco=anuncio.preco,
             endereco=self.handler.aplicacao.usuario.get_endereco(valores["Endereço"])
         )
         self.view.abrir_tela(self.stack, lambda: self.tela_pagamento(pedido, anuncio))
@@ -205,7 +204,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_data, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
-        label_nome = WidgetHelper.label_b(pedido.produto.nome)
+        label_nome = WidgetHelper.label_b(pedido.anuncio.produto.nome)
         layout.addWidget(label_nome, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
@@ -213,7 +212,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_qnt, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
-        label_preco = WidgetHelper.label_preco(pedido.quantidade * pedido.preco)
+        label_preco = WidgetHelper.label_preco(pedido.quantidade * pedido.anuncio.preco)
         layout.addWidget(label_preco, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
@@ -1486,12 +1485,12 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal.addWidget(botao_voltar, alignment=Qt.AlignmentFlag.AlignLeft)
 
-        loja_existe = pedido.produto.loja
+        loja_existe = pedido.anuncio.produto.loja
 
         botao_loja = WidgetHelper.botao(
             nome="Loja", fonte=15,
             acao=lambda e: (
-                self.handler.visualizar_loja(self.tela_detalhes_loja, pedido.produto.loja)
+                self.handler.visualizar_loja(self.tela_detalhes_loja, loja_existe)
                 if loja_existe
                 else
                 WidgetHelper.mostrar_alerta_temporario(
@@ -1507,24 +1506,24 @@ class MarketplaceUI(QMainWindow):
 
         layout_vertical.addLayout(layout_horizontal)
 
-        titulo = WidgetHelper.label_span(pedido.produto.nome, 40)
+        titulo = WidgetHelper.label_span(pedido.anuncio.produto.nome, 40)
         layout_vertical.addWidget(titulo)
 
-        carrossel = CarrosselImagem(pedido.produto.imagens, largura=300, altura=300)
+        carrossel = CarrosselImagem(pedido.anuncio.produto.imagens, largura=300, altura=300)
         layout_vertical.addWidget(carrossel, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        descricao = WidgetHelper.label_span(pedido.produto.descricao, 30)
+        descricao = WidgetHelper.label_span(pedido.anuncio.produto.descricao, 30)
         descricao.setWordWrap(True)
         layout_vertical.addWidget(descricao)
 
-        preco_total = WidgetHelper.label_preco(f"{pedido.preco * pedido.quantidade}",tamanho=35)
+        preco_total = WidgetHelper.label_preco(f"{pedido.anuncio.preco * pedido.quantidade}",tamanho=35)
         layout_vertical.addWidget(preco_total)
 
         layout_horizontal_2 = QHBoxLayout()
         quantidade = WidgetHelper.label_span(f"Quantidade: {pedido.quantidade}", 30)
         layout_horizontal_2.addWidget(quantidade)
 
-        preco = WidgetHelper.label_preco(f"{pedido.preco:.2f}")
+        preco = WidgetHelper.label_preco(f"{pedido.anuncio.preco:.2f}")
         layout_horizontal_2.addWidget(preco)
         layout_vertical.addLayout(layout_horizontal_2)
 

@@ -219,7 +219,7 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "pedido":
             pedido = Pedido.from_dict(resposta[1])
-            for imagem in pedido.produto.imagens:
+            for imagem in pedido.anuncio.produto.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
             return True, pedido
         return False
@@ -238,7 +238,6 @@ class ClienteAplicacao():
                     pedidos.append(Pedido.from_dict(resposta[1]))
                 else:
                     return False
-            self.usuario.pedidos = pedidos
             return True, pedidos
         return False
 
