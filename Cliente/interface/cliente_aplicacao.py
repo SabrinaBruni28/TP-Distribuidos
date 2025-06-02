@@ -37,7 +37,19 @@ class ClienteAplicacao():
                 anuncios.append(anuncio)
         self.anuncios = anuncios 
 
-    def atualiza_anuncio_produto(self, produto):
+    def apagar_anuncios(self, produto: Produto):
+        for i, a in enumerate(self.anuncios):
+            if a.produto.id == produto.id:
+                del self.anuncios[i]
+
+    def apagar_anuncio(self, anuncio: Anuncio):
+        for i, a in enumerate(self.anuncios):
+            if a.id == anuncio.id:
+                del self.anuncios[i]
+                return True
+        return False
+
+    def atualiza_anuncio_produto(self, produto: Produto):
         for i, a in enumerate(self.anuncios):
             if a.produto.id == produto.id:
                 a.produto = produto
@@ -73,8 +85,7 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "ok":
-            self.usuario = Usuario_Identificado.from_dict(resposta[1])
-            return [True]
+            return True, resposta[1]
         
         elif resposta[0] == "erro":
             return False, resposta[1]
@@ -88,7 +99,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "ok":
-            self.usuario = Usuario_Identificado.from_dict(resposta[1])
             return [True]
         
         elif resposta[0] == "erro":
@@ -296,7 +306,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "usuario":
-            self.usuario = Usuario_Identificado.from_dict(resposta[1])
             return [True]
         
         elif resposta[0] == "erro":
@@ -337,11 +346,9 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "produto":
             produto_resposta = Produto.from_dict(resposta[1])
-            produto.loja.criar_produto(produto_resposta)
-
             for imagem in produto_resposta.imagens:
                 self.socket.receive_image(path=f"uploads/{imagem}")
-            return True
+            return True, produto_resposta
         return False
     
     def criar_loja(self, loja: Loja):
@@ -355,10 +362,9 @@ class ClienteAplicacao():
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
             loja = Loja.from_dict(resposta[1])
-            self.usuario.criar_loja(loja)
             if loja.imagem:
                 self.socket.receive_image(path=f"uploads/{loja.imagem}")
-            return True
+            return True, loja
         return False
     
     def criar_pedido(self, pedido: Pedido):
@@ -368,8 +374,7 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "pedido":
-            self.usuario.criar_pedido(Pedido.from_dict(resposta[1]))
-            return True
+            return True, resposta[1]
         return False
     
     def criar_endereco(self, endereco: Endereco):
@@ -379,8 +384,7 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "endereco":
-            self.usuario.criar_endereco(Endereco.from_dict(resposta[1]))
-            return True
+            return True, endereco
         return False
 
     def criar_imagem(self, produto: Produto, imagem):
@@ -391,9 +395,8 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "imagem":
-            produto.criar_imagem(resposta[1])
             self.socket.receive_image(path=f"uploads/{resposta[1]}")
-            return True
+            return True, imagem
         return False
     
     def excluir_anuncio(self, anuncio: Anuncio):
@@ -423,7 +426,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "loja":
-            self.usuario.apagar_loja(loja)
             return True
         return False
     
@@ -434,7 +436,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "endereco":
-            self.usuario.apagar_endereco(endereco)
             return True
         return False
     
@@ -445,7 +446,6 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "imagem":
-            produto.apagar_imagem(imagem)
             return True
         return False
 

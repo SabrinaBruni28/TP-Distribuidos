@@ -36,6 +36,7 @@ class Loja:
         for i, p in enumerate(self.produtos):
             if p.id == produto.id:
                 del self.produtos[i]
+                self.apagar_anuncios(p)
                 return True
         return False
 
@@ -45,6 +46,11 @@ class Loja:
                 del self.anuncios[i]
                 return True
         return False
+    
+    def apagar_anuncios(self, produto: Produto):
+        for i, a in enumerate(self.anuncios):
+            if a.produto.id == produto.id:
+                del self.anuncios[i]
     
     def editar_produto(self, produto, novo_produto):
         for i, p in enumerate(self.produtos):
@@ -79,16 +85,8 @@ class Loja:
         for p in self.pedidos_em_andamento:
             if p.id == pedido.id:
                 self.pedidos_em_andamento.remove(p)
-                anuncio = self.get_anuncio(p.anuncio)
-                anuncio.quantidade_disponivel += p.quantidade
                 return True
         return False
-    
-    def get_anuncio(self, anuncio: Anuncio):
-        for a in self.anuncios:
-            if a.id == anuncio.id:
-                return a
-        return None
     
     def to_dict(self):
         return json.dumps({
