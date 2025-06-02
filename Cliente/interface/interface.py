@@ -426,7 +426,7 @@ class MarketplaceUI(QMainWindow):
 
         botao_cadastrar = WidgetHelper.botao(
             nome="Cadastrar", fonte=30,
-            largura=500, altura=50,
+            largura=200, altura=50,
             acao=lambda: self.handler.cadastrar(formulario)
         )
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
@@ -1842,7 +1842,7 @@ class InterfaceHandler:
             atualizar_tela=False
         ) 
 
-    def visualizar_minha_loja(self, loja: Loja, tela = None):
+    def visualizar_minha_loja(self, loja: Loja, tela):
         def ao_visualizar(resposta):
             nonlocal tela
             if not resposta:
@@ -1852,7 +1852,7 @@ class InterfaceHandler:
                     posicao="superior_direita",
                     mensagem=f"Erro ao visualizar!"
                 )
-            elif tela:
+            else:
                 loja = resposta[1]
                 self.view.abrir_tela(self.stack, lambda: tela(loja))
         # Executa:
@@ -2069,8 +2069,11 @@ class InterfaceHandler:
 
     def criar_pedido(self, pedido: Pedido, anuncio: Anuncio):   
         def ao_criar_pedido(resposta):
+            nonlocal anuncio
             if resposta:
                 anuncio.subtrair_quantidade(pedido.quantidade)
+                if anuncio.quantidade_disponivel == 0:
+                    self.aplicacao.apagar_anuncio(anuncio)
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self.parent, 
                     backcolor="#4CAF50",
@@ -2720,6 +2723,11 @@ class InterfaceHandler:
                     )
                     loja = self.aplicacao.usuario.get_loja(pedido.anuncio.produto.loja)
                     loja.cancelar_pedido(pedido)
+                    anuncio = loja.get_anuncio(pedido.anuncio)
+                    if anuncio.quantidade_disponivel == 0:
+                        anuncio.pausado = False
+                        anuncio.quantidade_disponivel = pedido.quantidade
+                        self.aplicacao.anuncios.append(anuncio)
                     self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(

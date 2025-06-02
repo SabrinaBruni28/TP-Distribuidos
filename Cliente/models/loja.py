@@ -88,6 +88,12 @@ class Loja:
                 return True
         return False
     
+    def get_anuncio(self, anuncio: Anuncio):
+        for a in self.anuncios:
+            if a.id == anuncio.id:
+                return a
+        return None
+    
     def to_dict(self):
         return json.dumps({
             "id": self.id,
