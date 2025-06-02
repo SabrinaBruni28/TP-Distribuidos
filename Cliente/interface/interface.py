@@ -431,12 +431,6 @@ class MarketplaceUI(QMainWindow):
         )
         layout_vertical.addWidget(botao_cadastrar, alignment=Qt.AlignmentFlag.AlignCenter)
 
-        botao_login = WidgetHelper.botao(
-            nome="Login",
-            acao=lambda: self.view.abrir_tela(self.stack, self.tela_login)
-        )
-        layout_vertical.addWidget(botao_login, alignment=Qt.AlignmentFlag.AlignRight)
-
         return tela
 
     def tela_login(self):
@@ -2209,11 +2203,17 @@ class InterfaceHandler:
             )
 
     def criar_anuncio(self, formulario: Formulario, formularioOp: FormularioOpcoes, produto: Produto):
-        erro = formulario.validar_tipos({"Preço": float, "Quantidade Disponível": int, "Chave Pix": str})
+        erro = formulario.validar_tipos(
+            {
+                "Preço": float, "Preço": "positivo", 
+                "Quantidade Disponível": int, "Quantidade Disponível": "positivo",
+                "Chave Pix": str
+            }
+        )
         valores = formulario.obter_valores()
         valores = valores | formularioOp.obter_valores()
         valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
-        valores["pausado"] = True if valores["pausado"] == "Sim" else False
+        valores["pausado"] = True if valores["pausado"] == "Sim" or not  valores["quantidade_disponivel"] else False
 
         if erro:
             formulario.exibir_erros()

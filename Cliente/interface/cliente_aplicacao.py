@@ -99,7 +99,7 @@ class ClienteAplicacao():
 
         resposta = self.divide_mensagem(self.socket.receive())
         if resposta[0] == "ok":
-            return [True]
+            return True, resposta[1]
         
         elif resposta[0] == "erro":
             return False, resposta[1]
