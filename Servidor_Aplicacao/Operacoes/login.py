@@ -1,23 +1,35 @@
 import socket
 import threading
+import uuid
 from Operacoes import server_operation as op
 from Operacoes import operacao
 from Operacoes import callback as cb
 from Estruturas.mensagem import Mensagem
+#from Estruturas.fila_de_mensagens2 import FilaDeMensagensV2
 #from Estruturas.fila_de_mensagens import FilaDeMensagens
 
 class Login(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
+    def __init__(self, mensagem, fila_mensagens):
+        super().__init__(mensagem, fila_mensagens)
 
     def run(self):
-        self.getOperacao()
+        return self.getOperacao()
 
     def getOperacao(self):
-        self.logar()
+        return self.logar()
 
     def logar(self):
         print("[Servidor][Login] Operação de Login recebida.")
+
+        # Agora as coisas ficaram bem diferentes.
+        # Quando o cliente invocar a operação de logar, ele quer o retorno do banco de dados
+        # Assim, a primeira coisa que temos de fazer e enfileirar essa requisição junto a um ID
+        
+
+
+
+
+
         dados = self.mensagemCliente.camposMensagem[1]
         mensagemServidor = Mensagem.produtorMensagem(f"login | {dados}")
 

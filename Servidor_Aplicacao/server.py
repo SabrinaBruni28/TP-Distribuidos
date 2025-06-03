@@ -1,5 +1,6 @@
 import socket
 import threading
+import logging
 import Pyro5.api
 from Operacoes import server_operation as op
 from Operacoes.login import Login
@@ -15,8 +16,14 @@ from Estruturas.fila_de_mensagens import FilaDeMensagens
 from Estruturas.mensagem import Mensagem
 from queue import Queue, Empty
 
+logging.basicConfig(level=logging.INFO, format='%(message)s')
+
 class ServicosServidorAplicacao:
-    pass
+    def __init__(self, fila: FilaDeMensagens):
+        self.filaDeMensagens = fila
+
+    def logar(self, dados):
+        
 
 # Várias instâncias de ClientHandler vão acontecer conforme clientes vão se conectando ao servidor.
 class ClientHandler(threading.Thread):

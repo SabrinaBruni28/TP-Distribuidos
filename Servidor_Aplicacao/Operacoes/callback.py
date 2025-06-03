@@ -2,7 +2,10 @@ import socket
 import json
 from Operacoes import thread_email as correio
 from Estruturas.mensagem import Mensagem
+from Estruturas.fila_de_mensagens2 import FilaDeMensagensV2
 from Operacoes import server_operation as op
+
+# Os callback também vão mudar consideravelmente já que não ldiam com sockets mais.
 
 # Callback da requisição de Login. O servidor deve retornar dois tipos de resposta ao cliente nesse caso:
 # ok | dados do cliente     -> Em caso do login ser confirmado no banco de dados.
