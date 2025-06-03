@@ -8,10 +8,6 @@ from queue import Queue, Empty
 from Operacoes import callback as cb
 from Operacoes import imagem as img
 
-
-
-logging.basicConfig(level=logging.INFO, format='%(message)s')
-
 # A Fila de Mensagens, estrutura da comunicação do nosso sistema.
 # A comunicação do sistema é efetivamente híbrida
 # A fila é usada na comunicação com o servidor de banco de dados
@@ -44,20 +40,20 @@ class FilaDeMensagens(threading.Thread):
                 self.dadosTemp.limpar_expirados()
                 mensagem, callback, connect, tipo, serverSocket, fila, imagens = self.desenfileira()
             except ValueError:
-                logging.info("[Fila de mensagens] Erro: tupla mal formada na fila.")
+                print("[Fila de mensagens] Erro: tupla mal formada na fila.")
                 continue
 
             if mensagem and callback and connect:
                 self.decisorFilaDeMensagens(mensagem, callback, connect, tipo, serverSocket, fila, imagens)
 
             else:
-                logging.info("[Fila de mensagens] Erro ao obter mensagem, callback ou connect.")
+                print("[Fila de mensagens] Erro ao obter mensagem, callback ou connect.")
         
     # DecisorFilaDeMensages() é o método onde as mensagens do servidor são envidas ao banco de dados e o retorno ao cliente é processado.
     def decisorFilaDeMensagens(self, mensagem: Mensagem, callback, connect, tipo, serverSocket, fila, imagens):
         from Operacoes.cadastramento import Cadastramento
 
-        logging.info("[Fila de Mensagem] Processando uma requisição da fila...")
+        print("[Fila de Mensagem] Processando uma requisição da fila...")
 
         resposta, respostaImagens = self.enviaAoBanco(mensagem, imagens)
 
@@ -136,7 +132,7 @@ class FilaDeMensagens(threading.Thread):
                 return None, None
 
         except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            print(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return None, None
         
@@ -166,7 +162,7 @@ class FilaDeMensagens(threading.Thread):
                 return None, None
 
         except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            print(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return None, None
         
@@ -214,7 +210,7 @@ class FilaDeMensagens(threading.Thread):
                 return None, None
 
         except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            print(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return None, None
         
@@ -223,10 +219,10 @@ class FilaDeMensagens(threading.Thread):
     def conectaBanco(self):
         try:
             self.socketBD = socket.create_connection(('localhost', 6000))
-            logging.info(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
+            print(f"[Fila de Mensagens] Conectado ao Banco de Dados [192.168.1.15:6000].")
         
         except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro ao conectar ao Banco de Dados: {e}")
+            print(f"[Fila de Mensagens] Erro ao conectar ao Banco de Dados: {e}")
             self.socketBD = None
         
 
@@ -377,7 +373,7 @@ class FilaDeMensagens(threading.Thread):
                 return "[Fila de Mensagens][Erro] Conexão com Banco de Dados não estabelecida"
 
         except Exception as e:
-            logging.info(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
+            print(f"[Fila de Mensagens] Erro na conexão com Banco de Dados: {e}")
             self.socketBD = None
             return f"[Fila de Mensagens][Erro] Falha ao enviar ao banco: {e}"
         1
