@@ -2,6 +2,9 @@ import socket
 import threading
 import logging
 import Pyro5.api
+import Pyro5.errors
+import Pyro5.nameserver
+import Pyro5.server
 from Operacoes import server_operation as op
 from Operacoes.login import Login
 from Operacoes.cadastramento import Cadastramento
@@ -18,122 +21,35 @@ from queue import Queue, Empty
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
+@Pyro5.api.expose
+@Pyro5.api.behavior(instance_mode="single")
 class ServicosServidorAplicacao:
     def __init__(self, fila: FilaDeMensagens):
         self.filaDeMensagens = fila
 
     def logar(self, dados):
-        
+        return Login().logar()
 
-# Várias instâncias de ClientHandler vão acontecer conforme clientes vão se conectando ao servidor.
-class ClientHandler(threading.Thread):
-    def __init__(self, fila: FilaDeMensagens):
-        super().__init__()
-        self.filaDeMensagem = fila
-        self.ativo = True
-        # self.lock = threading.Lock()  # Os momentos que precisam de trava no servidor já têm ela
-                                        # implementada por padrão. No caso, enfileirar mensagens
-                                        # já tem sistema de lock implementados em Queue.
+print(f"Iniciando servidor Pyro5...")
 
-    def decisor(self, mensagem: Mensagem):
-        print("[Servidor][ClientHandler] Entrou em decisor.")
-        cabecalhoTipoMensagem = mensagem.camposMensagem[0]
-        print(f"[Servidor] Cabeçalho sob avaliação: ${cabecalhoTipoMensagem}$")
-
-        match cabecalhoTipoMensagem:
-            case "login":
-                Login(mensagem, self.socketCliente, self.filaDeMensagem).start()
-
-            case "cadastramento":
-                Cadastramento(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem).start()
-
-            case "codigo":
-                Codigo(mensagem, self.socketCliente, self.filaDeMensagem).start()
-
-            case "visualizar":
-                Visualizar(mensagem, self.socketCliente, self.filaDeMensagem).start()
-
-            case "editar":
-                imagem = []
-                if mensagem.camposMensagem[1] == "loja":
-                    
-                    dados = mensagem.camposMensagem[2]
-                    imagem = Imagem(dados=dados, socket_cliente=self.socketCliente, tipo=mensagem.camposMensagem[1], campo="imagem").run()
-                Editar(mensagem, self.socketCliente, self.socketServidor, self.filaDeMensagem, imagem).start()
-
-            case "criar":
-                imagem = []
-                dados = None
-                tipo = mensagem.camposMensagem[1]
-                if tipo == "produto":
-                    dados = mensagem.camposMensagem[2]
-                elif tipo == "loja":
-                    dados = mensagem.camposMensagem[3]
-                imagem = Imagem(dados=dados, socket_cliente=self.socketCliente, tipo=tipo, campo="imagem").run()
-                if imagem != None:
-                    print(f"[Servidor][ClientHandler] Imagens: {len(imagem)}")
-                Criar(mensagem, self.socketCliente, self.filaDeMensagem, imagem).start()
-            
-            case "excluir":
-                Excluir(mensagem, self.socketCliente, self.filaDeMensagem).start()
-
-            case "pedido":
-                Pedido(mensagem, self.socketCliente, self.filaDeMensagem).start()
-
-            case _:
-                print("Comando inválido")
-                self.socketCliente.sendall("[Erro] Comando inválido.")
-                return
-
-def terminalServidor(flag_encerramento):
-    while not flag_encerramento.is_set():
-        comando = input()
-        if comando.lower() in ("sair", "exit", "shutdown", "fim", "q"):
-            print("[Servidor] Encerrando por comando.")
-            flag_encerramento.set()
-
-def conectaNovoCliente(servidor: socket.socket, fila: FilaDeMensagens):
-    try:                                                                        #
-        # Aceita a conexão (de um cliente)                                      #
-        socketCliente, endereco = servidor.accept()                             #    Fluxo se repete
-                                                                                #    para cada
-        # Começa uma nova thread para lidar com esta conexão (desse cliente)    #    novo
-        ClientHandler(servidor, socketCliente, endereco, fila).start()          #    cliente.
-                                                                                #
-    except socket.timeout:                                                      #
-        pass                                                                    #
-
-def rodarServidor(endereco_ip, porta, fila):
-    # O terminal do servidor ficará aberto para receber comandos, assim é possível encerrar o
-    # servidor pelo terminal do servidor sem necessitar do ctrl+c.
-    #flagEncerramento = threading.Event()
-    #threading.Thread(target=terminalServidor, args=(flagEncerramento, ), daemon=True).start()
-
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as servidor:
-        servidor.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        # Vinculação do socket servidor ao endereço e porta
-        servidor.bind((endereco_ip, porta))
-
-        # Listen para conexões
-        servidor.listen()
-        print(f"Ouvindo em {endereco_ip}:{porta}")
-
-        #servidor.settimeout(0.2)
-
-        # Enquanto o servidor não fecha, aceita novas conexões e cria novas thread para elas
-        #while not flagEncerramento.is_set():
-        while True:
-            conectaNovoCliente(servidor, fila)
-
-        
-    print("[Servidor] Conexão encerrada.")
-
-# ==== Execução do servidor ====
-
-# Inicialização da Fila de Mensagens
 filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
-# Inicialização do socket servidor
-rodarServidor('localhost', 5000, filaDeMensagem)
+try:
+    ns = Pyro5.api.locate_ns()
+    print("Name Server localizado.")
 
+except Pyro5.errors.NamingError:
+    print(f"Name Server não encontrado. Iniciando um novo...")
+    Pyro5.nameserver.start_ns_loop()
+    exit
+
+with Pyro5.server.Daemon() as daemon:
+    servicos = ServicosServidorAplicacao(filaDeMensagem)
+    uri = daemon.register(servicos)
+
+    ns.register("servicos.servidor", uri)
+    print(f"Serviço registrado com URI: {uri}")
+
+    print("Servidor aguardando chamadas remotas...")
+    daemon.requestLoop()

@@ -1,6 +1,7 @@
 import socket
 import threading
 import json
+import uuid
 from Operacoes import thread_email as correio
 from Operacoes import cadastramento
 from Estruturas import Mensagem
@@ -8,6 +9,9 @@ from Estruturas import Mensagem
 Algumas operações que o servidor usa. Estão aqui separadas para maior universalismo
 e para melhor organização.
 '''
+def gerarID():
+    return str(uuid.uuid4())
+
 def recebeQuantidade(stringDados: str, campo: str):
     dadosJson = json.loads(stringDados)
 

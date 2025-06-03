@@ -56,6 +56,7 @@ class FilaDeMensagensV2(threading.Thread):
 
     # O enviaAoBanco, agora, invoca um método do banco de dados. 
     # Achei o nome fazRequisicao mais coerente pro funcionamento de agora.
+    # Falando no "funcionamento de agora", ainda não elaborei como fazer quando há imagens na conversa.  ¬.¬
     def fazRequisicaoAoBanco(self, requisicao, dados, id):
         print("[Fila de Mensagens] Fazendo uma requisição ao Banco de Dados.")
 
@@ -66,6 +67,7 @@ class FilaDeMensagensV2(threading.Thread):
             # Aqui chamo a função do banco correspondente usando Pyro5.
             # Imagino que vou ter que fazer uma função aqui que decide a invocação certa
             # com base na requisição.
+            #TODO: Comunicação com o Banco usando Pyro5
             respostaBanco = None
 
             # Depois de receber a resposta, guarda ela e avisa o servidor.
@@ -81,3 +83,8 @@ class FilaDeMensagensV2(threading.Thread):
         print("[Fila de Mensagens] Conectando ao Banco de Dados via Pyro5...")
         self.bancoURI = Pyro5.api.Proxy("PROXYNAME:Caldeirao.database")
 
+    def esperaRespostaDoBancoDeRespostas(self, id):
+        return self._respostas.esperaResposta(id)
+    
+    def registraRequisicao(self, id):
+        self._respostas.criaRequisicao(id)
