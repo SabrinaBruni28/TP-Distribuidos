@@ -28,7 +28,7 @@ class ServicosServidorAplicacao:
         self.filaDeMensagens = fila
 
     def logar(self, dados):
-        return Login().logar()
+        return Login(fila_mensagens=self.filaDeMensagens).logar(dados)
 
 print(f"Iniciando servidor Pyro5...")
 
@@ -41,11 +41,12 @@ try:
 
 except Pyro5.errors.NamingError:
     print(f"Name Server não encontrado. Iniciando um novo...")
-    Pyro5.nameserver.start_ns_loop()
-    exit
+    Pyro5.nameserver.start_ns()
 
+print("É ali em baixo.")
 with Pyro5.server.Daemon() as daemon:
     servicos = ServicosServidorAplicacao(filaDeMensagem)
+    print("É ali mais em baixo.")
     uri = daemon.register(servicos)
 
     ns.register("servicos.servidor", uri)
