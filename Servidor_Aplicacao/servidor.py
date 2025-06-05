@@ -169,5 +169,5 @@ filaDeMensagem = FilaDeMensagens()
 filaDeMensagem.start()
 
 # Inicialização do socket servidor
-rodarServidor('localhost', 5000, filaDeMensagem)
+rodarServidor('192.168.1.15', 5000, filaDeMensagem)
 
