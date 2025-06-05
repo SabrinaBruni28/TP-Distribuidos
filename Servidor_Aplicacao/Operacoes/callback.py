@@ -161,8 +161,7 @@ def visualizarProdutoCallback(resposta_banco: list, socket_cliente, socket_banco
 
 def visualizarPedidoCallback(resposta_banco, socket_cliente, socket_banco):
     pedido = json.loads(resposta_banco[1])
-    anuncioPedido = pedido.get("anuncio")
-    produtoPedido = anuncioPedido.get("produto")
+    produtoPedido = pedido.get("produto")
     imagensPedido = produtoPedido.get("imagens")
 
     imagens = []
