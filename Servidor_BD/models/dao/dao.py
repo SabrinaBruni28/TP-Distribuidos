@@ -4,11 +4,10 @@ import sqlite3
 from models.persistivel import Persistivel
 
 class DAO():
-    def __init__(self, nome_tabelas: list, nome_colunas: list):
+    def __init__(self, table_names: list, nome_colunas: list):
         self.db_path = './db/caldeirao.db'
-        self.nome_tabelas = nome_tabelas
+        self.table_names = table_names
         self.nome_colunas = nome_colunas
-        self.chaves_estrangeiras = [coluna for coluna in nome_colunas if coluna[:3] == 'id_']
 
     def _connect(self):
         return sqlite3.connect(self.db_path)
@@ -22,10 +21,10 @@ class DAO():
             print(obj.to_dict())
             persistivel = obj.to_dict_bd(self.nome_colunas)
             print(persistivel)
-            sql = f'''INSERT INTO {self.nome_tabelas[0]}
+            sql = f'''INSERT INTO {self.table_names[0]}
             ({', '.join(persistivel.keys())})
             VALUES ({', '.join(['?'] * len(persistivel.values()))})
-            RETURNING id_{self.nome_tabelas[0]};'''
+            RETURNING id_{self.table_names[0]};'''
             print(sql, end='\n\n')
             cursor.execute(sql, tuple(persistivel.values()))
             id_persistivel = cursor.fetchone()[0]
@@ -37,10 +36,10 @@ class DAO():
             cursor = conn.cursor()
             persistivel = obj.to_dict_bd(self.nome_colunas)
             if obj.id:
-                persistivel[f'id_{self.nome_tabelas[0]}'] = obj.id
+                persistivel[f'id_{self.table_names[0]}'] = obj.id
             print(persistivel, bool(persistivel))
             logic = ' '+logic+' '
-            sql = f'''SELECT * FROM {' NATURAL JOIN '.join(self.nome_tabelas)}
+            sql = f'''SELECT * FROM {self.table_names[0]}
             {' WHERE ' if persistivel else ''}
             {logic.join([f'{column} = ?' for column in persistivel.keys()])};'''
             print(sql, end='\n\n')
@@ -52,10 +51,10 @@ class DAO():
             cursor = conn.cursor()
             persistivel = obj.to_dict_bd(self.nome_colunas)
 
-            sql = f'''UPDATE {self.nome_tabelas[0]} SET
+            sql = f'''UPDATE {self.table_names[0]} SET
             {', '.join([f'{column} = ?' for column in persistivel.keys()])}
-            WHERE id_{self.nome_tabelas[0]} = ?
-            RETURNING id_{self.nome_tabelas[0]}, {', '.join(self.nome_colunas)};'''
+            WHERE id_{self.table_names[0]} = ?
+            RETURNING id_{self.table_names[0]}, {', '.join(self.nome_colunas)};'''
             print(sql, end='\n\n')
             cursor.execute(sql, list(persistivel.values())+[obj.id])
             persistivel = cursor.fetchone()
@@ -65,21 +64,21 @@ class DAO():
     def delete(self, id_obj: int):
         with self._connect() as conn:
             cursor = conn.cursor()
-            sql = f'DELETE FROM {self.nome_tabelas[0]} WHERE id_{self.nome_tabelas[0]} = ?;'
+            sql = f'DELETE FROM {self.table_names[0]} WHERE id_{self.table_names[0]} = ?;'
             print(sql, end='\n\n')
             cursor.execute(sql, (id_obj,))
             conn.commit()
             return 'ok'
     
-    def forget(self, obj: Persistivel):
+    def zerar(self, obj: Persistivel, referencias_externas):
         with self._connect() as conn:
             cursor = conn.cursor()
-            persistivel = obj.to_dict_bd(self.nome_colunas)
+            persistivel = obj.to_dict_bd(referencias_externas)
 
-            sql = f'''UPDATE {self.nome_tabelas[0]} SET
-            {', '.join([f'{fk} = NULL' for fk in self.chaves_estrangeiras])}
-            WHERE id_{self.nome_tabelas[0]} = ?
-            RETURNING id_{self.nome_tabelas[0]}, {', '.join(self.nome_colunas)};'''
+            sql = f'''UPDATE {self.table_names[0]} SET
+            {', '.join([f'{column} = NULL' for column in persistivel.keys()])}
+            WHERE id_{self.table_names[0]} = ?
+            RETURNING id_{self.table_names[0]}, {', '.join(self.nome_colunas)};'''
             print(sql, end='\n\n')
             cursor.execute(sql, [obj.id])
             persistivel = cursor.fetchone()
