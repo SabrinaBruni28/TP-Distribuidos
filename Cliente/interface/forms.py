@@ -207,6 +207,54 @@ class Formulario(QWidget):
                     continue
                 self.erros[nome].setText(str(""))
 
+            if tipo_esperado == "positivo":
+                try:
+                    valor = float(texto)
+                except ValueError:
+                    erro ="Digite um número válido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+
+                if valor < 0:
+                    erro ="Digite um número positivo."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                self.erros[nome].setText(str(""))
+
+            if tipo_esperado == "negativo":
+                try:
+                    valor = float(texto)
+                except ValueError:
+                    erro ="Digite um número válido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+
+                if valor > 0:
+                    erro ="Digite um número negativo."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                self.erros[nome].setText(str(""))
+
+            if tipo_esperado == "non_zero":
+                try:
+                    valor = float(texto)
+                except ValueError:
+                    erro ="Digite um número válido."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+
+                if valor == 0:
+                    erro ="Digite um número diferente de zero."
+                    self.erros[nome].setText(str(erro))
+                    has_error = True
+                    continue
+                self.erros[nome].setText(str(""))
+
             if nome.lower() == "email":
                 if not Utils.check_email(texto):
                     erro = "Email inválido."

@@ -1,13 +1,14 @@
 from models.produto import Produto
 from models.anuncio import Anuncio
 from models.pedido import Pedido
+from typing import Optional
 import json
 
 class Loja:
     def __init__(
             self, id: int = 0, nome: str = "", imagem: str = "", 
-            produtos: Produto = [], anuncios: Anuncio = [], 
-            pedidos_confirmados: Pedido = [], pedidos_em_andamento: Pedido = []
+            produtos: Optional[Produto] = [], anuncios: Optional[Anuncio] = [], 
+            pedidos_confirmados: Optional[Pedido] = [], pedidos_em_andamento: Optional[Pedido] = []
         ):
         self.id = id
         self.nome = nome
@@ -18,12 +19,6 @@ class Loja:
         self.anuncios = anuncios
         self.pedidos_confirmados = pedidos_confirmados
         self.pedidos_em_andamento = pedidos_em_andamento
-
-    def anuncio_produto(self, produto):
-        for anuncio in self.anuncios:
-            if anuncio.produto.id == produto.id:
-                return anuncio
-        return None
 
     def criar_produto(self, produto):
         self.produtos.append(produto)
@@ -41,6 +36,7 @@ class Loja:
         for i, p in enumerate(self.produtos):
             if p.id == produto.id:
                 del self.produtos[i]
+                self.apagar_anuncios(p)
                 return True
         return False
 
@@ -50,6 +46,11 @@ class Loja:
                 del self.anuncios[i]
                 return True
         return False
+    
+    def apagar_anuncios(self, produto: Produto):
+        for i, a in enumerate(self.anuncios):
+            if a.produto.id == produto.id:
+                del self.anuncios[i]
     
     def editar_produto(self, produto, novo_produto):
         for i, p in enumerate(self.produtos):
@@ -72,20 +73,26 @@ class Loja:
                 return novo_anuncio
         return False
     
-    def confirmar_pedido(self, id_pedido):
-        for pedido in self.pedidos_em_andamento:
-            if pedido.id == id_pedido:
-                self.pedidos_confirmados.append(pedido)
-                self.pedidos_em_andamento.remove(pedido)
+    def confirmar_pedido(self, pedido):
+        for p in self.pedidos_em_andamento:
+            if p.id == pedido.id:
+                self.pedidos_confirmados.append(p)
+                self.pedidos_em_andamento.remove(p)
                 return True
         return False
     
-    def cancelar_pedido(self, id_pedido):
-        for pedido in self.pedidos_em_andamento:
-            if pedido.id == id_pedido:
-                self.pedidos_em_andamento.remove(pedido)
+    def cancelar_pedido(self, pedido: Pedido):
+        for p in self.pedidos_em_andamento:
+            if p.id == pedido.id:
+                self.pedidos_em_andamento.remove(p)
                 return True
         return False
+    
+    def get_anuncio(self, anuncio: Anuncio):
+        for a in self.anuncios:
+            if a.id == anuncio.id:
+                return a
+        return None
     
     def to_dict(self):
         return json.dumps({

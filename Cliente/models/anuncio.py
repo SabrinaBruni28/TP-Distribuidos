@@ -1,10 +1,11 @@
 from models.produto import Produto
+from typing import Optional
 import json
 
 class Anuncio:
     def __init__(
             self, id: int = 0, preco: float = 0, quantidade_disponivel: int = 0, 
-            chave_pix:str = "", pausado: bool = False, produto: Produto = None
+            chave_pix:str = "", pausado: bool = False, produto: Optional[Produto] = None
         ):
         self.id = id 
         self.preco = preco
