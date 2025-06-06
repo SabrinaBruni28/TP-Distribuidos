@@ -93,7 +93,7 @@ class Banqueiro():
     def excluirProduto(self, obj: Produto):
         imagens_a_remover = []
         ans = 'erro'
-        pedidos = self.buscar(Pedido(produto = obj))
+        pedidos = self.buscar(Pedido(anuncio = obj))
         if pedidos:
             result = self.encontrar(obj)
             if isinstance(result, Produto):
@@ -110,7 +110,36 @@ class Banqueiro():
     def confirmarPedido(self, obj: Pedido):
         return self.__daoPedido.confirmarPedido(obj)
     
-    def retornarLoja(self, obj: Loja, minha=False):
+    def retornarLoja(self, obj: Loja):
+        loja = self.encontrar(obj)
+        if isinstance(loja, Loja):
+            dummy_produto = Produto(loja = loja)
+            produtos_da_loja = self.buscar(dummy_produto)
+
+            anuncios_da_loja = []
+            for produto in produtos_da_loja:
+                dummy_produto = Produto(id = produto.id)
+                dummy_anuncio = Anuncio(produto = dummy_produto)
+                anuncios_do_produto = self.buscar(dummy_anuncio)
+                for anuncio in anuncios_do_produto:
+                    if anuncio.pausado:
+                        anuncios_do_produto.remove(anuncio)
+                    else:
+                        anuncio.produto.nome = produto.nome
+                anuncios_da_loja.extend(anuncios_do_produto)
+            
+
+            loja.anuncios = anuncios_da_loja
+            loja.produtos = []
+            loja.pedidos_confirmados = []
+            loja.pedidos_em_andamento = []
+            
+            return loja
+        else:
+            return False #loja não encontrada
+    
+
+    def retornarMinhaLoja(self, obj: Loja):
         loja = self.encontrar(obj)
         if isinstance(loja, Loja):
             dummy_produto = Produto(loja = loja)
@@ -128,30 +157,20 @@ class Banqueiro():
             
             pedidos_confirmados = []
             pedidos_em_andamento = []
-            for produto in produtos_da_loja:
-                dummy_produto = Produto(id = produto.id)
-                dummy_pedido = Pedido(produto = dummy_produto)
-                pedidos_do_produto = self.buscar(dummy_pedido)
-                for pedido, confirmacao in pedidos_do_produto:
+            for anuncio in anuncios_da_loja:
+                dummy_anuncio = Anuncio(id = anuncio.id)
+                dummy_pedido = Pedido(anuncio= dummy_anuncio)
+                pedidos_do_anuncio = self.buscar(dummy_pedido)
+                for pedido, confirmacao in pedidos_do_anuncio:
                     if confirmacao:
                         pedidos_confirmados.append(pedido)
                     else:
                         pedidos_em_andamento.append(pedido)
             
-            print(loja)
-            for produto in produtos_da_loja:
-                print(produto)
-            for anuncio in anuncios_da_loja:
-                print(anuncio)
-            for pc in pedidos_confirmados:
-                print(pc)
-            for pa in pedidos_em_andamento:
-                print(pa)
             loja.anuncios = anuncios_da_loja
-            if minha:
-                loja.produtos = produtos_da_loja
-                loja.pedidos_confirmados = pedidos_confirmados
-                loja.pedidos_em_andamento = pedidos_em_andamento
+            loja.produtos = produtos_da_loja
+            loja.pedidos_confirmados = pedidos_confirmados
+            loja.pedidos_em_andamento = pedidos_em_andamento
             
             return loja
         else:

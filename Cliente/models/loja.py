@@ -7,8 +7,8 @@ import json
 class Loja:
     def __init__(
             self, id: int = 0, nome: str = "", imagem: str = "", 
-            produtos: Optional[Produto] = [], anuncios: Optional[Anuncio] = [], 
-            pedidos_confirmados: Optional[Pedido] = [], pedidos_em_andamento: Optional[Pedido] = []
+            produtos: list[Produto] = [], anuncios: list[Anuncio] = [], 
+            pedidos_confirmados: list[Pedido] = [], pedidos_em_andamento: list[Pedido] = []
         ):
         self.id = id
         self.nome = nome

@@ -5,7 +5,7 @@ import datetime, json
 
 class Pedido:
     def __init__(
-            self, id: int = 0, quantidade: int = 0, data: str = None, 
+            self, id: int = 0, quantidade: int = 0, data: str = "", 
             anuncio: Optional[Anuncio] = None, endereco: Optional[Endereco] = None
         ):
         self.id = id
@@ -15,7 +15,7 @@ class Pedido:
         self.endereco = endereco
 
     def calcular_total(self):
-        total = self.anuncio.preco * self.quantidade
+        total = self.anuncio.preco * self.quantidade if self.anuncio is not None else 0
         return total
     
     def to_dict(self):
