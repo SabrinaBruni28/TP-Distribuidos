@@ -378,7 +378,7 @@ class MarketplaceUI(QMainWindow):
 
         return tela
     
-    def tela_codigo_confirmacao(self):
+    def tela_codigo_confirmacao(self, id_confirmacao):
         tela = QWidget()
         layout_vertical = QVBoxLayout(tela)
 
@@ -399,7 +399,7 @@ class MarketplaceUI(QMainWindow):
         botao_confirmar = WidgetHelper.botao(
             nome="Confirmar", fonte=30,
             largura=500, altura=50,
-            acao=lambda: self.handler.confirmar_codigo(formulario)
+            acao=lambda: self.handler.confirmar_codigo(id_confirmacao, formulario)
         )
         layout_vertical.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignCenter)
 
@@ -1941,7 +1941,7 @@ class InterfaceHandler:
             atualizar_tela=False
         )
 
-    def confirmar_codigo(self, formulario: Formulario):
+    def confirmar_codigo(self, id_confirmacao, formulario: Formulario):
         erro = formulario.validar_tipos({"Código": int})
         if erro:
             formulario.exibir_erros()
@@ -1989,7 +1989,7 @@ class InterfaceHandler:
                     )
             # Executa:
             self.thread.executar(
-                requisicao=lambda: self.aplicacao.email_confirmacao(valores["Código"]),
+                requisicao=lambda: self.aplicacao.email_confirmacao(id_confirmacao, valores["Código"]),
                 acao=ao_confirmar_codigo,
                 atualizar_tela=False
             )
@@ -2004,7 +2004,7 @@ class InterfaceHandler:
             usuario = Usuario_Identificado.from_dict(valores)
             def ao_cadastrar(resposta):
                 if resposta[0]:
-                    self.view.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao)
+                    self.view.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao(resposta[0]))
 
                 elif resposta[1]:
                     erros = {}

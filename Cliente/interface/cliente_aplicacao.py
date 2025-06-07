@@ -68,8 +68,8 @@ class ClienteAplicacao():
             return False, resposta[1]
         return [resposta]
         
-    def email_confirmacao(self, codigo):
-        resposta = self.middleware.chamar_middleware("send", codigo)
+    def email_confirmacao(self, id_confirmacao, codigo):
+        resposta = self.middleware.chamar_middleware("send", id_confirmacao, codigo)
 
         if isinstance(resposta, dict):
             return True, resposta
