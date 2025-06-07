@@ -1,13 +1,14 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
+from cliente_middleware import UnixMiddlewareClient
 from models.usuario import Usuario, Usuario_Identificado
-from Cliente.interface.cliente_middleware import UnixMiddlewareClient
 from models.endereco import Endereco
 from models.anuncio import Anuncio
 from models.produto import Produto
 from models.pedido import Pedido
 from models.loja import Loja
+from utils import Utils
 import json
 
 class ClienteAplicacao():
@@ -15,11 +16,6 @@ class ClienteAplicacao():
         self.anuncios = []
         self.usuario = Usuario()
         self.middleware = UnixMiddlewareClient(ip, porta)
-
-    def divide_mensagem(self, stringMensagem):
-        if not stringMensagem:
-            return [""]
-        return [ws.strip() for ws in stringMensagem.split('|')]
     
     def logout(self):
         self.usuario = Usuario()
@@ -93,321 +89,244 @@ class ClienteAplicacao():
         return False, ""
         
     def login(self, usuario: Usuario_Identificado):
-        mensagem = f"login|{usuario.to_dict_login()}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        usuario_dict = usuario.to_dict_login()
+        resposta = self.middleware.chamar_middleware("logar", usuario_dict)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "ok":
-            return True, resposta[1]
-        
-        elif resposta[0] == "erro":
-            return False, resposta[1]
-        
-        return False, ""
+        if isinstance(resposta, dict):
+            return True, resposta
+
+        return False, str(resposta)
 
     def visualizar_anuncios(self):
-        mensagem = f"visualizar|todos_anuncios"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        return []
+        resposta = self.middleware.chamar_middleware("send")
 
-        quantidade = self.middleware.receive_size()
-        if self.is_inteiro(quantidade):
+        if resposta:
             anuncios = []
-            for i in range(quantidade):
-                resposta = self.divide_mensagem(self.middleware.receive())
-                if resposta[0] == "anuncios":
-                    anuncio = Anuncio.from_dict(resposta[1])
-                    anuncios.append(anuncio)
-                    imagem = anuncio.produto.imagens[0]
-                    if imagem:
-                        self.middleware.receive_image(path=f"uploads/{imagem}")
-                else:
-                    return False
+            for anuncio_dict in resposta:
+                anuncio = Anuncio.from_dict(anuncio_dict)
+                anuncios.append(anuncio)
+                imagem = anuncio.produto.imagens[0]
+                if imagem:
+                    imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                    Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncios
-        return False   
+        return False
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        mensagem = f"visualizar|anuncio|{anuncio.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", anuncio.id)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "anuncio":
-            anuncio = Anuncio.from_dict(resposta[1])
+        if isinstance(resposta, dict):
+            anuncio = Anuncio.from_dict(resposta)
             for imagem in anuncio.produto.imagens:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncio
         return False
     
     def visualizar_produto(self, produto: Produto):
-        mensagem = f"visualizar|produto|{produto.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", produto.id)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "produto":
-            produto = Produto.from_dict(resposta[1])
+        if isinstance(resposta, dict):
+            produto = Produto.from_dict(resposta)
             for imagem in produto.imagens:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, produto
         return False
     
     def visualizar_loja(self, loja: Loja):
-        mensagem = f"visualizar|loja|{loja.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", loja.id)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "loja":
-            loja = Loja.from_dict(resposta[1])
+        if isinstance(resposta, dict):
+            loja = Loja.from_dict(resposta)
             if loja.imagem:
-                self.middleware.receive_image(path=f"uploads/{loja.imagem}")
+                imagem_byte = self.middleware.chamar_middleware("send", loja.imagem)
+                Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
 
             lista_imagens = [anuncio.produto.imagens[0] for anuncio in loja.anuncios]
             for imagem in lista_imagens:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
-        mensagem = f"visualizar|minha_loja|{loja.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", loja.id)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "minha_loja":
-            loja = self.usuario.editar_loja(loja, Loja.from_dict(resposta[1]))
+        if isinstance(resposta, dict):
+            loja = self.usuario.editar_loja(loja, Loja.from_dict(resposta))
             lista_imagens = [produto.imagens[0] for produto in loja.produtos]
             for imagem in lista_imagens:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
     
     def visualizar_minhas_lojas(self):
-        mensagem = f"visualizar|minhas_lojas|{self.usuario.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", self.usuario.id)
 
-        quantidade = self.middleware.receive_size()
-        if self.is_inteiro(quantidade):
+        if resposta:
             lojas = []
-            for i in range(quantidade):
-                resposta = self.divide_mensagem(self.middleware.receive())
-                if resposta[0] == "minhas_lojas":
-                    loja = Loja.from_dict(resposta[1])
-                    lojas.append(loja)
-                    if loja.imagem:
-                        self.middleware.receive_image(path=f"uploads/{loja.imagem}")
-                else:
-                    return False
+            for loja_dict in resposta:
+                loja = Loja.from_dict(loja_dict)
+                lojas.append(loja)
+                if loja.imagem:
+                    imagem_byte = self.middleware.chamar_middleware("send", loja.imagem)
+                    Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
             return True, lojas
         return False
 
     def visualizar_meus_enderecos(self):
-        mensagem = f"visualizar|meus_enderecos|{self.usuario.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", self.usuario.id)
 
-        quantidade = self.middleware.receive_size()
-        if self.is_inteiro(quantidade):
+        if resposta:
             enderecos = []
-            for i in range(quantidade):
-                resposta = self.divide_mensagem(self.middleware.receive())
-                if resposta[0] == "meus_enderecos":
-                    enderecos.append(Endereco.from_dict(resposta[1]))
-                else:
-                    return False
+            for endereco_dict in resposta:
+                endereco = Endereco.from_dict(endereco_dict)
+                enderecos.append(endereco)
             return True, enderecos
         return False
     
     def visualizar_pedido(self, pedido: Pedido):
-        mensagem = f"visualizar|pedido|{pedido.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", pedido.id)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "pedido":
-            pedido = Pedido.from_dict(resposta[1])
+        if isinstance(resposta, dict):
+            pedido = Pedido.from_dict(resposta)
             for imagem in pedido.anuncio.produto.imagens:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, pedido
         return False
 
     def visualizar_meus_pedidos(self):
-        mensagem = f"visualizar|meus_pedidos|{self.usuario.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", self.usuario.id)
 
-        quantidade = self.middleware.receive_size()
-        if self.is_inteiro(quantidade):
+        if isinstance(resposta, dict):
             pedidos = []
-            for i in range(quantidade):
-                resposta = self.divide_mensagem(self.middleware.receive())
-                if resposta[0] == "meus_pedidos":
-                    pedidos.append(Pedido.from_dict(resposta[1]))
-                else:
-                    return False
+            for pedido_dict in resposta:
+                pedido = Pedido.from_dict(pedido_dict)
+                pedidos.append(pedido)
             return True, pedidos
         return False
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
-        mensagem = f"editar|anuncio|{json.dumps(novos_dados)}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", novos_dados)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "anuncio":
-            dict_resposta = json.loads(resposta[1])
-            anuncio.preco = dict_resposta.get("preco", anuncio.preco)
-            anuncio.quantidade_disponivel = dict_resposta.get("quantidade_disponivel", anuncio.quantidade_disponivel)
-            anuncio.chave_pix = dict_resposta.get("chave_pix", anuncio.chave_pix)
-            anuncio.pausado = dict_resposta.get("pausado", anuncio.pausado)
-
+        if isinstance(resposta, dict):
+            anuncio_dict = json.loads(resposta)
+            anuncio.preco = anuncio_dict.get("preco", anuncio.preco)
+            anuncio.quantidade_disponivel = anuncio_dict.get("quantidade_disponivel", anuncio.quantidade_disponivel)
+            anuncio.chave_pix = anuncio_dict.get("chave_pix", anuncio.chave_pix)
+            anuncio.pausado = anuncio_dict.get("pausado", anuncio.pausado)
             return True, anuncio
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
-        mensagem = f"editar|produto|{json.dumps(novos_dados)}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", novos_dados)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "produto":
-            produto = Produto.from_dict(resposta[1])
+        if isinstance(resposta, dict):
+            produto = Produto.from_dict(resposta)
             return True, produto
         return False
     
     def editar_loja(self, loja: Loja, novos_dados):
-        mensagem = f"editar|loja|{json.dumps(novos_dados)}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
+        imagem_byte = None
         editar_imagem = novos_dados.get("imagem", 0)
         if editar_imagem:
-            self.middleware.send_image(f"uploads/{editar_imagem}")
+            imagem_byte = Utils.image_to_byte(f"uploads/{editar_imagem}")
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "loja":
-            dict_resposta = json.loads(resposta[1])
-            loja.nome = dict_resposta.get("nome", loja.nome)
-            loja.imagem = dict_resposta.get("imagem", loja.imagem)
+        resposta = self.middleware.chamar_middleware("send", novos_dados, imagem_byte)
 
-            imagem = dict_resposta.get("imagem", 0)
+        if resposta:
+            loja_dict = json.loads(resposta[0])
+            loja.nome = loja_dict.get("nome", loja.nome)
+            loja.imagem = loja_dict.get("imagem", loja.imagem)
+
+            imagem = loja_dict.get("imagem", 0)
             if editar_imagem and imagem:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+                Utils.byte_to_image(resposta[1], f"uploads/{imagem}")
             return True, loja
         return False
     
     def editar_usuario(self, novos_dados):
-        mensagem = f"editar|usuario|{json.dumps(novos_dados)}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", novos_dados)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "usuario":
-            return [True]
+        if resposta:
+            return True, resposta
         
-        elif resposta[0] == "erro":
-            return False, resposta[1]
-        
-        return False, ""
+        return False, resposta
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
-        mensagem = f"editar|endereco|{json.dumps(novos_dados)}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", novos_dados)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "endereco":
-            endereco = Endereco.from_dict(resposta[1])
+        if resposta:
+            endereco = Endereco.from_dict(resposta)
             return True, endereco
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):
-        mensagem = f"criar|anuncio|{anuncio.to_dict_personalizado()}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", anuncio.to_dict_personalizado())
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "anuncio":
-            anuncio = Anuncio.from_dict(resposta[1])
+        if resposta:
+            anuncio = Anuncio.from_dict(resposta)
             return True, anuncio
         return False
     
     def criar_produto(self, produto: Produto):
-        mensagem = f"criar|produto|{produto.to_dict_personalizado()}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
+        imagens_byte = []
         for imagem in produto.imagens:
-            self.middleware.send_image(f"uploads/{imagem}")
+            imagens_byte.append(Utils.image_to_byte(f"uploads/{imagem}"))
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "produto":
-            produto_resposta = Produto.from_dict(resposta[1])
-            for imagem in produto_resposta.imagens:
-                self.middleware.receive_image(path=f"uploads/{imagem}")
+        resposta = self.middleware.chamar_middleware("send", produto.to_dict_personalizado(), imagens_byte)
+        if resposta:
+            produto_resposta = Produto.from_dict(resposta[0])
+            for i, imagem_byte in enumerate(resposta[1]):
+                imagem = produto.imagens[i]
+                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, produto_resposta
         return False
     
     def criar_loja(self, loja: Loja):
-        mensagem = f"criar|loja|{self.usuario.id}|{loja.to_dict_personalizado()}"
-        self.middleware.send(mensagem)
+        imagem_byte = None
         if loja.imagem:
-            self.middleware.send_image(f"uploads/{loja.imagem}")
-        
-        self.middleware.limpar_buffer_middleware()
+            imagem_byte = Utils.image_to_byte(f"uploads/{loja.imagem}")
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "loja":
-            loja = Loja.from_dict(resposta[1])
+        resposta = self.middleware.chamar_middleware("send", loja.to_dict_personalizado(), imagem_byte)
+
+        if resposta:
+            loja = Loja.from_dict(resposta[0])
             if loja.imagem:
-                self.middleware.receive_image(path=f"uploads/{loja.imagem}")
+                Utils.byte_to_image(resposta[1], f"uploads/{loja.imagem}")
             return True, loja
         return False
     
     def criar_pedido(self, pedido: Pedido):
-        mensagem = f"criar|pedido|{self.usuario.id}|{pedido.to_dict_personalizado()}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", pedido.to_dict_personalizado())
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "pedido":
-            return True, resposta[1]
+        if resposta:
+            return True, resposta
         return False
     
     def criar_endereco(self, endereco: Endereco):
-        mensagem = f"criar|endereco|{self.usuario.id}|{endereco.to_dict_personalizado()}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", endereco.to_dict_personalizado())
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "endereco":
-            return True, endereco
+        if resposta:
+            return True, resposta
         return False
 
     def criar_imagem(self, produto: Produto, imagem):
-        mensagem = f"criar|imagem|{produto.id}"
-        self.middleware.send(mensagem)
-        self.middleware.send_image(f"uploads/{imagem}")
-        self.middleware.limpar_buffer_middleware()
+        imagem_byte = Utils.image_to_byte(f"uploads/{imagem}")
+        resposta = self.middleware.chamar_middleware("send", produto.id, imagem_byte)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "imagem":
-            self.middleware.receive_image(path=f"uploads/{resposta[1]}")
-            return True, imagem
+        if resposta:
+            Utils.byte_to_image(resposta[1], f"uploads/{resposta[0]}")
+            return True, resposta[0]
         return False
     
     def excluir_anuncio(self, anuncio: Anuncio):
-        mensagem = f"excluir|anuncio|{anuncio.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "anuncio":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", anuncio.id)
+        return resposta
     
     def excluir_produto(self, produto: Produto):
         mensagem = f"excluir|produto|{produto.id}"

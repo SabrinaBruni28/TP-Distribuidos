@@ -70,7 +70,6 @@ class MarketplaceUI(QMainWindow):
         resposta = dialogo.exec()
 
         if resposta == QDialog.DialogCode.Accepted:
-            self.handler.aplicacao.socket.close()
             Utils.excluir_arquivos_pasta("uploads")
             event.accept()
         else:

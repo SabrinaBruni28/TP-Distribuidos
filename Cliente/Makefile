@@ -1,5 +1,5 @@
 # Definindo valores padrão
-IP ?= "localhost"
+IP ?= "192.168.1.4"
 PORTA ?= 5000
 
 criar_ambiente:
@@ -13,7 +13,7 @@ instalar_bibliotecas:
 	python3 -m pip install --upgrade pip
 
 cliente:
-	@echo "Iniciando processo cliente"
+	@echo "Iniciando processo Cliente"
 	@echo "IP: $(IP)"
 	@echo "PORTA: $(PORTA)"
 	@python3 interface/interface.py "$(IP)" "$(PORTA)"

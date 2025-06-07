@@ -17,14 +17,14 @@ class Utils:
 
     @staticmethod
     def image_to_byte(image_path: str):
-        caminho = Utils.caminho_imagem('uploads/' + image_path)
+        caminho = Utils.caminho_imagem(image_path)
         with open(caminho, 'rb') as f:
             data = f.read()
         return data
 
     @staticmethod
     def byte_to_image(image_bytes, path='received_image.png'):
-        caminho = Utils.caminho_imagem('uploads/' + path)
+        caminho = Utils.caminho_imagem(path)
         with open(caminho, 'wb') as f:
             f.write(image_bytes)
         return path

@@ -104,10 +104,10 @@ class Usuario_Identificado(Usuario):
         })
     
     def to_dict_login(self):
-        return json.dumps({
+        return {
             "email": self.email,
             "senha": self.senha,
-        })
+        }
     
     @classmethod
     def from_dict(cls, data):
