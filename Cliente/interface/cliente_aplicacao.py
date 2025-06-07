@@ -61,32 +61,19 @@ class ClienteAplicacao():
         return False
 
     def cadastrar(self, usuario: Usuario_Identificado):
-        mensagem = f"cadastramento|{usuario.to_dict_cadastramento()}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        usuario_dict = usuario.to_dict_cadastramento()
+        resposta = self.middleware.chamar_middleware("send", usuario_dict)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "email_confirmacao":
-            return [True]
-        
-        elif resposta[0] == "erro":
+        if isinstance(resposta, list):
             return False, resposta[1]
-
-        return False, ""
+        return [resposta]
         
     def email_confirmacao(self, codigo):
-        mensagem = f"codigo|{codigo}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
+        resposta = self.middleware.chamar_middleware("send", codigo)
 
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "ok":
-            return True, resposta[1]
-        
-        elif resposta[0] == "erro":
-            return False, resposta[1]
-        
-        return False, ""
+        if isinstance(resposta, dict):
+            return True, resposta
+        return False, resposta
         
     def login(self, usuario: Usuario_Identificado):
         usuario_dict = usuario.to_dict_login()
@@ -94,7 +81,6 @@ class ClienteAplicacao():
 
         if isinstance(resposta, dict):
             return True, resposta
-
         return False, str(resposta)
 
     def visualizar_anuncios(self):
@@ -254,7 +240,6 @@ class ClienteAplicacao():
 
         if resposta:
             return True, resposta
-        
         return False, resposta
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
@@ -329,61 +314,25 @@ class ClienteAplicacao():
         return resposta
     
     def excluir_produto(self, produto: Produto):
-        mensagem = f"excluir|produto|{produto.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "produto":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", produto.id)
+        return resposta
     
     def excluir_loja(self, loja: Loja):
-        mensagem = f"excluir|loja|{loja.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "loja":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", loja.id)
+        return resposta
     
     def excluir_endereco(self, endereco: Endereco):
-        mensagem = f"excluir|endereco|{endereco.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "endereco":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", endereco.id)
+        return resposta
     
     def excluir_imagem(self, produto: Produto, imagem):
-        mensagem = f"excluir|imagem|{imagem}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "imagem":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", produto.id, imagem)
+        return resposta
 
     def confirmar_pedido(self, pedido: Pedido):
-        mensagem = f"pedido|confirmar|{pedido.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "ok":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", pedido.id)
+        return resposta
     
     def cancelar_pedido(self, pedido: Pedido):
-        mensagem = f"pedido|cancelar|{pedido.id}"
-        self.middleware.send(mensagem)
-        self.middleware.limpar_buffer_middleware()
-
-        resposta = self.divide_mensagem(self.middleware.receive())
-        if resposta[0] == "ok":
-            return True
-        return False
+        resposta = self.middleware.chamar_middleware("send", pedido.id)
+        return resposta
