@@ -16,8 +16,18 @@ class Utils:
         return os.path.join(CAMINHO_BASE, path)
 
     @staticmethod
-    def criar_dict_de_atributos(obj, atributos: list):
-        return {attr: getattr(obj, attr, None) for attr in atributos}
+    def image_to_byte(image_path: str):
+        caminho = Utils.caminho_imagem('uploads/' + image_path)
+        with open(caminho, 'rb') as f:
+            data = f.read()
+        return data
+
+    @staticmethod
+    def byte_to_image(image_bytes, path='received_image.png'):
+        caminho = Utils.caminho_imagem('uploads/' + path)
+        with open(caminho, 'wb') as f:
+            f.write(image_bytes)
+        return path
     
     @staticmethod
     def check_cpf(cpf: str) -> bool:
