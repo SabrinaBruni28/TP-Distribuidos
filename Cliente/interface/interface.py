@@ -2013,9 +2013,9 @@ class InterfaceHandler:
 
                 elif isinstance(resposta, list):
                     erros = {}
-                    if "cpf" in resposta[1]:
+                    if "cpf" in resposta:
                         erros["CPF"] = "CPF já cadastrado!"
-                    if "email" in resposta[1]:
+                    if "email" in resposta:
                         erros["Email"] = "Email já cadastrado!"
                     if erros:
                         formulario.definir_erros_especificos(erros)
