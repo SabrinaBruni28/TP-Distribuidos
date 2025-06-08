@@ -147,8 +147,8 @@ class Utils:
         if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", chave):
             return True
 
-        # Telefone no formato E.164 (ex: +5511999999999)
-        if re.fullmatch(r"\+[1-9]\d{1,14}$", chave):
+        # Telefone no formato E.164 (ex: (##) ####-#### / (##) #####-####)
+        if re.fullmatch(r"\(\d{2}\) \d{4,5}-\d{4}", chave):
             return True
 
         # Chave aleatória (UUID v4)

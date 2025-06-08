@@ -84,7 +84,7 @@ class Usuario_Identificado(Usuario):
         return None
     
     def to_dict(self):
-        return json.dumps({
+        return {
             "id": self.id,
             "nome": self.nome,
             "cpf": self.cpf,
@@ -93,15 +93,15 @@ class Usuario_Identificado(Usuario):
             "lojas": [loja.to_dict() for loja in self.lojas] if self.lojas else [],
             "enderecos": [endereco.to_dict() for endereco in self.enderecos] if self.enderecos else [],
             "pedidos": [pedido.to_dict() for pedido in self.pedidos] if self.pedidos else []
-        })
+        }
 
     def to_dict_cadastramento(self):
-        return json.dumps({
+        return {
             "nome": self.nome,
             "cpf": self.cpf,
             "email": self.email,
             "senha": self.senha,
-        })
+        }
     
     def to_dict_login(self):
         return {

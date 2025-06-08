@@ -1,8 +1,8 @@
 import sys, os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from cliente_middleware import UnixMiddlewareClient
 from models.usuario import Usuario, Usuario_Identificado
+from cliente_middleware import UnixMiddlewareClient
 from models.endereco import Endereco
 from models.anuncio import Anuncio
 from models.produto import Produto
@@ -62,14 +62,11 @@ class ClienteAplicacao():
 
     def cadastrar(self, usuario: Usuario_Identificado):
         usuario_dict = usuario.to_dict_cadastramento()
-        resposta = self.middleware.chamar_middleware("send", usuario_dict)
-
-        if isinstance(resposta, list):
-            return False, resposta[1]
-        return [resposta]
+        resposta = self.middleware.chamar_middleware("cadastrar", usuario_dict)
+        return resposta
         
     def email_confirmacao(self, id_confirmacao, codigo):
-        resposta = self.middleware.chamar_middleware("send", id_confirmacao, codigo)
+        resposta = self.middleware.chamar_middleware("codigo", id_confirmacao, codigo)
 
         if isinstance(resposta, dict):
             return True, resposta
@@ -94,7 +91,7 @@ class ClienteAplicacao():
                 anuncios.append(anuncio)
                 imagem = anuncio.produto.imagens[0]
                 if imagem:
-                    imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                    imagem_byte = self.middleware.chamar_middleware("send", "produto", imagem)
                     Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncios
         return False
@@ -105,7 +102,7 @@ class ClienteAplicacao():
         if isinstance(resposta, dict):
             anuncio = Anuncio.from_dict(resposta)
             for imagem in anuncio.produto.imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                imagem_byte = self.middleware.chamar_middleware("send", "produto", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncio
         return False
@@ -116,7 +113,7 @@ class ClienteAplicacao():
         if isinstance(resposta, dict):
             produto = Produto.from_dict(resposta)
             for imagem in produto.imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                imagem_byte = self.middleware.chamar_middleware("send", "produto", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, produto
         return False
@@ -132,7 +129,7 @@ class ClienteAplicacao():
 
             lista_imagens = [anuncio.produto.imagens[0] for anuncio in loja.anuncios]
             for imagem in lista_imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                imagem_byte = self.middleware.chamar_middleware("send", "loja", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
@@ -144,7 +141,7 @@ class ClienteAplicacao():
             loja = self.usuario.editar_loja(loja, Loja.from_dict(resposta))
             lista_imagens = [produto.imagens[0] for produto in loja.produtos]
             for imagem in lista_imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                imagem_byte = self.middleware.chamar_middleware("send", "loja", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
@@ -158,7 +155,7 @@ class ClienteAplicacao():
                 loja = Loja.from_dict(loja_dict)
                 lojas.append(loja)
                 if loja.imagem:
-                    imagem_byte = self.middleware.chamar_middleware("send", loja.imagem)
+                    imagem_byte = self.middleware.chamar_middleware("send", "loja", loja.imagem)
                     Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
             return True, lojas
         return False
@@ -237,10 +234,7 @@ class ClienteAplicacao():
     
     def editar_usuario(self, novos_dados):
         resposta = self.middleware.chamar_middleware("send", novos_dados)
-
-        if resposta:
-            return True, resposta
-        return False, resposta
+        return bool(resposta), resposta
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
         resposta = self.middleware.chamar_middleware("send", novos_dados)

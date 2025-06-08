@@ -95,7 +95,7 @@ class Loja:
         return None
     
     def to_dict(self):
-        return json.dumps({
+        return {
             "id": self.id,
             "nome": self.nome,
             "imagem": self.imagem,
@@ -103,13 +103,13 @@ class Loja:
             "anuncios": [anuncio.produto.nome for anuncio in self.anuncios] if self.anuncios else [],
             "pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados] if self.pedidos_confirmados else [],
             "pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento] if self.pedidos_em_andamento else [],
-        }) 
+        }
     
     def to_dict_personalizado(self):
-        return json.dumps({
+        return {
             "nome": self.nome,
             "imagem": self.imagem if self.imagem else "",
-        })
+        }
     
     @classmethod
     def from_dict(cls, data):

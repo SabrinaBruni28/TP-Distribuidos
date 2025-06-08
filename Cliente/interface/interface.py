@@ -2003,10 +2003,15 @@ class InterfaceHandler:
             valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
             usuario = Usuario_Identificado.from_dict(valores)
             def ao_cadastrar(resposta):
-                if resposta[0]:
-                    self.view.abrir_tela(self.stack, self.parent.tela_codigo_confirmacao(resposta[0]))
+                if not resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao realizar cadastramento!"
+                    )
 
-                elif resposta[1]:
+                elif isinstance(resposta, list):
                     erros = {}
                     if "cpf" in resposta[1]:
                         erros["CPF"] = "CPF já cadastrado!"
@@ -2015,13 +2020,10 @@ class InterfaceHandler:
                     if erros:
                         formulario.definir_erros_especificos(erros)
                         formulario.exibir_erros()
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent,
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao realizar cadastramento!"
-                    )
+
+                elif resposta:
+                    self.view.abrir_tela(self.stack, lambda: self.parent.tela_codigo_confirmacao(resposta))
+
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.cadastrar(usuario),
@@ -2221,7 +2223,7 @@ class InterfaceHandler:
             formulario.exibir_erros()
 
         elif not Utils.validar_chave_pix(valores["chave_pix"]):
-            formulario.definir_erros_especificos({"Chave Pix": "Chave pix inválida!"})
+            formulario.definir_erros_especificos({"Chave Pix": "Chave pix inválida!\nExemplo: (xx) xxxxx-xxxx, xxx.xxx.xxx-xx, xx.xxx.xxx/xxxx-xx, usuario@exemplo.com, ou chave aleatória"})
             formulario.exibir_erros()
 
         else:
