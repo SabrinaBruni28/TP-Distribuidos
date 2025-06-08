@@ -5,12 +5,14 @@ from Operacoes import server_operation as op
 from Operacoes import operacao
 from Operacoes import callback as cb
 from Estruturas.mensagem import Mensagem
+from Estruturas.fila_de_mensagens2 import FilaDeMensagensV2
 
 #from Estruturas.fila_de_mensagens import FilaDeMensagens
 
-class Login(operacao.Operacao):
-    def __init__(self, mensagem, fila_mensagens):
-        super().__init__(mensagem, fila_mensagens)
+class Login():
+    def __init__(self, mensagem, fila_mensagens: FilaDeMensagensV2):
+        self.mensagem = mensagem
+        self.fila = fila_mensagens
 
     def run(self):
         return self.getOperacao()
@@ -34,4 +36,5 @@ class Login(operacao.Operacao):
 
         print(f"[Servidor][Login] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao, dados, reqID)
+
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)

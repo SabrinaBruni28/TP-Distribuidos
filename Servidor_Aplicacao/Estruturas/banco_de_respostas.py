@@ -26,6 +26,8 @@ class BancoDeRespostas:
             event = threading.Event()
             self._events[id] = event
 
+        print(f"[Banco de Respostas] Requisição criada.")
+
     # Essa função aqui é para ser chamada quando o servidor de aplicação
     # estiver esperando uma resposta do banco de dados.
     def esperaResposta(self, id):
@@ -36,6 +38,7 @@ class BancoDeRespostas:
                 raise KeyError(f"Requisição com ID {id} não existe. Esperando por uma resposta que não vai chegar. Há! Olha minha vida de parquera aí...")
             
         # Espera a notificação de que uma nova resposta do banco de dados chegou
+        print(f"[Banco de Resposta] Esperando resposta.")
         event.wait()
         
         # Retorna a resposta do servidor
@@ -44,6 +47,7 @@ class BancoDeRespostas:
 
             self._events.pop(id)
 
+            print(f"[Banco de Respostas] Retornando resposta do banco: {resposta}")
             return resposta
         
     def guardarResposta(self, id, resposta):
@@ -55,9 +59,11 @@ class BancoDeRespostas:
                 self._respostas[id] = resposta
                 return
             
+            print(f"[Banco de Respostas] Resposta guardada na tabela de respostas.")
             # Guarda a resposta na tabela de respostas
             self._respostas[id] = resposta
             event = self._events[id]
 
         # Notifica que uma resposta chegou
+        print(f"[Banco de Respostas] Servidor notificado.")
         event.set()

@@ -1,15 +1,18 @@
 import socket
 import threading
 import logging
+import json
 import Pyro5.api
 import Pyro5.errors
 from Estruturas.mensagem import Mensagem
 from Estruturas.dados_confirmacao import DadosTemporariosConfirmacao
 from Estruturas.banco_de_respostas import BancoDeRespostas
 from Operacoes import server_operation as op
+from Operacoes import thread_email as correio
 from queue import Queue, Empty
 from Operacoes import callback as cb
 from Operacoes import imagem as img
+
 
 # A Fila de Mensagens, estrutura da comunicação do nosso sistema.
 # A comunicação do sistema é efetivamente híbrida
@@ -19,8 +22,7 @@ class FilaDeMensagensV2(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
         self._fila = Queue()
-        self._respostas = BancoDeRespostas
-        self._respostas.start()
+        self._respostas = BancoDeRespostas()
         self.dadosTemp = DadosTemporariosConfirmacao()
         self.bancoURI = None
 
@@ -32,7 +34,7 @@ class FilaDeMensagensV2(threading.Thread):
 
     def desenfileira(self):
         try:
-            return self._fila.get()
+            return self._fila.get(timeout=60)
         except Empty:
             return None
     
@@ -41,18 +43,23 @@ class FilaDeMensagensV2(threading.Thread):
     # TODO: Implementar a estratégia antipooling do Banco de Respostas aqui também.
     def run(self):
         while True:
+            self.dadosTemp.limpar_expirados()
+            requisicao_dados = self.desenfileira()
+
+            if requisicao_dados is None:
+                continue  # Nada na fila, mas já limpamos os expirados
+
             try:
-                self.dadosTemp.limpar_expirados()
-                requisicao, dados, id = self.desenfileira()
+                requisicao, dados, id = requisicao_dados
             except ValueError:
                 print("[Fila de Mensagens] Erro: tupla mal formada na fila.")
                 continue
 
             if requisicao and dados and id:
                 self.fazRequisicaoAoBanco(requisicao, dados, id)
-
             else:
                 print("[Fila de Mensagens] Erro ao obter requisição, dados ou id.")
+
 
     # O enviaAoBanco, agora, invoca um método do banco de dados. 
     # Achei o nome fazRequisicao mais coerente pro funcionamento de agora.
@@ -64,11 +71,11 @@ class FilaDeMensagensV2(threading.Thread):
             if self.bancoURI is None:
                 self.conectaBanco()
 
+            # TODO: Mudar esse comentário
             # Aqui chamo a função do banco correspondente usando Pyro5.
             # Imagino que vou ter que fazer uma função aqui que decide a invocação certa
             # com base na requisição.
-            #TODO: Comunicação com o Banco usando Pyro5
-            respostaBanco = None
+            respostaBanco = self._decisorFila(requisicao, dados, id)
 
             # Depois de receber a resposta, guarda ela e avisa o servidor.
             # Aí o cliente ligado à essa requisição específica encontra a resposta.
@@ -79,11 +86,208 @@ class FilaDeMensagensV2(threading.Thread):
             self.bancoURI = None
             self.conectaBanco()
 
+    def _decisorFila(self, requisicao, dados, id):
+        match requisicao:
+            case "login":
+                return self._login(dados, id)
+            
+            case "cadastramento":
+                return self._cadastramento(dados, id)
+            
+            case "codigo":
+                return self._codigo(dados, id)
+            
+            case "visualizar_anuncios":
+                return self._visualizarAnuncios(dados, id)
+            
+            case "visualizar_anuncio":
+                return self._visualizarAnuncio(dados, id)
+            
+            case "visualizar_produto":
+                return self._visualizarProduto(dados, id)
+            
+            case "visualizar_loja":
+                return self._visualizarLoja(dados, id)
+            
+            case "visualizar_minha_loja":
+                return self._visualizarMinhaLoja(dados, id)
+            
+            case "visualizar_minhas_lojas":
+                return self._visualizarMinhasLojas(dados, id)
+            
+            case "visualizar_meus_enderecos":
+                return self._visualizarMeusEnderecos(dados, id)
+            
+            case "visualizar_pedido":
+                return self._visualizarPedido(dados, id)
+            
+            case "visualizar_meus_pedidos":
+                return self._visualizarMeusPedidos(dados, id)
+            
+            case "editar_anuncio":
+                return self._editarAnuncio(dados, id)
+            
+            case "editar_produto":
+                return self._editarProduto(dados, id)
+            
+            case "editar_loja":
+                return self._editarLoja(dados, id)
+            
+            case "editar_endereco":
+                return self._editarEndereco(dados, id)
+            
+            case "editar_usuario":
+                return self._editarUsuario(dados, id)
+            
+            case "criar_anuncio":
+                return self._criarAnuncio(dados, id)
+            
+            case "criar_produtos":
+                return self._criarProdutos(dados, id)
+            
+            case "criar_loja":
+                return self._criarLoja(dados, id)
+            
+            case "criar_pedido":
+                return self._criarPedido(dados, id)
+            
+            case "criar_endereco":
+                return self._criarEndereco(dados, id)
+            
+            case "criar_imagem":
+                return self._criarImagem(dados, id)
+            
+            case "excluir_anuncio":
+                return self._excluirAnuncio(dados, id)
+            
+            case "excluir_produto":
+                return self._excluirProduto(dados, id)
+            
+            case "excluir_loja":
+                return self._excluirLoja(dados, id)
+            
+            case "excluir_endereco":
+                return self._excluirEndereco(dados, id)
+            
+            case "excluir_imagem":
+                return self._excluirImagem(dados, id)
+            
+            case "confirmar_pedido":
+                return self._confirmarPedido(dados, id)
+            
+            case "cancelar_pedido":
+                return self._cancelarPedido(dados, id)
+            
+            case _:
+                pass
+
+
+    def _login(self, dados, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Login] Chamando função de login do Banco de Dados.")
+            return banco.loginUsuario(dados)
+            
+    def _cadastramento(self, dados, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Cadastramento] Chamando função de conferir usuário do Banco de Dados.")
+            respostaBanco = banco.confereUsuario(dados)
+
+            if (respostaBanco is True):
+                print("[Fila de Mensagens][Cadastramento] ")
+                emailCliente = dados.get("email")
+                print(f"[Fila de Mensagens][Cadastramento] Email: {emailCliente}")
+
+                email = correio.ThreadEmail("confirmacao cadastro", emailCliente)
+                email.start()
+
+                codigoConfirmacao = str(email.codigo)
+                print(f"[Fila de Mensagens][Cadastramento] Código de confirmação enviado: {codigoConfirmacao}")
+
+                self.dadosTemp.armazenar(id, codigoConfirmacao, dados)
+
+                print("[Fila de Mensagens][Cadastramento] Esperando confirmação de email do cliente...")
+                return id
+            
+            elif (isinstance(respostaBanco, list)):
+                return respostaBanco
+            
+    def _codigo(self, dados, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Cadastramento][Código] Chamando função de criar usuário do Banco de Dados.")
+            return banco.criarUsuario(dados)
+
+    def _visualizarAnuncios(self, dados, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Todos os Anúncios] Chamando função de visualizar todos os anúncios do Banco de Dados.")
+            return banco.retornarAnuncios()
+
+    def _visualizarAnuncio(self, dados, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Anúncio] Chamando função de visualizar anúncio do Banco de Dados.")
+            return banco.retornarAnuncio()
+
+    def _visualizarProduto(self, dados, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarProduto()
+
+    def _visualizarLoja(self, dados, id):
+        pass
+    def  _visualizarMinhaLoja(self, dados, id):
+        pass
+    def _visualizarMinhasLojas(self, dados, id):
+        pass
+    def _visualizarMeusEnderecos(self, dados, id):
+        pass
+    def _visualizarPedido(self, dados, id):
+        pass
+    def _visualizarMeusPedidos(self, dados, id):
+        pass
+    def _editarAnuncio(self, dados, id):
+        pass
+    def _editarProduto(self, dados, id):
+        pass
+    def _editarLoja(self, dados, id):
+        pass
+    def _editarEndereco(self, dados, id):
+        pass
+    def _editarUsuario(self, dados, id):
+        pass
+    def _criarAnuncio(self, dados, id):
+        pass
+    def _criarProdutos(self, dados, id):
+        pass
+    def _criarLoja(self, dados, id):
+        pass
+    def _criarPedido(self, dados, id):
+        pass
+    def _criarEndereco(self, dados, id):
+        pass
+    def _criarImagem(self, dados, id):
+        pass
+    def _excluirAnuncio(self, dados, id):
+        pass
+    def _excluirProduto(self, dados, id):
+        pass
+    def _excluirLoja(self, dados, id):
+        pass
+    def _excluirEndereco(self, dados, id):
+        pass
+    def _excluirImagem(self, dados, id):
+        pass
+    def _confirmarPedido(self, dados, id):
+        pass
+    def _cancelarPedido(self, dados, id):
+        pass
+
     def conectaBanco(self):
         print("[Fila de Mensagens] Conectando ao Banco de Dados via Pyro5...")
-        self.bancoURI = Pyro5.api.Proxy("PROXYNAME:Caldeirao.database")
+        ns = Pyro5.api.locate_ns(host='192.168.1.4', port=5000)
+        print("[Fila de Mensagens] Tentando fazer o lookup.")
+        self.bancoURI = ns.lookup("Caldeirao:servicos.banqueiro")
+        print(f"[Fila de Mensagens] URI do Banco de Dados: {self.bancoURI}")
 
-    def esperaRespostaDoBancoDeRespostas(self, id):
+    def esperarRespostaDoBancoDeRespostas(self, id):
         return self._respostas.esperaResposta(id)
     
     def registraRequisicao(self, id):

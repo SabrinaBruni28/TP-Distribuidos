@@ -6,21 +6,18 @@ from Operacoes import operacao
 from Estruturas.mensagem import Mensagem
 
 class Visualizar(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
-
+    def __init__(self, operacao, fila_mensagens):
+        self.tipoOperacao = operacao
+        self.fila = fila_mensagens
+        
     def run(self):
         self.getOperacao()
 
     def getOperacao(self):
-        if self.mensagemCliente.tamanho < 3:
-            self.todosAnuncios()
-
-        else:
-            self.decisor()
+        self.decisor()
 
     def decisor(self):
-        operacao = self.mensagemCliente.camposMensagem[1]
+        operacao = self.tipoOperacao
 
         match operacao:
             case "todos_anuncios":
@@ -55,10 +52,8 @@ class Visualizar(operacao.Operacao):
 
     def todosAnuncios(self):
         print("[Servidor][Visualizar] Operação de visualizar todos os anúncios recebida.")
-        mensagemServidor = Mensagem.produtorMensagem("retornar | anuncios")
-
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarTodosAnunciosCallback, self.conexaoCliente, "visualizar")
+        
+        reqID = op.gerarID()
 
     def anuncio(self):
         print("[Servidor][Visualizar] Operação de visualizar anúncio recebida.")

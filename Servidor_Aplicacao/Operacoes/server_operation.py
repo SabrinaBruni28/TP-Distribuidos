@@ -24,7 +24,25 @@ def codifica(mensagemEmString: str):
 def carrega(resposta):
     return resposta.decode("utf-8")
 
+def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
+        if resposta[0] == "ok":
+            emailCliente = dadosJson.get("email")
+            print(f"[SignupHandler] Email: {emailCliente}")
+            email = correio.ThreadEmail("confirmacao cadastro", emailCliente)            
+            email.start()
 
+            codigoConfirmacao = str(email.codigo)
+
+            fila.dadosTemp.armazenar(cliente, codigoConfirmacao, dadosJson)
+
+            mensagemAoCliente = Mensagem.produtorMensagem(f"email_confirmacao")
+            print("[Servidor] Esperando confirmação de email do cliente...")
+
+        else:
+            mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {json.dumps(dadosJson)}")
+            print("[Servidor][Cadastramento] Reportando erro de cadastro...")
+
+        op.enviaMensagem(cliente, mensagemAoCliente)
 
 def fazMensagemServidor(string):
     stringMensagemServidor = codifica(string)

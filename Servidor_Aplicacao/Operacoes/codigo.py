@@ -5,8 +5,9 @@ from Estruturas.mensagem import Mensagem
 import json
 
 class Codigo(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
+    def __init__(self, mensagem, fila_mensagens):
+        self.mensagem = mensagem
+        self.fila = fila_mensagens
 
     def run(self):
         self.getOperacao()
@@ -14,22 +15,28 @@ class Codigo(operacao.Operacao):
     def getOperacao(self):
         self.codigo()
 
-    def codigo(self):
+    def codigo(self, idCliente, codigo):
         from Estruturas.mensagem import Mensagem
         print("[Servidor][Código] Código recebido.")
-
-        codigoEnviadoCliente = self.mensagemCliente.camposMensagem[1]
         
-        status, dados = self.fila.dadosTemp.verificarCodigo(self.conexaoCliente, codigoEnviadoCliente)
+        status, dados = self.fila.dadosTemp.verificarCodigo(idCliente, codigo)
 
-        self.decisorCodigo(status, dados)
+        print(f"[Servidor][Código] Código que o cliente enviou: {codigo}")
+        print(f"[Servidor][Código] ID do código: {idCliente}")
+        return self.decisorCodigo(status, dados)
 
     def decisorCodigo(self, status, dados):
         if status == "ok":
-            dadosJson = json.dumps(dados)
-            mensagemServidor = Mensagem.produtorMensagem(f"criar | usuario | {dadosJson}")
-            self.fila.enfileira(mensagemServidor, cb.codigoCallback, self.conexaoCliente, tipo="codigo")
+            print("[Servidor][Código] Código confirmado.")
+            reqID = op.gerarID()
+
+            self.fila.registraRequisicao(reqID)
+
+            print(f"[Servidor][Código] Enviando requisição para a fila...")
+            self.fila.enfileira(f"codigo", dados, reqID)
+
+            return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
         elif status == "erro":
-            mensagemAoCliente = Mensagem.produtorMensagem(f"{status} | {dados}")
-            op.enviaMensagem(self.conexaoCliente, mensagemAoCliente)
+            print("[Servidor][Código] Código inválido. Retornando ao cliente.")
+            return dados
