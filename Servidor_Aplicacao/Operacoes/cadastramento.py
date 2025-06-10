@@ -10,8 +10,7 @@ from Estruturas.mensagem import Mensagem
 #from Estruturas.fila_de_mensagens import FilaDeMensagens
 
 class Cadastramento(operacao.Operacao):
-    def __init__(self, mensagem, fila_mensagens):
-        self.mensagem = mensagem
+    def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
     def cadastrar(self, dados):

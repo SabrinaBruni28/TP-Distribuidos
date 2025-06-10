@@ -5,8 +5,7 @@ from Estruturas.mensagem import Mensagem
 import json
 
 class Codigo(operacao.Operacao):
-    def __init__(self, mensagem, fila_mensagens):
-        self.mensagem = mensagem
+    def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
     def run(self, idCliente, codigo):

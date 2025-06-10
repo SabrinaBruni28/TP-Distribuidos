@@ -21,6 +21,11 @@ from queue import Queue, Empty
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
+# Esse wraper aqui é equivalente a ficar usando try: 
+#                                                   função
+#                                               exception:
+#                                                   return False
+# Fiz para a fachada ali ficar mais limpa
 def RetornaCorretamenteOuFalse(funcao):
     def wrapper(*args, **kwargs):
         try:
@@ -39,21 +44,55 @@ class ServicosServidorAplicacao:
 
     @RetornaCorretamenteOuFalse
     def logar(self, dados):
-        return Login(mensagem=dados, fila_mensagens=self.filaDeMensagens).logar(dados)
+        return Login(self.filaDeMensagens).logar(dados)
     
     @RetornaCorretamenteOuFalse
     def cadastrar(self, dados):
-        return Cadastramento(mensagem=dados, fila_mensagens=self.filaDeMensagens).cadastrar(dados)
+        return Cadastramento(self.filaDeMensagens).cadastrar(dados)
     
     @RetornaCorretamenteOuFalse
     def codigo(self, codigo, id):
-        return Codigo(mensagem=codigo, fila_mensagens=self.filaDeMensagens).codigo(codigo, id)
+        return Codigo(self.filaDeMensagens).codigo(codigo, id)
     
     @RetornaCorretamenteOuFalse
     def visualizarAnuncios(self):
-        return Visualizar(operacao="todos_anuncios", fila_mensagens=self.filaDeMensagens).run()
+        return Visualizar(self.filaDeMensagens).todosAnuncios()
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarAnuncio(self, idAnuncio):
+        return Visualizar(self.filaDeMensagens).anuncio(idAnuncio)
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarProduto(self, idProduto):
+        return Visualizar(self.filaDeMensagens).produto(idProduto)
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarLoja(self, idLoja):
+        return Visualizar(self.filaDeMensagens).loja(idLoja)
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarMinhaLoja(self, idLoja):
+        return Visualizar(self.filaDeMensagens).minhaLojaS(idLoja)
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarMinhasLojas(self, idUsuario):
+        return Visualizar(self.filaDeMensagens).minhaListaLojas(idUsuario)
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarMeusEnderecos(self, idUsuario):
+        return Visualizar(self.filaDeMensagens).meusEnderecos(idUsuario)
+    
+    @RetornaCorretamenteOuFalse
+    def visualizarPedido(self, idPedido):
+        return Visualizar(self.filaDeMensagens).pedido(idPedido)
+
+    @RetornaCorretamenteOuFalse
+    def visualizarMeusPedidos(self, idUsuario):
+        return Visualizar(self.filaDeMensagens).meusPedidos(idUsuario)
     
     
+    
+
 
 
 print(f"Iniciando servidor Pyro5...")

@@ -10,8 +10,7 @@ from Estruturas.fila_de_mensagens2 import FilaDeMensagensV2
 #from Estruturas.fila_de_mensagens import FilaDeMensagens
 
 class Login():
-    def __init__(self, mensagem, fila_mensagens: FilaDeMensagensV2):
-        self.mensagem = mensagem
+    def __init__(self, fila_mensagens: FilaDeMensagensV2):
         self.fila = fila_mensagens
 
     def run(self):
