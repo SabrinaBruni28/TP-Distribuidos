@@ -290,18 +290,35 @@ class FilaDeMensagensV2(threading.Thread):
             return banco.editarUsuario(dados)
 
     def _criarAnuncio(self, dados, id):
-        pass
-    
-    def _criarProdutos(self, dados, id):
-        pass
-    def _criarLoja(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Criar][Anúncio] Chamando função de criar anúncio do Banco de Dados.")
+            return banco.editarUsuario(dados)
+
+    def _criarProdutos(self, dados, imagens, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Criar][Produto] Chamando função de criar produto do Banco de Dados.")
+            return banco.editarUsuario(dados, imagens)
+
+    def _criarLoja(self, dados, imagens, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Criar][Loja] Chamando função de criar loja do Banco de Dados.")
+            return banco.editarUsuario(dados, imagens)
+
     def _criarPedido(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Criar][Pedido] Chamando função de criar pedido do Banco de Dados.")
+            return banco.editarUsuario(dados)
+
     def _criarEndereco(self, dados, id):
-        pass
-    def _criarImagem(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Criar][Endereço] Chamando função de criar endereço do Banco de Dados.")
+            return banco.editarUsuario(dados)
+
+    def _criarImagem(self, dados, imagem, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Criar][Imagem] Chamando função de criar imagem do Banco de Dados.")
+            return banco.editarUsuario(dados, imagem)
+
     def _excluirAnuncio(self, dados, id):
         pass
     def _excluirProduto(self, dados, id):
