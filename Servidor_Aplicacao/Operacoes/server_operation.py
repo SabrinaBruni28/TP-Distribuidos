@@ -42,7 +42,7 @@ def signupHandler(dadosJson, resposta, cliente: socket.socket, fila):
             mensagemAoCliente = Mensagem.produtorMensagem(f"erro | {json.dumps(dadosJson)}")
             print("[Servidor][Cadastramento] Reportando erro de cadastro...")
 
-        op.enviaMensagem(cliente, mensagemAoCliente)
+        enviaMensagem(cliente, mensagemAoCliente)
 
 def fazMensagemServidor(string):
     stringMensagemServidor = codifica(string)

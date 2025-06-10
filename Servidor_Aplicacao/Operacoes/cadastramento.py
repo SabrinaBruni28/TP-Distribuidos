@@ -14,15 +14,6 @@ class Cadastramento(operacao.Operacao):
         self.mensagem = mensagem
         self.fila = fila_mensagens
 
-    def run(self):
-        self.getOperacao()
-
-    def getOperacao(self):
-        self.decisor()
-
-    def decisor(self):
-        self.cadastrar()
-
     def cadastrar(self, dados):
         print("[Servidor][Cadastramento] Operação de Cadastramento recebida.")
 

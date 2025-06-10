@@ -21,35 +21,39 @@ from queue import Queue, Empty
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
 
+def RetornaCorretamenteOuFalse(funcao):
+    def wrapper(*args, **kwargs):
+        try:
+            return funcao(*args, **kwargs)
+        except Exception as e:
+            print(f"[Servidor] Erro em {funcao.__name__}: {e}")
+            return False
+    return wrapper
+
+
 @Pyro5.api.expose
 @Pyro5.api.behavior(instance_mode="single")
 class ServicosServidorAplicacao:
     def __init__(self, fila: FilaDeMensagensV2):
         self.filaDeMensagens = fila
 
+    @RetornaCorretamenteOuFalse
     def logar(self, dados):
-        try:
-            return Login(mensagem=dados, fila_mensagens=self.filaDeMensagens).logar(dados)
-        except:
-            return False
+        return Login(mensagem=dados, fila_mensagens=self.filaDeMensagens).logar(dados)
     
+    @RetornaCorretamenteOuFalse
     def cadastrar(self, dados):
-        try:
-            return Cadastramento(mensagem=dados, fila_mensagens=self.filaDeMensagens).cadastrar(dados)
-        except:
-            return False
+        return Cadastramento(mensagem=dados, fila_mensagens=self.filaDeMensagens).cadastrar(dados)
     
+    @RetornaCorretamenteOuFalse
     def codigo(self, codigo, id):
-        try:
-            return Codigo(mensagem=codigo, fila_mensagens=self.filaDeMensagens).codigo(codigo, id)
-        except:
-            return False
+        return Codigo(mensagem=codigo, fila_mensagens=self.filaDeMensagens).codigo(codigo, id)
     
+    @RetornaCorretamenteOuFalse
     def visualizarAnuncios(self):
-        try:
-            return Visualizar(operacao="todos_anuncios", fila_mensagens=self.filaDeMensagens).run()
-        except:
-            return False
+        return Visualizar(operacao="todos_anuncios", fila_mensagens=self.filaDeMensagens).run()
+    
+    
 
 
 print(f"Iniciando servidor Pyro5...")

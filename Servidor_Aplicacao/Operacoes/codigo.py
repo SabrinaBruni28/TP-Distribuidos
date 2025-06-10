@@ -9,34 +9,49 @@ class Codigo(operacao.Operacao):
         self.mensagem = mensagem
         self.fila = fila_mensagens
 
-    def run(self):
-        self.getOperacao()
+    def run(self, idCliente, codigo):
+        return self.getOperacao(idCliente, codigo)
 
-    def getOperacao(self):
-        self.codigo()
+    def getOperacao(self, idCliente, codigo):
+        return self.codigo(idCliente, codigo)
 
+    # O fim da requisição de cadastramento, o envio do código de confirmação pelo cliente
+    # contém parte da comunicação envolvendo apenas o cliente e o servidor.
+    # Aqui, o cliente envia seu identificador, que foi retornado na requisição de
+    # cadastramento, junto ao código de confirmação.
     def codigo(self, idCliente, codigo):
-        from Estruturas.mensagem import Mensagem
         print("[Servidor][Código] Código recebido.")
         
+        # O primeiro passo é verificar se:
+        #   - O tempo de enviar o código já expirou
+        #   - As três tentativas já foram
+        #   - Por fim, se o código está correto
         status, dados = self.fila.dadosTemp.verificarCodigo(idCliente, codigo)
 
         print(f"[Servidor][Código] Código que o cliente enviou: {codigo}")
         print(f"[Servidor][Código] ID do código: {idCliente}")
         return self.decisorCodigo(status, dados)
 
+    # Com a resposta do verificador de código de confirmação, decidimos a resposta
+    # pro cliente.
     def decisorCodigo(self, status, dados):
+        # Se a resposta for "ok", significa que o código não expirou e está correto.
         if status == "ok":
+            # Então segue o padrão, cria um ID de requisição para o banco de dados,
             print("[Servidor][Código] Código confirmado.")
             reqID = op.gerarID()
 
+            # Registra a requisição,
             self.fila.registraRequisicao(reqID)
 
+            # Coloca a requisição na fila
             print(f"[Servidor][Código] Enviando requisição para a fila...")
             self.fila.enfileira(f"codigo", dados, reqID)
 
+            # Espera e retorna a resposta do banco de dados
             return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
+        # Se houver algum erro, retorna o tipo de erro.
         elif status == "erro":
             print("[Servidor][Código] Código inválido. Retornando ao cliente.")
             return dados

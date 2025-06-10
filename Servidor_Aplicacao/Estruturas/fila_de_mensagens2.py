@@ -18,6 +18,7 @@ from Operacoes import imagem as img
 # A comunicação do sistema é efetivamente híbrida
 # A fila é usada na comunicação com o servidor de banco de dados
 # A comunicação entre cliente e servidor ainda é direta
+# TODO: Mudar o nome para Fila de Requisições
 class FilaDeMensagensV2(threading.Thread):
     def __init__(self):
         super().__init__(daemon=True)
@@ -81,10 +82,12 @@ class FilaDeMensagensV2(threading.Thread):
             # Aí o cliente ligado à essa requisição específica encontra a resposta.
             self._respostas.guardarResposta(id, respostaBanco)
 
+        # Caso a conexão com o banco de dados seja perdida, tenta reconectar e reenviar a requisição.
         except (Pyro5.errors.CommunicationError, Pyro5.errors.ConnectionClosedError) as e:
             print(f"[Fila de Mensagens] Conexão perdida ou erro na comunicação: {e}. Reconectando...")
             self.bancoURI = None
             self.conectaBanco()
+            self.fazRequisicaoAoBanco(requisicao, dados, id)
 
     def _decisorFila(self, requisicao, dados, id):
         match requisicao:
@@ -98,7 +101,7 @@ class FilaDeMensagensV2(threading.Thread):
                 return self._codigo(dados, id)
             
             case "visualizar_anuncios":
-                return self._visualizarAnuncios(dados, id)
+                return self._visualizarAnuncios(id)
             
             case "visualizar_anuncio":
                 return self._visualizarAnuncio(dados, id)
@@ -216,7 +219,7 @@ class FilaDeMensagensV2(threading.Thread):
             print("[Fila de Mensagens][Cadastramento][Código] Chamando função de criar usuário do Banco de Dados.")
             return banco.criarUsuario(dados)
 
-    def _visualizarAnuncios(self, dados, id):
+    def _visualizarAnuncios(self, id):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print("[Fila de Mensagens][Visualizar][Todos os Anúncios] Chamando função de visualizar todos os anúncios do Banco de Dados.")
             return banco.retornarAnuncios()
@@ -224,25 +227,43 @@ class FilaDeMensagensV2(threading.Thread):
     def _visualizarAnuncio(self, dados, id):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print("[Fila de Mensagens][Visualizar][Anúncio] Chamando função de visualizar anúncio do Banco de Dados.")
-            return banco.retornarAnuncio()
+            return banco.retornarAnuncio(dados)
 
     def _visualizarProduto(self, dados, id):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
-            return banco.retornarProduto()
+            return banco.retornarProduto(dados)
 
     def _visualizarLoja(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarLoja(dados)
+
     def  _visualizarMinhaLoja(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarMinhaLoja(dados)
+
     def _visualizarMinhasLojas(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarMinhasLojas(dados)
+
     def _visualizarMeusEnderecos(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarMeusEnderecos(dados)
+
     def _visualizarPedido(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarMeuPedido(dados)
+
     def _visualizarMeusPedidos(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            return banco.retornarMeusPedidos(dados)
+
     def _editarAnuncio(self, dados, id):
         pass
     def _editarProduto(self, dados, id):

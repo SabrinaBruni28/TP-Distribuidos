@@ -20,21 +20,20 @@ class Login():
     def getOperacao(self):
         return self.logar()
 
-    # TODO: Expor essa função pro Pyro
-    def logar(self, dados):
-        
+    def logar(self, dados):        
         print("[Servidor][Login] Operação de Login recebida.")
 
-        # Agora as coisas ficaram bem diferentes.
-        # Quando o cliente invocar a operação de logar, ele quer o retorno do banco de dados
-        # Assim, a primeira coisa que temos de fazer e enfileirar essa requisição junto a um ID
-
+        # Gero um ID para a requisição do cliente
         reqID = op.gerarID()
         requisicao = f"login"
 
+        # Registro a requisição -com seu ID- 
         self.fila.registraRequisicao(reqID)
 
+        # Coloco essa requisição do Servidor na Fila de Requisições para ela ser enviada ao banco
+        # quando este estiver livre.
         print(f"[Servidor][Login] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao, dados, reqID)
 
+        # Espero a resposta do Banco de Dados para retornar ao cliente
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
