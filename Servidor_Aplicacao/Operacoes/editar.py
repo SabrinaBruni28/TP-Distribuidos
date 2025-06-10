@@ -9,7 +9,7 @@ class Editar(operacao.Operacao):
     def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
-
+    # Operação de editar um anuncio do unuário no marketplace.
     def anuncio(self, dados):
         print("[Servidor][Editar][Anúncio] Operação de editar anúncio recebida.")
         reqID = op.gerarID()
@@ -21,6 +21,7 @@ class Editar(operacao.Operacao):
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
+    # Operação de editar um produto do usuário no marketplace.
     def produto(self, dados):
         print("[Servidor][Editar][Produto] Operação de editar produto recebida.")
         reqID = op.gerarID()
@@ -32,6 +33,7 @@ class Editar(operacao.Operacao):
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
+    # Operação de editar a loja do usuário no marketplace.
     # Na operação de edição da loja, a imagem pode ser editada.
     def loja(self, dados, imagem):
         print("[Servidor][Editar][Loja] Operação de editar loja recebida.")
@@ -44,6 +46,7 @@ class Editar(operacao.Operacao):
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
+    # Operação de editar um endereço do usuário no marketplace.
     def endereco(self, dados):
         print("[Servidor][Editar][Endereço] Operação de editar endereço recebida.")
         reqID = op.gerarID()
@@ -55,6 +58,8 @@ class Editar(operacao.Operacao):
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
+    # Operação de editar dados do usuário no marketplace.
+    # No caso, os dados enviados pelo usuário nos parâmetros da função são os dados editados.
     def usuario(self, dados):
         print("[Servidor][Editar][Usuário] Operação de editar usuário recebida.")
         reqID = op.gerarID()
