@@ -90,7 +90,25 @@ class ServicosServidorAplicacao:
     def visualizarMeusPedidos(self, idUsuario):
         return Visualizar(self.filaDeMensagens).meusPedidos(idUsuario)
     
+    @RetornaCorretamenteOuFalse
+    def editarAnuncio(self, dados):
+        return Editar(self.filaDeMensagens).anuncio(dados)
     
+    @RetornaCorretamenteOuFalse
+    def editarProduto(self, dados):
+        return Editar(self.filaDeMensagens).produto(dados)
+    
+    @RetornaCorretamenteOuFalse
+    def editarLoja(self, dados, imagem):
+        return Editar(self.filaDeMensagens).loja(dados, imagem)
+    
+    @RetornaCorretamenteOuFalse
+    def editarEndereco(self, dados):
+        return Editar(self.filaDeMensagens).endereco(dados)
+    
+    @RetornaCorretamenteOuFalse
+    def editarUsuario(self, dados):
+        return Editar(self.filaDeMensagens).usuario(dados)
     
 
 

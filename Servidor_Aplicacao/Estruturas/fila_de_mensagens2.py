@@ -30,8 +30,8 @@ class FilaDeMensagensV2(threading.Thread):
     # Com o middleware, por hora, enfileiro o tipo de requisição, os dados que o cliente passou
     # e o ID dessa requisição. Não considerei imagens ainda.
     # TODO: Criar uma estrutura equivalente à Mensagem para conter tudo o que uma requisição precisar
-    def enfileira(self, requisicao, dados, id):
-        self._fila.put((requisicao, dados, id))
+    def enfileira(self, requisicao, dados, id, imagens=True):
+        self._fila.put((requisicao, dados, id, imagens))
 
     def desenfileira(self):
         try:
@@ -51,13 +51,13 @@ class FilaDeMensagensV2(threading.Thread):
                 continue  # Nada na fila, mas já limpamos os expirados
 
             try:
-                requisicao, dados, id = requisicao_dados
+                requisicao, dados, id, imagens = requisicao_dados
             except ValueError:
                 print("[Fila de Mensagens] Erro: tupla mal formada na fila.")
                 continue
 
             if requisicao and dados and id:
-                self.fazRequisicaoAoBanco(requisicao, dados, id)
+                self.fazRequisicaoAoBanco(requisicao, dados, id, imagens)
             else:
                 print("[Fila de Mensagens] Erro ao obter requisição, dados ou id.")
 
@@ -65,7 +65,7 @@ class FilaDeMensagensV2(threading.Thread):
     # O enviaAoBanco, agora, invoca um método do banco de dados. 
     # Achei o nome fazRequisicao mais coerente pro funcionamento de agora.
     # Falando no "funcionamento de agora", ainda não elaborei como fazer quando há imagens na conversa.  ¬.¬
-    def fazRequisicaoAoBanco(self, requisicao, dados, id):
+    def fazRequisicaoAoBanco(self, requisicao, dados, id, imagens):
         print("[Fila de Mensagens] Fazendo uma requisição ao Banco de Dados.")
 
         try:
@@ -76,7 +76,7 @@ class FilaDeMensagensV2(threading.Thread):
             # Aqui chamo a função do banco correspondente usando Pyro5.
             # Imagino que vou ter que fazer uma função aqui que decide a invocação certa
             # com base na requisição.
-            respostaBanco = self._decisorFila(requisicao, dados, id)
+            respostaBanco = self._decisorFila(requisicao, dados, id, imagens)
 
             # Depois de receber a resposta, guarda ela e avisa o servidor.
             # Aí o cliente ligado à essa requisição específica encontra a resposta.
@@ -87,9 +87,9 @@ class FilaDeMensagensV2(threading.Thread):
             print(f"[Fila de Mensagens] Conexão perdida ou erro na comunicação: {e}. Reconectando...")
             self.bancoURI = None
             self.conectaBanco()
-            self.fazRequisicaoAoBanco(requisicao, dados, id)
+            self.fazRequisicaoAoBanco(requisicao, dados, id, imagens)
 
-    def _decisorFila(self, requisicao, dados, id):
+    def _decisorFila(self, requisicao, dados, id, imagens):
         match requisicao:
             case "login":
                 return self._login(dados, id)
@@ -134,7 +134,7 @@ class FilaDeMensagensV2(threading.Thread):
                 return self._editarProduto(dados, id)
             
             case "editar_loja":
-                return self._editarLoja(dados, id)
+                return self._editarLoja(dados, imagens, id)
             
             case "editar_endereco":
                 return self._editarEndereco(dados, id)
@@ -265,17 +265,33 @@ class FilaDeMensagensV2(threading.Thread):
             return banco.retornarMeusPedidos(dados)
 
     def _editarAnuncio(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Editar][Anúncio] Chamando função de editar anúncio do Banco de Dados.")
+            return banco.editarAnuncio(dados)
+
     def _editarProduto(self, dados, id):
-        pass
-    def _editarLoja(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Editar][Produto] Chamando função de editar produto do Banco de Dados.")
+            return banco.editarProduto(dados)
+
+    def _editarLoja(self, dados, imagem, id):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Editar][Loja] Chamando função de editar loja do Banco de Dados.")
+            return banco.editarLoja(dados, imagem)
+
     def _editarEndereco(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Editar][Anúncio] Chamando função de editar anúncio do Banco de Dados.")
+            return banco.editarEndereco(dados)
+
     def _editarUsuario(self, dados, id):
-        pass
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Editar][Usuário] Chamando função de editar usuário do Banco de Dados.")
+            return banco.editarUsuario(dados)
+
     def _criarAnuncio(self, dados, id):
         pass
+    
     def _criarProdutos(self, dados, id):
         pass
     def _criarLoja(self, dados, id):

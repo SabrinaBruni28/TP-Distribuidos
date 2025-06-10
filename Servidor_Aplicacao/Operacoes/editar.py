@@ -6,75 +6,62 @@ from Operacoes import operacao
 from Estruturas.mensagem import Mensagem
 
 class Editar(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens, imagens: list =None):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
-        self.conexaoServidor = socket_servidor
-        self.imagem = imagens
+    def __init__(self, fila_mensagens):
+        self.fila = fila_mensagens
 
-    def run(self):
-        self.getOperacao()
 
-    def getOperacao(self):
-        self.decisor()
+    def anuncio(self, dados):
+        print("[Servidor][Editar][Anúncio] Operação de editar anúncio recebida.")
+        reqID = op.gerarID()
 
-    def decisor(self):
-        operacao = self.mensagemCliente.camposMensagem[1]
+        self.fila.registraRequisicao(reqID)
 
-        match operacao:
-            case "anuncio":
-                self.anuncio()
+        print(f"[Servidor][Editar][Anúncio] Enviando requisição para a fila...")
+        self.fila.enfileira(f"editar_anuncio", dados, reqID)
 
-            case "produto":
-                self.produto()
+        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-            case "loja":
-                self.loja()
+    def produto(self, dados):
+        print("[Servidor][Editar][Produto] Operação de editar produto recebida.")
+        reqID = op.gerarID()
 
-            case "endereco":
-                self.endereco()
+        self.fila.registraRequisicao(reqID)
 
-            case "usuario":
-                self.usuario()
+        print(f"[Servidor][Editar][Produto] Enviando requisição para a fila...")
+        self.fila.enfileira(f"editar_produto", dados, reqID)
 
-            case _:
-                print("[Servidor] Mensagem inválida.")
+        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def anuncio(self):
-        print("[Servidor][Editar] Operação de editar anúncio recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
+    # Na operação de edição da loja, a imagem pode ser editada.
+    def loja(self, dados, imagem):
+        print("[Servidor][Editar][Loja] Operação de editar loja recebida.")
+        reqID = op.gerarID()
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarAnuncioCallback, self.conexaoCliente, "editar")
+        self.fila.registraRequisicao(reqID)
 
-    def produto(self):
-        print("[Servidor][Editar] Operação de editar produto recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | produto | {dados}")
+        print(f"[Servidor][Editar][Loja] Enviando requisição para a fila...")
+        self.fila.enfileira(f"editar_loja", dados, reqID, imagem)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar")
+        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def loja(self):
-        print("[Servidor][Editar] Operação de editar loja recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | loja | {dados}")
+    def endereco(self, dados):
+        print("[Servidor][Editar][Endereço] Operação de editar endereço recebida.")
+        reqID = op.gerarID()
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarLojaCallback, self.conexaoCliente, "editar", imagem=self.imagem)
+        self.fila.registraRequisicao(reqID)
 
-    def endereco(self):
-        print("[Servidor][Editar] Operação de editar endereço recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | endereco | {dados}")
+        print(f"[Servidor][Editar][Endereço] Enviando requisição para a fila...")
+        self.fila.enfileira(f"editar_endereco", dados, reqID)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarEnderecoCallback, self.conexaoCliente, "editar")
+        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def usuario(self):
-        print("[Servidor][Editar] Operação de editar usuário recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | usuario | {dados}")
+    def usuario(self, dados):
+        print("[Servidor][Editar][Usuário] Operação de editar usuário recebida.")
+        reqID = op.gerarID()
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarUsuarioCallback, self.conexaoCliente, "editar")
+        self.fila.registraRequisicao(reqID)
+
+        print(f"[Servidor][Editar][Usuário] Enviando requisição para a fila...")
+        self.fila.enfileira(f"editar_usuario", dados, reqID)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
