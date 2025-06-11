@@ -1,5 +1,3 @@
-import socket
-import threading
 from Operacoes import server_operation as op
 from Operacoes import callback as cb
 from Operacoes import operacao
@@ -32,46 +30,46 @@ class Criar(operacao.Operacao):
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def loja(self, dados, imagens=[]):
+    def loja(self, id_usuario, dados, imagem_loja):
         print("[Servidor][Criar][Loja] Operação de criar loja recebida.")
         reqID = op.gerarID()
 
         self.fila.registraRequisicao(reqID)
 
-        print(f"[Servidor][Criar][Produto] Enviando requisição para a fila...")
-        self.fila.enfileira(f"criar_loja", dados, reqID, imagens)
+        print(f"[Servidor][Criar][Loja] Enviando requisição para a fila...")
+        self.fila.enfileira(f"criar_loja", dados, reqID, imagem_loja, outro_id= id_usuario)
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def pedido(self, dados):
+    def pedido(self, id_usuario, dados):
         print("[Servidor][Criar][Pedido] Operação de criar pedido recebida.")
         reqID = op.gerarID()
 
         self.fila.registraRequisicao(reqID)
 
         print(f"[Servidor][Criar][Pedido] Enviando requisição para a fila...")
-        self.fila.enfileira(f"criar_pedido", dados, reqID)
+        self.fila.enfileira(f"criar_pedido", dados, reqID, outro_id= id_usuario)
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def endereco(self, dados):
+    def endereco(self, id_usuario, dados):
         print("[Servidor][Criar][Endereço] Operação de criar endereço recebida.")
         reqID = op.gerarID()
 
         self.fila.registraRequisicao(reqID)
 
         print(f"[Servidor][Criar][Endereço] Enviando requisição para a fila...")
-        self.fila.enfileira(f"criar_endereco", dados, reqID)
+        self.fila.enfileira(f"criar_endereco", dados, reqID, outro_id= id_usuario)
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
 
-    def imagem(self, dados):
+    def imagem(self, id_produto, imagem):
         print("[Servidor][Criar][Imagem] Operação de criar imagem recebida.")
         reqID = op.gerarID()
 
         self.fila.registraRequisicao(reqID)
 
         print(f"[Servidor][Criar][Imagem] Enviando requisição para a fila...")
-        self.fila.enfileira(f"criar_imagem", dados, reqID)
+        self.fila.enfileira(f"criar_imagem", id_produto, reqID, imagem)
 
         return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
