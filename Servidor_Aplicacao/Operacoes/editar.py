@@ -1,11 +1,10 @@
 from Operacoes import server_operation as op
-
-from Servidor_Aplicacao.Estruturas.requisicao import Requisicao
+from Estruturas.requisicao import Requisicao
 
 
 class Editar():
-    def __init__(self, fila_mensagens):
-        self.fila = fila_mensagens
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
     def anuncio(self, dados):
         """ Operação de editar um anuncio do unuário no marketplace. """

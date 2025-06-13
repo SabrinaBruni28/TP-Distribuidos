@@ -3,8 +3,8 @@ from Operacoes import server_operation as op
 from Estruturas.requisicao import Requisicao
 
 class Codigo():
-    def __init__(self, fila_mensagens):
-        self.fila = fila_mensagens
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
     # O fim da requisição de cadastramento, o envio do código de confirmação pelo cliente
     # contém parte da comunicação envolvendo apenas o cliente e o servidor.

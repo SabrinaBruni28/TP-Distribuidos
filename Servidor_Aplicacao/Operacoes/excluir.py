@@ -2,8 +2,8 @@ from Operacoes import server_operation as op
 from Estruturas.requisicao import Requisicao
 
 class Excluir():
-    def __init__(self, fila_mensagens):
-        self.fila = fila_mensagens
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
     def anuncio(self, id_anuncio):
         print("[Servidor][Excluir][Anúncio] Operação de excluir anúncio recebida.")

@@ -189,6 +189,21 @@ class FilaDeRequisicoes(threading.Thread):
             case "cancelar_pedido":
                 return self._cancelarPedido(requisicao)
 
+            case "imagens_anuncio":
+                return self._pegarImagensAnuncio(requisicao)
+
+            case "imagens_produto":
+                return self._pegarImagensProduto(requisicao)
+
+            case "imagens_produtos_loja":
+                return self._pegarImagemProdutosLoja(requisicao)
+
+            case "imagens_lojas":
+                return self._pegarImagensLojas(requisicao)
+
+            case "imagens_pedidos":
+                return self._pegarImagensPedido(requisicao)
+
             case _:
                 print(f"[Fila de Mensagens] Requisição do Servidor mal formada.")
                 return False
@@ -364,6 +379,31 @@ class FilaDeRequisicoes(threading.Thread):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print("[Fila de Mensagens][Excluir][Imagem] Chamando função de excluir anúncio do Banco de Dados.")
             return banco.excluirImagem(requisicao.dadosRequisicao)
+
+    def _pegarImagensAnuncio(self, requisicao: Requisicao):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Imagens][Anúncio] Chamando função de retornar imagens de um anúncio do Banco de Dados.")
+            return banco.retornaImagensAnuncio(requisicao.dadosRequisicao)
+
+    def _pegarImagensProduto(self, requisicao: Requisicao):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print("[Fila de Mensagens][Imagens][Produto] Chamando função de retornar imagens de um produto do Banco de Dados.")
+            return banco.retornaImagensProduto(requisicao.dadosRequisicao)
+
+    def _pegarImagemProdutosLoja(self, requisicao: Requisicao):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print(f"[Fila de Mensagens][Imagens][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagens de um produto do Banco de Dados. Se a loja tiver imagem, retorna ela também.")
+            return banco.retornaImagensProdutosLoja(requisicao.dadosRequisicao)
+
+    def _pegarImagensLojas(self, requisicao: Requisicao):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print(f"[Fila de Mensagens][Imagens][Minhas Lojas][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagens das lojas de um usuário do Banco de Dados.")
+            return banco.retornaImagensLojas(requisicao.dadosRequisicao)
+
+    def _pegarImagensPedido(self, requisicao: Requisicao):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print(f"[Fila de Mensagens][Imagens][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagens de um pedido do Banco de Dados.")
+            return banco.retornaImagensPedido(requisicao.dadosRequisicao)
 
     def _confirmarPedido(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:

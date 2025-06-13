@@ -5,8 +5,8 @@ from Estruturas.requisicao import Requisicao
 # Excluso o Login, provavelmente a operação mais simples. Não carrega imagens do cliente e nem
 # tem duas fases (como o Cadastramento e o Código de confirmação).
 class Visualizar():
-    def __init__(self, fila_mensagens):
-        self.fila = fila_mensagens
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
     # Operação de visualizar todos os anúncios do marketplace.
     def todosAnuncios(self):

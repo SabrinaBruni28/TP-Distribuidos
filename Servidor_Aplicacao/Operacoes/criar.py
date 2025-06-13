@@ -3,8 +3,8 @@ from Operacoes import callback as cb
 from Estruturas.requisicao import Requisicao
 
 class Criar():
-    def __init__(self, fila_mensagens):
-        self.fila = fila_mensagens
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
     def anuncio(self, dados):
         print("[Servidor][Criar][Anúncio] Operação de criar anúncio recebida.")
