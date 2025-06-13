@@ -1,7 +1,4 @@
-from Operacoes import thread_email as correio
-from Operacoes import server_operation as op
 from Estruturas.requisicao import Requisicao
-
 
 class Cadastramento():
     def __init__(self, fila_requisicoes):

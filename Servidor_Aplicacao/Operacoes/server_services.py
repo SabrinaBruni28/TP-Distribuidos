@@ -1,6 +1,5 @@
 import logging
 import Pyro5.api
-import Pyro5.errors
 import Pyro5.server
 from Operacoes import server_operation as op
 from Operacoes.login import Login
@@ -19,6 +18,7 @@ logging.basicConfig(level=logging.INFO, format='%(message)s')
 @Pyro5.api.expose
 @Pyro5.api.behavior(instance_mode="single")
 class ServicosServidorAplicacao:
+    """ Essa é a fachada do Servidor para os métodos expostos para o Cliente via Pyro5 """
     def __init__(self, fila: FilaDeRequisicoes):
         self.filaDeMensagens = fila
 
@@ -183,44 +183,23 @@ class ServicosServidorAplicacao:
     # ========== Funções de confirmar e cancelar Pedido ==========
     @op.RetornaCorretamenteOuFalse
     def confirmarPedido(self, id_pedido):
-        """ Função exposta via Pyro para o cliente confirmar um pedido. Recebe apenas o id do pedido """
+        """ Função exposta via Pyro para o cliente confirmar um pedido. Recebe apenas o id do pedido. """
         return Pedido(self.filaDeMensagens).confirmar(id_pedido)
 
     @op.RetornaCorretamenteOuFalse
     def cancelarPedido(self, id_pedido):
-        """ Função exposta via Pyro para o cliente cancelar um pedido. Recebe apenas o id do pedido """
+        """ Função exposta via Pyro para o cliente cancelar um pedido. Recebe apenas o id do pedido. """
         return Pedido(self.filaDeMensagens).cancelar(id_pedido)
     # ============================================================
 
+    # ========== Funções que enviam imagens para o cliente ==========
+    @op.RetornaCorretamenteOuFalse
+    def imagemProduto(self, nome_imagem):
+        """ Função exposta via Pyro para o cliente pedir a imagem de um produto. Recebe apenas o nome da imagem. """
+        return Imagem(self.filaDeMensagens).produto(nome_imagem)
 
-print(f"Iniciando servidor Pyro5...")
-
-filaDeMensagem = FilaDeRequisicoes()
-filaDeMensagem.start()
-
-ip = '192.168.1.4'
-porta = 5000
-
-import time
-import Pyro5.errors
-
-while True:
-    try:
-        ns = Pyro5.api.locate_ns(host=ip, port=porta)
-        print("Name Server localizado.")
-        break
-
-    except Pyro5.errors.NamingError:
-        print("Name Server não encontrado. Tentando novamente em 2 segundos...")
-        time.sleep(2)
-
-
-with Pyro5.server.Daemon(host=ip) as daemon:
-    servicos = ServicosServidorAplicacao(filaDeMensagem)
-    uri = daemon.register(servicos)
-
-    ns.register("Caldeirao:servicos.servidor", uri)
-    print(f"Serviço registrado com URI: {uri}")
-
-    print("Servidor aguardando chamadas remotas...")
-    daemon.requestLoop()
+    @op.RetornaCorretamenteOuFalse
+    def imagemLoja(self, nome_imagem):
+        """ Função exposta via Pyro para o cliente pedir a imagem de uma loja. Recebe apenas o nome da imagem. """
+        return Imagem(self.filaDeMensagens).loja(nome_imagem)
+    # ===============================================================

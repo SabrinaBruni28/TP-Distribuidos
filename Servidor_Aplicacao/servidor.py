@@ -1,0 +1,41 @@
+import sys
+import time
+import Pyro5.api
+import Pyro5.server
+import Pyro5.errors
+from Estruturas.fila_de_requisicoes import FilaDeRequisicoes
+from Operacoes.server_services import ServicosServidorAplicacao
+
+print(f"Iniciando servidor Pyro5...")
+
+filaDeMensagem = FilaDeRequisicoes()
+filaDeMensagem.start()
+
+# Valores padrão
+ip = '127.0.0.1'
+porta = 9090
+
+if len(sys.argv) >= 3:
+    ip = sys.argv[1]
+    porta = int(sys.argv[2])
+
+while True:
+    try:
+        ns = Pyro5.api.locate_ns(host=ip, port=porta)
+        print("Name Server localizado.")
+        break
+
+    except Pyro5.errors.NamingError:
+        print("Name Server não encontrado. Tentando novamente em 2 segundos...")
+        time.sleep(2)
+
+
+with Pyro5.server.Daemon(host=ip) as daemon:
+    servicos = ServicosServidorAplicacao(filaDeMensagem)
+    uri = daemon.register(servicos)
+
+    ns.register("Caldeirao:servicos.servidor", uri)
+    print(f"Serviço registrado com URI: {uri}")
+
+    print("Servidor aguardando chamadas remotas...")
+    daemon.requestLoop()

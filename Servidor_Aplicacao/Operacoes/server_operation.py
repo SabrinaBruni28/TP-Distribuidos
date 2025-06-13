@@ -1,6 +1,4 @@
 import uuid
-from Operacoes import thread_email as correio
-from Operacoes import cadastramento
 
 # Algumas operações que o servidor usa. Estão aqui separadas para maior universalismo
 # e para melhor organização.

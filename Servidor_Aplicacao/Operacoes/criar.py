@@ -1,5 +1,3 @@
-from Operacoes import server_operation as op
-from Operacoes import callback as cb
 from Estruturas.requisicao import Requisicao
 
 class Criar():

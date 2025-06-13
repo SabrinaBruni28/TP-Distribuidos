@@ -1,6 +1,4 @@
-from Operacoes import server_operation as op
 from Estruturas.requisicao import Requisicao
-
 
 class Editar():
     def __init__(self, fila_requisicoes):
@@ -61,7 +59,7 @@ class Editar():
         No caso, os dados enviados pelo usuário nos parâmetros da função são os dados editados.
         """
         print("[Servidor][Editar][Usuário] Operação de editar usuário recebida.")
-        requisicao = Requisicao.produzRequisicao("editar_user", dados)
+        requisicao = Requisicao.produzRequisicao("editar_usuario", dados)
         self.fila.registraRequisicao(requisicao)
 
         print(f"[Servidor][Editar][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")

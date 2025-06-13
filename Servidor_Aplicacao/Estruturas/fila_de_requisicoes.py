@@ -1,14 +1,11 @@
 import threading
 import Pyro5.api
 import Pyro5.errors
-from ..Estruturas.requisicao import Requisicao
+from Estruturas.requisicao import Requisicao
 from Estruturas.dados_confirmacao import DadosTemporariosConfirmacao
 from Estruturas.banco_de_respostas import BancoDeRespostas
-from Operacoes import server_operation as op
 from Operacoes import thread_email as correio
 from queue import Queue, Empty
-from Operacoes import callback as cb
-from Operacoes import imagem as img
 
 # A Fila de Mensagens, estrutura da comunicação do nosso sistema.
 # A comunicação do sistema é efetivamente híbrida
@@ -109,7 +106,7 @@ class FilaDeRequisicoes(threading.Thread):
                 return self._codigo(requisicao)
             
             case "visualizar_anuncios":
-                return self._visualizarAnuncios()
+                return self._visualizarAnuncios(requisicao)
             
             case "visualizar_anuncio":
                 return self._visualizarAnuncio(requisicao)
@@ -189,20 +186,11 @@ class FilaDeRequisicoes(threading.Thread):
             case "cancelar_pedido":
                 return self._cancelarPedido(requisicao)
 
-            case "imagens_anuncio":
-                return self._pegarImagensAnuncio(requisicao)
-
             case "imagens_produto":
-                return self._pegarImagensProduto(requisicao)
-
-            case "imagens_produtos_loja":
-                return self._pegarImagemProdutosLoja(requisicao)
+                return self._pegarImagemProduto(requisicao)
 
             case "imagens_lojas":
-                return self._pegarImagensLojas(requisicao)
-
-            case "imagens_pedidos":
-                return self._pegarImagensPedido(requisicao)
+                return self._pegarImagemLoja(requisicao)
 
             case _:
                 print(f"[Fila de Mensagens] Requisição do Servidor mal formada.")
@@ -211,28 +199,28 @@ class FilaDeRequisicoes(threading.Thread):
 
     def _login(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Login] Chamando função de login do Banco de Dados.")
+            print(f"[Fila de Mensagens][Login][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de login do Banco de Dados.")
             return banco.loginUsuario(requisicao.dadosRequisicao)
 
     def _cadastramento(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Cadastramento] Chamando função de conferir usuário do Banco de Dados.")
+            print(f"[Fila de Mensagens][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de conferir usuário do Banco de Dados.")
             respostaBanco = banco.confereUsuario(requisicao.dadosRequisicao)
 
             if respostaBanco is True:
-                print("[Fila de Mensagens][Cadastramento] ")
+                print(f"[Fila de Mensagens][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando email de confirmação para o cliente.")
                 emailCliente = requisicao.dadosRequisicao.get("email")
-                print(f"[Fila de Mensagens][Cadastramento] Email: {emailCliente}")
+                print(f"[Fila de Mensagens][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Email: {emailCliente}")
 
                 email = correio.ThreadEmail("confirmacao cadastro", emailCliente)
                 email.start()
 
                 codigoConfirmacao = str(email.codigo)
-                print(f"[Fila de Mensagens][Cadastramento] Código de confirmação enviado: {codigoConfirmacao}")
+                print(f"[Fila de Mensagens][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Código de confirmação enviado: {codigoConfirmacao}")
 
                 self.dadosTemp.armazenar(requisicao.idRequisicao, codigoConfirmacao, requisicao.dadosRequisicao)
 
-                print("[Fila de Mensagens][Cadastramento] Esperando confirmação de email do cliente...")
+                print(f"[Fila de Mensagens][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Esperando confirmação de email do cliente...")
                 return requisicao.idRequisicao
 
             elif (isinstance(respostaBanco, list)):
@@ -243,103 +231,104 @@ class FilaDeRequisicoes(threading.Thread):
 
     def _codigo(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Cadastramento][Código] Chamando função de criar usuário do Banco de Dados.")
+            print(f"[Fila de Mensagens][Cadastramento][Código][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar usuário do Banco de Dados.")
             return banco.criarUsuario(requisicao.dadosRequisicao)
 
-    def _visualizarAnuncios(self):
+    def _visualizarAnuncios(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Todos os Anúncios] Chamando função de visualizar todos os anúncios do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Todos os Anúncios][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar todos os anúncios do Banco de Dados.")
             return banco.retornarAnuncios()
 
     def _visualizarAnuncio(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Anúncio] Chamando função de visualizar anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar anúncio do Banco de Dados.")
             return banco.retornarAnuncio(requisicao.dadosRequisicao)
 
     def _visualizarProduto(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarProduto(requisicao.dadosRequisicao)
 
     def _visualizarLoja(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarLoja(requisicao.dadosRequisicao)
 
     def  _visualizarMinhaLoja(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarMinhaLoja(requisicao.dadosRequisicao)
 
     def _visualizarMinhasLojas(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarMinhasLojas(requisicao.dadosRequisicao)
 
     def _visualizarMeusEnderecos(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarMeusEnderecos(requisicao.dadosRequisicao)
 
     def _visualizarPedido(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarMeuPedido(requisicao.dadosRequisicao)
 
     def _visualizarMeusPedidos(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Visualizar][Produto] Chamando função de visualizar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar produto do Banco de Dados.")
             return banco.retornarMeusPedidos(requisicao.dadosRequisicao)
 
     def _editarAnuncio(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Editar][Anúncio] Chamando função de editar anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Editar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de editar anúncio do Banco de Dados.")
             return banco.editarAnuncio(requisicao.dadosRequisicao)
 
     def _editarProduto(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Editar][Produto] Chamando função de editar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Editar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de editar produto do Banco de Dados.")
             return banco.editarProduto(requisicao.dadosRequisicao)
 
     def _editarLoja(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Editar][Loja] Chamando função de editar loja do Banco de Dados.")
+            print(f"[Fila de Mensagens][Editar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de editar loja do Banco de Dados.")
             return banco.editarLoja(requisicao.dadosRequisicao, requisicao.imagens)
 
     def _editarEndereco(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Editar][Anúncio] Chamando função de editar anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Editar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de editar anúncio do Banco de Dados.")
             return banco.editarEndereco(requisicao.dadosRequisicao)
 
     def _editarUsuario(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Editar][Usuário] Chamando função de editar usuário do Banco de Dados.")
+            print(f"[Fila de Mensagens][Editar][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de editar usuário do Banco de Dados.")
             return banco.editarUsuario(requisicao.dadosRequisicao)
 
     def _criarAnuncio(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Criar][Anúncio] Chamando função de criar anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Criar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar anúncio do Banco de Dados.")
             return banco.criarAnuncio(requisicao.dadosRequisicao)
 
     def _criarProdutos(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Criar][Produto] Chamando função de criar produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Criar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar produto do Banco de Dados.")
             return banco.criarProduto(requisicao.dadosRequisicao, requisicao.imagens)
 
     def _criarLoja(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Criar][Loja] Chamando função de criar loja do Banco de Dados.")
+            print(f"[Fila de Mensagens][Criar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar loja do Banco de Dados.")
             return banco.criarLoja(requisicao.idRequisicao, requisicao.dadosRequisicao, requisicao.imagens)
 
     def _criarPedido(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Criar][Pedido] Chamando função de criar pedido do Banco de Dados.")
+            print(f"[Fila de Mensagens][Criar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar pedido do Banco de Dados.")
 
             usuario = banco.retornarUsuario(requisicao.idRequisicao)
             emailUsuario = usuario.get("email")
 
             respostaBanco = banco.criarPedido(requisicao.idRequisicao, requisicao.dadosRequisicao)
 
+            print(f"[Fila de Mensagens][Criar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando email confirmando que o pedido do cliente foi realizado.")
             email = correio.ThreadEmail("pedido realizado", emailUsuario)
             email.start()
 
@@ -347,63 +336,71 @@ class FilaDeRequisicoes(threading.Thread):
 
     def _criarEndereco(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Criar][Endereço] Chamando função de criar endereço do Banco de Dados.")
+            print(f"[Fila de Mensagens][Criar][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar endereço do Banco de Dados.")
             return banco.criarEndereco(requisicao.idRequisicao, requisicao.dadosRequisicao)
 
     def _criarImagem(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Criar][Imagem] Chamando função de criar imagem do Banco de Dados.")
+            print(f"[Fila de Mensagens][Criar][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de criar imagem do Banco de Dados.")
             return banco.criarImagem(requisicao.dadosRequisicao, requisicao.imagens)
 
     def _excluirAnuncio(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Excluir][Anúncio] Chamando função de excluir anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Excluir][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir anúncio do Banco de Dados.")
             return banco.excluirAnuncio(requisicao.dadosRequisicao)
 
     def _excluirProduto(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Excluir][Produto] Chamando função de excluir produto do Banco de Dados.")
+            print(f"[Fila de Mensagens][Excluir][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir produto do Banco de Dados.")
             return banco.excluirProduto(requisicao.dadosRequisicao)
 
     def _excluirLoja(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Excluir][Loja] Chamando função de excluir loja do Banco de Dados.")
+            print(f"[Fila de Mensagens][Excluir][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir loja do Banco de Dados.")
             return banco.excluirLoja(requisicao.dadosRequisicao)
 
     def _excluirEndereco(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Excluir][Endereço] Chamando função de excluir endereço do Banco de Dados.")
+            print(f"[Fila de Mensagens][Excluir][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir endereço do Banco de Dados.")
             return banco.excluirEndereco(requisicao.dadosRequisicao)
 
     def _excluirImagem(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Excluir][Imagem] Chamando função de excluir anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Excluir][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir anúncio do Banco de Dados.")
             return banco.excluirImagem(requisicao.dadosRequisicao)
 
-    def _pegarImagensAnuncio(self, requisicao: Requisicao):
-        with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Imagens][Anúncio] Chamando função de retornar imagens de um anúncio do Banco de Dados.")
-            return banco.retornaImagensAnuncio(requisicao.dadosRequisicao)
 
-    def _pegarImagensProduto(self, requisicao: Requisicao):
-        with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print("[Fila de Mensagens][Imagens][Produto] Chamando função de retornar imagens de um produto do Banco de Dados.")
-            return banco.retornaImagensProduto(requisicao.dadosRequisicao)
 
-    def _pegarImagemProdutosLoja(self, requisicao: Requisicao):
-        with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print(f"[Fila de Mensagens][Imagens][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagens de um produto do Banco de Dados. Se a loja tiver imagem, retorna ela também.")
-            return banco.retornaImagensProdutosLoja(requisicao.dadosRequisicao)
+    def _pegarImagemProduto(self, requisicao: Requisicao):
+        """
+        Essa função pede uma imagem do banco de dados enviando o nome dela na requisição.
+        Requisição:
+            ID: <id da requisicao>
+            TIPO: 'imagem_produto'
+            DADOS: <nome da imagem>
+            IMAGENS: None
+            ID ASSOCIADO: None
+        """
 
-    def _pegarImagensLojas(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print(f"[Fila de Mensagens][Imagens][Minhas Lojas][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagens das lojas de um usuário do Banco de Dados.")
-            return banco.retornaImagensLojas(requisicao.dadosRequisicao)
+            print(f"[Fila de Mensagens][Imagem][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagem de um produto do Banco de Dados.")
+            return banco.retornaImagemProduto(requisicao.dadosRequisicao)
 
-    def _pegarImagensPedido(self, requisicao: Requisicao):
+    def _pegarImagemLoja(self, requisicao: Requisicao):
+        """
+        Essa função pede uma imagem do banco de dados enviando o nome dela na requisição.
+        Requisição:
+            ID: <id da requisicao>
+            TIPO: 'imagem_loja'
+            DADOS: <nome da imagem>
+            IMAGENS: None
+            ID ASSOCIADO: None
+        """
+
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print(f"[Fila de Mensagens][Imagens][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagens de um pedido do Banco de Dados.")
-            return banco.retornaImagensPedido(requisicao.dadosRequisicao)
+            print(f"[Fila de Mensagens][Imagem][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagem de uma loja do Banco de Dados.")
+            return banco.retornaImagemLoja(requisicao.dadosRequisicao)
+
 
     def _confirmarPedido(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:

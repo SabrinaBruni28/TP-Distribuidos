@@ -1,4 +1,3 @@
-from Operacoes import server_operation as op
 from Estruturas.requisicao import Requisicao
 
 class Excluir():

@@ -1,5 +1,3 @@
-from Operacoes import operacao
-from Operacoes import server_operation as op
 from Estruturas.requisicao import Requisicao
 
 class Codigo():
@@ -36,7 +34,7 @@ class Codigo():
             self.fila.registraRequisicao(requisicao)
 
             # Coloca a requisição na fila
-            print(f"[Servidor][Código] Enviando requisição para a fila...")
+            print(f"[Servidor][Código][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
             self.fila.enfileira(requisicao)
 
             # Espera e retorna a resposta do banco de dados
