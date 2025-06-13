@@ -12,7 +12,12 @@ class Anuncio(Persistivel):
 
         # Atributos estrangeiros
         self.produto = produto
-        self.id_produto = produto.id if produto else 0
+        if produto:
+            self.id_produto = produto.id
+            self.id_loja = produto.loja.id if produto.loja else 0
+        else:
+            self.id_produto = 0
+            self.id_loja = 0
 
     def subtrair_quantidade(self, quantidade):
         if self.pausado:
@@ -52,7 +57,7 @@ class Anuncio(Persistivel):
     
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
-        atributos_bd = ('id_produto', 'preco', 'quantidade_disponivel', 'chave_pix', 'pausado')
+        atributos_bd = ('id_produto', 'id_loja', 'preco', 'quantidade_disponivel', 'chave_pix', 'pausado')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):
             valor = getattr(self, attr, None)
             if valor:

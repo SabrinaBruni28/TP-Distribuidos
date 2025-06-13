@@ -69,7 +69,7 @@ class DAO():
             print(sql, end='\n\n')
             cursor.execute(sql, (id_obj,))
             conn.commit()
-            return 'ok'
+            return True
     
     def forget(self, obj: Persistivel):
         with self._connect() as conn:

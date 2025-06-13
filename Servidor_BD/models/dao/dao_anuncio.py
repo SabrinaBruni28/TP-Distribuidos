@@ -1,17 +1,22 @@
 from models.dao.dao import DAO
 from models.anuncio import Anuncio
 from models.produto import Produto
+from models.loja import Loja
 
 class DAOAnuncio(DAO):
     def __init__(self):
         super().__init__(
-            ['anuncio'],
-            ['id_produto', 'preco_anuncio', 'quantidade_produto', 'chave_pix', 'pausado'])
+            ['anuncio', 'produto'],
+            ['id_produto', 'id_loja', 'preco_anuncio', 'quantidade_produto', 'chave_pix', 'pausado'])
     
-    def _from_tuple(self, tupla = (0, 0, 0, 0, '', 0)):
+    def _from_tuple(self, tupla = (0, 0, 0, 0, '', 0, 0, '', '')):
         return Anuncio(
             id = tupla[0],
-            produto = Produto(id = tupla[1]),
+            produto = Produto(
+                id = tupla[1],
+                loja= Loja(id= tupla[6]),
+                nome= tupla[7],
+                descricao= tupla[8]),
             preco = tupla[2],
             quantidade_disponivel = tupla[3],
             chave_pix = tupla[4],

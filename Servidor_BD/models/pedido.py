@@ -14,7 +14,12 @@ class Pedido(Persistivel):
         self.anuncio = anuncio
         self.id_anuncio = anuncio.id if anuncio else 0
         self.endereco = endereco
-        self.id_endereco = endereco.id if endereco else 0
+        if endereco:
+            self.id_endereco = endereco.id
+            self.id_usuario = endereco.id_usuario
+        else:
+            self.id_endereco = 0
+            self.id_usuario = 0
 
     def to_dict(self):
         return {
@@ -36,14 +41,17 @@ class Pedido(Persistivel):
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
         if self.quantidade == -1:
-            #modo especial de confirmação
-            obj_bd = {'confirmacao_pedido': True}
-        else:
-            atributos_bd = ('id_anuncio', 'id_endereco', 'quantidade', 'data')
-            for attr, nome_coluna in zip(atributos_bd, nome_colunas):
-                valor = getattr(self, attr, None)
-                if valor:
-                    obj_bd[nome_coluna] = valor
+            #modo especial de confirmação == True
+            obj_bd['confirmacao_pedido'] = True
+        elif self.quantidade == -2:
+            #modo especial de confirmação == False
+            obj_bd['confirmacao_pedido'] = False
+        
+        atributos_bd = ('id_anuncio', 'id_endereco', 'id_usuario', 'quantidade', 'data')
+        for attr, nome_coluna in zip(atributos_bd, nome_colunas):
+            valor = getattr(self, attr, None)
+            if valor:
+                obj_bd[nome_coluna] = valor
         return obj_bd
     
     def clone_zerado(self):

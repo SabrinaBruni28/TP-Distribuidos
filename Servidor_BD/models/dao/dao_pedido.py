@@ -8,10 +8,10 @@ from models.loja import Loja
 class DAOPedido(DAO):
     def __init__(self):
         super().__init__(
-            ['pedido', 'anuncio', 'produto'],
-            ["id_anuncio", "id_endereco", "quantidade_pedido", "data_pedido"])
+            ['pedido', 'anuncio', 'produto', 'endereco'],
+            ['id_anuncio', 'id_endereco', 'id_usuario', 'quantidade_pedido', 'data_pedido'])
     
-    def _from_tuple(self, tupla = (0, 0, 0, 0, "", False, 0, 0, 0, "", False, 0, "", "")):
+    def _from_tuple(self, tupla = (0, 0, 0, 0, '', False, 0, 0, 0, '', False, 0, '', '', 0, '', '', '', '', '', '')):
         #confirmacao_pedido = tupla[5],
         pedido = Pedido(
             id = tupla[0],
@@ -28,7 +28,16 @@ class DAOPedido(DAO):
                 chave_pix = tupla[9],
                 pausado = tupla[10]
             ),
-            endereco = Endereco(id = tupla[2]),
+            endereco = Endereco(
+                id = tupla[2],
+                id_usuario= tupla[14],
+                rua= tupla[15],
+                numero= tupla[16],
+                bairro= tupla[17],
+                cidade= tupla[18],
+                estado= tupla[19],
+                complemento= tupla[20]
+            ),
             quantidade = tupla[3],
             data = tupla[4],
         )
@@ -52,5 +61,5 @@ class DAOPedido(DAO):
     def confirmarPedido(self, obj: Pedido):
         obj.quantidade = -1
         pedido_tupla = super().update(obj)
-        return 'ok'
+        return self._from_tuple(pedido_tupla), bool(pedido_tupla[5])
 
