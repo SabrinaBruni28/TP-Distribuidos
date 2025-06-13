@@ -1,18 +1,10 @@
 from Operacoes import operacao
 from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Estruturas.mensagem import Mensagem
-import json
+from Estruturas.requisicao import Requisicao
 
-class Codigo(operacao.Operacao):
+class Codigo():
     def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
-
-    def run(self, idCliente, codigo):
-        return self.getOperacao(idCliente, codigo)
-
-    def getOperacao(self, idCliente, codigo):
-        return self.codigo(idCliente, codigo)
 
     # O fim da requisição de cadastramento, o envio do código de confirmação pelo cliente
     # contém parte da comunicação envolvendo apenas o cliente e o servidor.
@@ -38,19 +30,22 @@ class Codigo(operacao.Operacao):
         if status == "ok":
             # Então segue o padrão, cria um ID de requisição para o banco de dados,
             print("[Servidor][Código] Código confirmado.")
-            reqID = op.gerarID()
+            requisicao = Requisicao.produzRequisicao("codigo", dados)
 
             # Registra a requisição,
-            self.fila.registraRequisicao(reqID)
+            self.fila.registraRequisicao(requisicao)
 
             # Coloca a requisição na fila
             print(f"[Servidor][Código] Enviando requisição para a fila...")
-            self.fila.enfileira(f"codigo", dados, reqID)
+            self.fila.enfileira(requisicao)
 
             # Espera e retorna a resposta do banco de dados
-            return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+            return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
         # Se houver algum erro, retorna o tipo de erro.
         elif status == "erro":
             print("[Servidor][Código] Código inválido. Retornando ao cliente.")
             return dados
+
+        else:
+            return False

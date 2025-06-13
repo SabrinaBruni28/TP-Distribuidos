@@ -1,72 +1,71 @@
-import socket
-import threading
 from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Operacoes import operacao
-from Estruturas.mensagem import Mensagem
 
-class Editar(operacao.Operacao):
+from Servidor_Aplicacao.Estruturas.requisicao import Requisicao
+
+
+class Editar():
     def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
-    # Operação de editar um anuncio do unuário no marketplace.
     def anuncio(self, dados):
+        """ Operação de editar um anuncio do unuário no marketplace. """
         print("[Servidor][Editar][Anúncio] Operação de editar anúncio recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("editar_anuncio", dados)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Editar][Anúncio] Enviando requisição para a fila...")
-        self.fila.enfileira(f"editar_anuncio", dados, reqID)
+        print(f"[Servidor][Editar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
-    # Operação de editar um produto do usuário no marketplace.
     def produto(self, dados):
+        """ Operação de editar um produto do usuário no marketplace. """
         print("[Servidor][Editar][Produto] Operação de editar produto recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("editar_produto", dados)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Editar][Produto] Enviando requisição para a fila...")
-        self.fila.enfileira(f"editar_produto", dados, reqID)
+        print(f"[Servidor][Editar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
-    # Operação de editar a loja do usuário no marketplace.
-    # Na operação de edição da loja, a imagem pode ser editada.
     def loja(self, dados, imagem):
+        """
+        Operação de editar a loja do usuário no marketplace.
+        Na operação de edição da loja, a imagem pode ser editada.
+        """
         print("[Servidor][Editar][Loja] Operação de editar loja recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("editar_loja", dados, imagens=imagem)
+        self.fila.registraRequisicao(requisicao)
 
-        self.fila.registraRequisicao(reqID)
+        print(f"[Servidor][Editar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        print(f"[Servidor][Editar][Loja] Enviando requisição para a fila...")
-        self.fila.enfileira(f"editar_loja", dados, reqID, imagem)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
-
-    # Operação de editar um endereço do usuário no marketplace.
     def endereco(self, dados):
+        """ Operação de editar um endereço do usuário no marketplace. """
         print("[Servidor][Editar][Endereço] Operação de editar endereço recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("editar_endereco", dados)
+        self.fila.registraRequisicao(requisicao)
 
-        self.fila.registraRequisicao(reqID)
+        print(f"[Servidor][Editar][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        print(f"[Servidor][Editar][Endereço] Enviando requisição para a fila...")
-        self.fila.enfileira(f"editar_endereco", dados, reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
-
-    # Operação de editar dados do usuário no marketplace.
-    # No caso, os dados enviados pelo usuário nos parâmetros da função são os dados editados.
     def usuario(self, dados):
+        """
+        Operação de editar dados do usuário no marketplace.
+        No caso, os dados enviados pelo usuário nos parâmetros da função são os dados editados.
+        """
         print("[Servidor][Editar][Usuário] Operação de editar usuário recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("editar_user", dados)
+        self.fila.registraRequisicao(requisicao)
 
-        self.fila.registraRequisicao(reqID)
+        print(f"[Servidor][Editar][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        print(f"[Servidor][Editar][Usuário] Enviando requisição para a fila...")
-        self.fila.enfileira(f"editar_usuario", dados, reqID)
-
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)

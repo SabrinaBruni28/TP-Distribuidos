@@ -1,122 +1,117 @@
-import socket
-import threading
 from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Operacoes import operacao
-from Estruturas.mensagem import Mensagem
+from Estruturas.requisicao import Requisicao
 
 # Operação de visualizar.
 # Excluso o Login, provavelmente a operação mais simples. Não carrega imagens do cliente e nem
 # tem duas fases (como o Cadastramento e o Código de confirmação).
-class Visualizar(operacao.Operacao):
+class Visualizar():
     def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
     # Operação de visualizar todos os anúncios do marketplace.
     def todosAnuncios(self):
         print("[Servidor][Visualizar] Operação de visualizar todos os anúncios recebida.")
-        reqID = op.gerarID()
-
-        self.fila.registrarRequisicao(reqID)
+        requisicao = Requisicao.produzRequisicao("visualizar_anuncios", None)
+        self.fila.registraRequisicao(requisicao)
 
         # Como a requisição de visualizar todos os anúnicos não recebe parãmetros, ao invés de criar uma
         # outra versão de enfileiramento, envio True para que a fila não tenha problemas com essa chamada aqui.
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_anuncios", True, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar um único anúncio do marketplace.
-    def anuncio(self, idAnuncio):
+    def anuncio(self, id_anuncio):
         print("[Servidor][Visualizar] Operação de visualizar anúncio recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_anuncio", id_anuncio)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_anuncio", idAnuncio, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
     # Operação de visualizar um produto específico.
-    def produto(self, idProduto):
+    def produto(self, id_produto):
         print("[Servidor][Visualizar] Operação de visualizar produto recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_produto", id_produto)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_produto", idProduto, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
     # Operação de visualizar um loja específica.
-    def loja(self, idLoja):
+    def loja(self, id_loja):
         print("[Servidor][Visualizar] Operação de visualizar loja recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_loja", id_loja)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_loja", idLoja, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
         
 
     # Operação de visualizar a loja do usuário.
-    def minhaLoja(self, idLoja):
+    def minhaLoja(self, id_loja):
         print("[Servidor][Visualizar] Operação de visualizar loja do usuário recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_minha_loja", id_loja)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_minha_loja", idLoja, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
     # Operação de visualizar todas as lojas do usuário.
-    def minhaListaLojas(self, idUsuario):
+    def minhaListaLojas(self, id_usuario):
         print("[Servidor][Visualizar] Operação de visualizar lojas do usuário recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_minhas_lojas", id_usuario)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_minhas_lojas", idUsuario, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
     # Operação de visualizar um pedido específico.
-    def pedido(self, idPedido):
+    def pedido(self, id_pedido):
         print("[Servidor][Visualizar] Operação de visualizar pedido recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_pedido", id_pedido)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_pedido", idPedido, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
     # Operação de visualizar todos os pedidos do usuário.
-    def meusPedidos(self, idUsuario):
+    def meusPedidos(self, id_usuario):
         print("[Servidor][Visualizar] Operação de visualizar pedidos do usuário recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_meus_pedidos", id_usuario)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_meus_pedidos", idUsuario, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
     # Operação de visualizar a lista de endereços do usuário.
-    def meusEnderecos(self, idUsuario):
+    def meusEnderecos(self, id_usuario):
         print("[Servidor][Visualizar] Operação de visualizar endereços do usuário recebida.")
-        reqID = op.gerarID()
+        requisicao = Requisicao.produzRequisicao("visualizar_meus_enderecos", id_usuario)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
-        print(f"[Servidor][Visualizar] Enviando requisição para a fila...")
-        self.fila.enfileira(f"visualizar_meus_enderecos", idUsuario, reqID)
+        print(f"[Servidor][Visualizar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)

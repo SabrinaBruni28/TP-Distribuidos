@@ -1,38 +1,23 @@
-import socket
-import threading
-import uuid
 from Operacoes import server_operation as op
-from Operacoes import operacao
-from Operacoes import callback as cb
-from Estruturas.mensagem import Mensagem
-from Estruturas.fila_de_mensagens2 import FilaDeMensagensV2
-
-#from Estruturas.fila_de_mensagens import FilaDeMensagens
+from Estruturas.requisicao import Requisicao
 
 class Login():
-    def __init__(self, fila_mensagens: FilaDeMensagensV2):
+    def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
-    def run(self):
-        return self.getOperacao()
-
-    def getOperacao(self):
-        return self.logar()
-
-    def logar(self, dados):        
+    def logar(self, dados):
         print("[Servidor][Login] Operação de Login recebida.")
 
         # Gero um ID para a requisição do cliente
-        reqID = op.gerarID()
-        requisicao = f"login"
+        requisicao = Requisicao.produzRequisicao("login", dados)
 
         # Registro a requisição -com seu ID- 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao)
 
         # Coloco essa requisição do Servidor na Fila de Requisições para ela ser enviada ao banco
         # quando este estiver livre.
-        print(f"[Servidor][Login] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao, dados, reqID)
+        print(f"[Servidor][Login][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
         # Espero a resposta do Banco de Dados para retornar ao cliente
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)

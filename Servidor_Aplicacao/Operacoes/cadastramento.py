@@ -1,26 +1,19 @@
-import socket
-import threading
-import json
 from Operacoes import thread_email as correio
 from Operacoes import server_operation as op
-from Operacoes import thread_email as correio
-from Operacoes import operacao
-from Operacoes import callback as cb
-from Estruturas.mensagem import Mensagem
-#from Estruturas.fila_de_mensagens import FilaDeMensagens
+from Estruturas.requisicao import Requisicao
 
-class Cadastramento(operacao.Operacao):
+
+class Cadastramento():
     def __init__(self, fila_mensagens):
         self.fila = fila_mensagens
 
     def cadastrar(self, dados):
         print("[Servidor][Cadastramento] Operação de Cadastramento recebida.")
 
-        reqID = op.gerarID()
-        requisicao = f"cadastramento"
+        requisicao = Requisicao.produzRequisicao("cadastramento", dados)
 
-        self.fila.registraRequisicao(reqID)
+        self.fila.registraRequisicao(requisicao.idRequisicao)
 
-        print(f"[Servidor][Cadastramento] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao, dados, reqID)
-        return self.fila.esperarRespostaDoBancoDeRespostas(reqID)
+        print(f"[Servidor][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)

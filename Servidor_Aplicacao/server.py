@@ -1,7 +1,6 @@
 import logging
 import Pyro5.api
 import Pyro5.errors
-import Pyro5.nameserver
 import Pyro5.server
 from Operacoes import server_operation as op
 from Operacoes.login import Login
@@ -13,33 +12,18 @@ from Operacoes.excluir import Excluir
 from Operacoes.pedido import Pedido
 from Operacoes.codigo import Codigo
 from Operacoes.imagem import Imagem
-from Estruturas.fila_de_mensagens2 import FilaDeMensagensV2
+from Estruturas.fila_de_requisicoes import FilaDeRequisicoes
 
 logging.basicConfig(level=logging.INFO, format='%(message)s')
-
-# Esse wraper aqui é equivalente a ficar usando try: 
-#                                                   função
-#                                               exception:
-#                                                   return False
-# Fiz para a fachada ali ficar mais limpa
-def RetornaCorretamenteOuFalse(funcao):
-    def wrapper(*args, **kwargs):
-        try:
-            return funcao(*args, **kwargs)
-        except Exception as e:
-            print(f"[Servidor] Erro em {funcao.__name__}: {e}")
-            return False
-    return wrapper
-
 
 @Pyro5.api.expose
 @Pyro5.api.behavior(instance_mode="single")
 class ServicosServidorAplicacao:
-    def __init__(self, fila: FilaDeMensagensV2):
+    def __init__(self, fila: FilaDeRequisicoes):
         self.filaDeMensagens = fila
 
     # ========== Função relacionada à operação de Login =========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def logar(self, dados):
         """ Função exposta via Pyro para o cliente realizar o login. Recebe os dados de login. """
         return Login(self.filaDeMensagens).logar(dados)
@@ -47,12 +31,12 @@ class ServicosServidorAplicacao:
 
 
     # ========== Funções relacionadas à operação de Cadastramento ==========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def cadastrar(self, dados):
         """ Função exposta via Pyro para o cliente se cadastrar. Recebe os dados do cadastro. """
         return Cadastramento(self.filaDeMensagens).cadastrar(dados)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def codigo(self, codigo, id_requisicao_cadastramento):
         """ Função exposta via Pyro para o cliente validar o código de confirmação.
             Recebe o código e o ID da requisição de cadastramento. """
@@ -60,74 +44,74 @@ class ServicosServidorAplicacao:
     # ======================================================================
 
     # ========== Funções relacionadas à operação de Visualizar ==========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarAnuncios(self):
         """ Função exposta via Pyro para o cliente visualizar todos os anúncios disponíveis. """
         return Visualizar(self.filaDeMensagens).todosAnuncios()
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarAnuncio(self, idAnuncio):
         """ Função exposta via Pyro para o cliente visualizar um anúncio específico. Recebe o ID do anúncio. """
         return Visualizar(self.filaDeMensagens).anuncio(idAnuncio)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarProduto(self, idProduto):
         """ Função exposta via Pyro para o cliente visualizar os dados de um produto. Recebe o ID do produto. """
         return Visualizar(self.filaDeMensagens).produto(idProduto)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarLoja(self, idLoja):
         """ Função exposta via Pyro para o cliente visualizar uma loja. Recebe o ID da loja. """
         return Visualizar(self.filaDeMensagens).loja(idLoja)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarMinhaLoja(self, idLoja):
         """ Função exposta via Pyro para o cliente visualizar os dados da sua própria loja. Recebe o ID da loja. """
-        return Visualizar(self.filaDeMensagens).minhaLojaS(idLoja)
+        return Visualizar(self.filaDeMensagens).minhaLoja(idLoja)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarMinhasLojas(self, idUsuario):
         """ Função exposta via Pyro para o cliente visualizar a lista de suas lojas. Recebe o ID do usuário. """
         return Visualizar(self.filaDeMensagens).minhaListaLojas(idUsuario)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarMeusEnderecos(self, idUsuario):
         """ Função exposta via Pyro para o cliente visualizar todos os seus endereços. Recebe o ID do usuário. """
         return Visualizar(self.filaDeMensagens).meusEnderecos(idUsuario)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarPedido(self, idPedido):
         """ Função exposta via Pyro para o cliente visualizar os detalhes de um pedido. Recebe o ID do pedido. """
         return Visualizar(self.filaDeMensagens).pedido(idPedido)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def visualizarMeusPedidos(self, idUsuario):
         """ Função exposta via Pyro para o cliente visualizar todos os seus pedidos. Recebe o ID do usuário. """
         return Visualizar(self.filaDeMensagens).meusPedidos(idUsuario)
     # ===================================================================
 
     # ========== Funções relacionadas à operação de Editar ==========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def editarAnuncio(self, dados):
         """ Função exposta via Pyro para o cliente editar um anúncio. Recebe os dados do anúncio. """
         return Editar(self.filaDeMensagens).anuncio(dados)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def editarProduto(self, dados):
         """ Função exposta via Pyro para o cliente editar um produto. Recebe os dados atualizados do produto. """
         return Editar(self.filaDeMensagens).produto(dados)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def editarLoja(self, dados, imagem):
         """ Função exposta via Pyro para o cliente editar uma loja. Recebe os dados da loja e uma nova imagem (opcional). """
         return Editar(self.filaDeMensagens).loja(dados, imagem)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def editarEndereco(self, dados):
         """ Função exposta via Pyro para o cliente editar um endereço. Recebe os dados do endereço. """
         return Editar(self.filaDeMensagens).endereco(dados)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def editarUsuario(self, dados):
         """ Função exposta via Pyro para o cliente editar os dados do seu usuário. """
         return Editar(self.filaDeMensagens).usuario(dados)
@@ -135,33 +119,33 @@ class ServicosServidorAplicacao:
 
 
     # ========== Funções relacionadas à operação de Criar ==========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def criarAnuncio(self, dados):
         """ Função exposta via Pyro para o cliente criar um anúncio. Recebe os dados do anúncio. """
         return Criar(self.filaDeMensagens).anuncio(dados)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def criarProduto(self, dados, imagens):
         """ Função exposta via Pyro para o cliente criar um produto. Recebe os dados do produto e a(s) imagem(ens) dele. """
         return Criar(self.filaDeMensagens).produto(dados, imagens)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def criarLoja(self, id_usuario, dados, imagem_loja= None):
         """ Função exposta via Pyro para o cliente criar uma loja. Recebe o id do usuário e os dados da loja.
             Uma loja pode possuir uma imagem, por isso a função recebe uma imagem (esse parâmetro pode estar vazio). """
         return Criar(self.filaDeMensagens).loja(id_usuario, dados, imagem_loja)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def criarPedido(self, id_usuario, dados_pedido):
         """ Função exposta via Pyro para o cliente criar um endereço. Recebe o id do usuário e os dados do endereço. """
         return Criar(self.filaDeMensagens).pedido(id_usuario, dados_pedido)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def criarEndereco(self, id_usuario, dados_endereco):
         """ Função exposta via Pyro para o cliente criar um endereço. Recebe o id do usuário e os dados do endereço. """
         return Criar(self.filaDeMensagens).endereco(id_usuario, dados_endereco)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def criarImagem(self, id_produto, imagem):
         """ Função exposta via Pyro para o cliente criar a imagem de um produto. Recebe o id do produto e a imagem. """
         return Criar(self.filaDeMensagens).imagem(id_produto, imagem)
@@ -169,27 +153,27 @@ class ServicosServidorAplicacao:
 
 
     # ========== Funções relacionadas à operação de Excluir ==========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def excluirAnuncio(self, id_anuncio):
         """ Função exposta via Pyro para o cliente excluir um anúncio. Recebe apenas o id do anúncio. """
         return Excluir(self.filaDeMensagens).anuncio(id_anuncio)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def excluirProduto(self, id_produto):
         """ Função exposta via Pyro para o cliente excluir um produto. Recebe apenas o id do produto. """
         return Excluir(self.filaDeMensagens).produto(id_produto)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def excluirLoja(self, id_loja):
         """ Função exposta via Pyro para o cliente excluir uma loja. Recebe apenas o id da loja. """
         return Excluir(self.filaDeMensagens).loja(id_loja)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def excluirEndereco(self, id_endereco):
         """ Função exposta via Pyro para o cliente excluir um endereço. Recebe apenas o id do endereço. """
-        return Excluir(self.filaDeMensagens).enderecos(id_endereco)
+        return Excluir(self.filaDeMensagens).endereco(id_endereco)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def excluirImagem(self, nome_imagem):
         """ Função exposta via Pyro para o cliente excluir uma imagem. Recebe apenas o nome da imagem. """
         return Excluir(self.filaDeMensagens).imagem(nome_imagem)
@@ -197,12 +181,12 @@ class ServicosServidorAplicacao:
 
 
     # ========== Funções de confirmar e cancelar Pedido ==========
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def confirmarPedido(self, id_pedido):
         """ Função exposta via Pyro para o cliente confirmar um pedido. Recebe apenas o id do pedido """
         return Pedido(self.filaDeMensagens).confirmar(id_pedido)
 
-    @RetornaCorretamenteOuFalse
+    @op.RetornaCorretamenteOuFalse
     def cancelarPedido(self, id_pedido):
         """ Função exposta via Pyro para o cliente cancelar um pedido. Recebe apenas o id do pedido """
         return Pedido(self.filaDeMensagens).cancelar(id_pedido)
@@ -211,7 +195,7 @@ class ServicosServidorAplicacao:
 
 print(f"Iniciando servidor Pyro5...")
 
-filaDeMensagem = FilaDeMensagensV2()
+filaDeMensagem = FilaDeRequisicoes()
 filaDeMensagem.start()
 
 ip = '192.168.1.4'

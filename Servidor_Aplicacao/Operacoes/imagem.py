@@ -1,7 +1,6 @@
-import threading
 import json
-from Estruturas.mensagem import Mensagem
 from Operacoes import server_operation as op
+from ..Estruturas.requisicao import Requisicao
 
 class Imagem():
     def __init__(self, dados, socket_cliente, tipo: str, campo: str = ""):
