@@ -4,7 +4,7 @@ import smtplib
 import random
 
 class ThreadEmail(threading.Thread):
-    def __init__(self, tipo, email_destinatario):
+    def __init__(self, tipo, email_destinatario, nome="Alquimista"):
         threading.Thread.__init__(self)
         self.email_destinatario = email_destinatario
         self.codigo = None
@@ -17,7 +17,7 @@ class ThreadEmail(threading.Thread):
                     CONFIRMAÇÃO DE CADASTRO
             ========================================
 
-            Olá! Aqui é a equipe Caldeirão.
+            Olá, {nome}! Aqui é a equipe Caldeirão.
 
             Seu código de confirmação é:
 
@@ -42,7 +42,7 @@ class ThreadEmail(threading.Thread):
                     CONFIRMAÇÃO DE PEDIDO
             ========================================
 
-            Olá! Aqui é a equipe Caldeirão.
+            Olá, {nome}! Aqui é a equipe Caldeirão.
             
             Seu pedido foi confirmado com sucesso!
 
@@ -59,7 +59,7 @@ class ThreadEmail(threading.Thread):
                     CANCELAMENTO DE PEDIDO
             ========================================
 
-            Olá! Aqui é a equipe Caldeirão.
+            Olá, {nome}! Aqui é a equipe Caldeirão.
 
             O vendedor cancelou seu pedido!
 
@@ -76,7 +76,7 @@ class ThreadEmail(threading.Thread):
                         PEDIDO REALIZADO
             ========================================
 
-            Olá! Aqui é a equipe Caldeirão.
+            Olá, {nome}! Aqui é a equipe Caldeirão.
 
             Um pedido foi realizado em sua loja!
             Você pode ir lá para conferir. Não deixe seu cliente esperando!

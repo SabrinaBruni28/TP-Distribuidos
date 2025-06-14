@@ -37,7 +37,7 @@ class ServicosServidorAplicacao:
         return Cadastramento(self.filaDeMensagens).cadastrar(dados)
 
     @op.RetornaCorretamenteOuFalse
-    def codigo(self, codigo, id_requisicao_cadastramento):
+    def codigo(self, id_requisicao_cadastramento, codigo):
         """ Função exposta via Pyro para o cliente validar o código de confirmação.
             Recebe o código e o ID da requisição de cadastramento. """
         return Codigo(self.filaDeMensagens).codigo(codigo, id_requisicao_cadastramento)
@@ -136,9 +136,9 @@ class ServicosServidorAplicacao:
         return Criar(self.filaDeMensagens).loja(id_usuario, dados, imagem_loja)
 
     @op.RetornaCorretamenteOuFalse
-    def criarPedido(self, id_usuario, dados_pedido):
+    def criarPedido(self, dados_pedido):
         """ Função exposta via Pyro para o cliente criar um endereço. Recebe o id do usuário e os dados do endereço. """
-        return Criar(self.filaDeMensagens).pedido(id_usuario, dados_pedido)
+        return Criar(self.filaDeMensagens).pedido(dados_pedido)
 
     @op.RetornaCorretamenteOuFalse
     def criarEndereco(self, id_usuario, dados_endereco):
@@ -202,4 +202,9 @@ class ServicosServidorAplicacao:
     def imagemLoja(self, nome_imagem):
         """ Função exposta via Pyro para o cliente pedir a imagem de uma loja. Recebe apenas o nome da imagem. """
         return Imagem(self.filaDeMensagens).loja(nome_imagem)
+
+    @op.RetornaCorretamenteOuFalse
+    def imagemPedido(self, nome_imagem):
+        """ Função exposta via Pyro para o cliente pedir a imagem de um pedido. Recebe apenas o nome da imagem. """
+        return Imagem(self.filaDeMensagens).pedido(nome_imagem)
     # ===============================================================

@@ -31,7 +31,7 @@ class BancoDeRespostas:
                 raise KeyError(f"Requisição com ID {id_requisicao} não existe. Esperando por uma resposta que não vai chegar. Há! Olha minha vida de parquera aí...")
             
         # Espera a notificação de que uma nova resposta do banco de dados chegou
-        print(f"[Banco de Resposta] Esperando resposta.")
+        print(f"[Banco de Resposta][ID: {id_requisicao[:3]}...{id_requisicao[-3:]}] Esperando resposta.")
         event.wait()
         
         # Retorna a resposta do servidor
@@ -40,7 +40,7 @@ class BancoDeRespostas:
 
             self._events.pop(id_requisicao)
 
-            print(f"[Banco de Respostas] Retornando resposta do banco: {resposta}")
+            print(f"[Banco de Respostas][ID: {id_requisicao[:3]}...{id_requisicao[-3:]}] Retornando resposta do banco. {resposta[-20:]}")
             return resposta
         
     def guardarResposta(self, id_requisicao, resposta):
@@ -52,11 +52,11 @@ class BancoDeRespostas:
                 self._respostas[id_requisicao] = resposta
                 return
             
-            print(f"[Banco de Respostas] Resposta guardada na tabela de respostas.")
+            print(f"[Banco de Respostas][ID: {id_requisicao[:3]}...{id_requisicao[-3:]}] Resposta guardada na tabela de respostas.")
             # Guarda a resposta na tabela de respostas
             self._respostas[id_requisicao] = resposta
             event = self._events[id_requisicao]
 
         # Notifica que uma resposta chegou
-        print(f"[Banco de Respostas] Servidor notificado.")
+        print(f"[Banco de Respostas][ID: {id_requisicao[:3]}...{id_requisicao[-3:]}] Servidor notificado.")
         event.set()

@@ -37,9 +37,9 @@ class Criar():
 
         return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
 
-    def pedido(self, id_usuario, dados):
+    def pedido(self, dados):
         print("[Servidor][Criar][Pedido] Operação de criar pedido recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_pedido", dados, id_associado=id_usuario)
+        requisicao = Requisicao.produzRequisicao("criar_pedido", dados)
 
         self.fila.registraRequisicao(requisicao)
 

@@ -12,7 +12,7 @@ filaDeMensagem = FilaDeRequisicoes()
 filaDeMensagem.start()
 
 # Valores padrão
-ip = '127.0.0.1'
+ip = "127.0.0.1"
 porta = 9090
 
 if len(sys.argv) >= 3:
