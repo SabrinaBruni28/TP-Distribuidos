@@ -256,6 +256,24 @@ class Banqueiro():
 
     ################################### Retornar ###################################
     
+    def retornarUsuario(self, id_usuario: int):
+        try:
+            print(f'[Banqueiro][Retornar][Usuário] - Iniciando tentativa de retornar usuário...')
+            if result := self.__daoUsuario.select(Usuario_Identificado(id= id_usuario), logic= 'AND'):
+                usuario = result[0]
+                print(f'[Banqueiro][Retornar][Usuário] - Usuário recuperado:', usuario)
+                return usuario.to_dict()
+            else:
+                print(f'[Banqueiro][Retornar][Usuário] - Usuário não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Retornar][Usuário][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+
     def retornarImagem(self, tipoObj: str, nomeImagem: str):
         try:
             print(f'[Banqueiro][Retornar][Imagem] - Iniciando tentativa de retornar imagem...')
@@ -376,7 +394,7 @@ class Banqueiro():
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
             tipo = type(e).__name__
             mensagem = str(e)
-            print(f'[Banqueiro][Retornar][Produto][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            print(f'[Banqueiro][Retornar][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
     
     def retornarLoja(self, id):
@@ -500,6 +518,72 @@ class Banqueiro():
             tipo = type(e).__name__
             mensagem = str(e)
             print(f'[Banqueiro][Retornar][MeusPedidos][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+    
+    def retornarCompradorPedido(self, id_pedido: int):
+        try:
+            print(f'[Banqueiro][Retornar][CompradorPedido] - Iniciando tentativa de retornar comprador do pedido {id_pedido}...')
+            if result := self.__daoPedido.select(Pedido(id= id_pedido), logic= 'AND'):
+                pedido, _ = result[0]
+                print(f'[Banqueiro][Retornar][CompradorPedido] - Pedido recuperado:', pedido)
+                if isinstance(pedido.endereco, Endereco):
+                    print(f'[Banqueiro][Retornar][CompradorPedido] - Recuperando comprador do pedido recuperado...')
+                    if result := self.__daoUsuario.select(Usuario_Identificado(id= pedido.endereco.id_usuario), logic= 'AND'):
+                        comprador = result[0]
+                        print(f'[Banqueiro][Retornar][CompradorPedido] - Comprador recuperado:', comprador)
+                        return comprador.to_dict()
+                    else:
+                        print(f'[Banqueiro][Retornar][CompradorPedido] - Usuário não encontrado!')
+                        return False
+                else:
+                    print(f'[Banqueiro][Retornar][CompradorPedido] - Falha fatal: Pedido não possui Endereço!')
+                    return False
+            else:
+                print(f'[Banqueiro][Retornar][CompradorPedido] - Pedido não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Retornar][CompradorPedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+    
+    def retornarVendedorPedido(self, id_pedido: int):
+        try:
+            print(f'[Banqueiro][Retornar][VendedorPedido] - Iniciando tentativa de retornar vendedor do pedido {id_pedido}...')
+            if result := self.__daoPedido.select(Pedido(id= id_pedido), logic= 'AND'):
+                pedido, _ = result[0]
+                print(f'[Banqueiro][Retornar][VendedorPedido] - Pedido recuperado:', pedido)
+                if isinstance(pedido.anuncio, Anuncio):
+                    if isinstance(pedido.anuncio.produto, Produto):
+                        if isinstance(pedido.anuncio.produto.loja, Loja):
+                            print(f'[Banqueiro][Retornar][VendedorPedido] - Recuperando vendedor do pedido recuperado...')
+                            if result := self.__daoUsuario.select(Usuario_Identificado(id= pedido.anuncio.produto.loja.id_usuario), logic= 'AND'):
+                                vendedor = result[0]
+                                print(f'[Banqueiro][Retornar][VendedorPedido] - Comprador recuperado:', vendedor)
+                                return vendedor.to_dict()
+                            else:
+                                print(f'[Banqueiro][Retornar][VendedorPedido] - Usuário não encontrado!')
+                                return False
+                        else:
+                            print(f'[Banqueiro][Retornar][VendedorPedido] - Falha fatal: Produto do Anúncio do Pedido não possui Loja!')
+                            return False
+                    else:
+                        print(f'[Banqueiro][Retornar][VendedorPedido] - Falha fatal: Anúncio do Pedido não possui Produto!')
+                        return False
+                else:
+                    print(f'[Banqueiro][Retornar][VendedorPedido] - Falha fatal: Pedido não possui Anúncio!')
+                    return False
+            else:
+                print(f'[Banqueiro][Retornar][VendedorPedido] - Pedido não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Retornar][VendedorPedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
     
     ################################### Editar ###################################
