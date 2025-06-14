@@ -1,3 +1,4 @@
+import base64
 import copy
 import traceback
 from Pyro5.api import expose
@@ -29,7 +30,8 @@ def obterImagem(pasta: str, nomeImagem: str):
     if os.path.exists(caminho_imagem):
         with open(caminho_imagem, 'rb') as f:
             print(f'[Imagens][Obter] - Retornando {nomeImagem} ...')
-            return f.read()
+            data = f.read()
+        return base64.b64encode(data).decode('utf-8')
     else:
         print(f'[Imagens][Obter] - {nomeImagem} não encontrado!')
         return False
