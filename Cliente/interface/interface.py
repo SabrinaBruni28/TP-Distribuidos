@@ -2701,7 +2701,7 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 acao=ao_excluir_imagem,
-                requisicao=lambda: self.aplicacao.excluir_imagem(produto, imagem),
+                requisicao=lambda: self.aplicacao.excluir_imagem(imagem),
             )
 
     def cancelar_pedido(self, pedido: Pedido):

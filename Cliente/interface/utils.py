@@ -3,7 +3,7 @@ CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
 
 from pybrcode.pix import generate_simple_pix
-import re, uuid, unicodedata
+import re, uuid, unicodedata, base64
 
 class Utils:
     @staticmethod
@@ -20,11 +20,12 @@ class Utils:
         caminho = Utils.caminho_imagem(image_path)
         with open(caminho, 'rb') as f:
             data = f.read()
-        return data
+        return base64.b64encode(data).decode('utf-8')
 
     @staticmethod
     def byte_to_image(image_bytes, path='received_image.png'):
         caminho = Utils.caminho_imagem(path)
+        image_bytes = base64.b64decode(image_bytes.encode('utf-8'))
         with open(caminho, 'wb') as f:
             f.write(image_bytes)
         return path

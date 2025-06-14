@@ -89,8 +89,8 @@ class ClienteAplicacao():
                 anuncio = Anuncio.from_dict(anuncio_dict)
                 anuncios.append(anuncio)
                 imagem = anuncio.produto.imagens[0]
-                if imagem:
-                    imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
+                if imagem_byte:
                     Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncios
         return False
@@ -102,7 +102,8 @@ class ClienteAplicacao():
             anuncio = Anuncio.from_dict(resposta)
             for imagem in anuncio.produto.imagens:
                 imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
-                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
+                if imagem_byte:
+                    Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncio
         return False
     
@@ -113,7 +114,8 @@ class ClienteAplicacao():
             produto = Produto.from_dict(resposta)
             for imagem in produto.imagens:
                 imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
-                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
+                if imagem_byte:
+                    Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, produto
         return False
     
@@ -124,12 +126,14 @@ class ClienteAplicacao():
             loja = Loja.from_dict(resposta)
             if loja.imagem:
                 imagem_byte = self.middleware.chamar_middleware("imagemLoja", loja.imagem)
-                Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
+                if imagem_byte:
+                    Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
 
             lista_imagens = [anuncio.produto.imagens[0] for anuncio in loja.anuncios]
             for imagem in lista_imagens:
                 imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
-                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
+                if imagem_byte:
+                    Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
     
@@ -141,7 +145,8 @@ class ClienteAplicacao():
             lista_imagens = [produto.imagens[0] for produto in loja.produtos]
             for imagem in lista_imagens:
                 imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
-                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
+                if imagem_byte:
+                    Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
     
@@ -155,7 +160,8 @@ class ClienteAplicacao():
                 lojas.append(loja)
                 if loja.imagem:
                     imagem_byte = self.middleware.chamar_middleware("imagemLoja", loja.imagem)
-                    Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
+                    if imagem_byte:
+                        Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
             return True, lojas
         return False
 
@@ -280,7 +286,7 @@ class ClienteAplicacao():
         return False
     
     def criar_pedido(self, pedido: Pedido):
-        resposta = self.middleware.chamar_middleware("criarPedido", self.usuario.id, pedido.to_dict_personalizado())
+        resposta = self.middleware.chamar_middleware("criarPedido", pedido.to_dict_personalizado())
 
         if resposta:
             return True, resposta
@@ -318,7 +324,7 @@ class ClienteAplicacao():
         resposta = self.middleware.chamar_middleware("excluirEndereco", endereco.id)
         return resposta
     
-    def excluir_imagem(self, produto: Produto, imagem):
+    def excluir_imagem(self, imagem):
         resposta = self.middleware.chamar_middleware("excluirImagem", imagem)
         return resposta
 
