@@ -81,87 +81,86 @@ class ClienteAplicacao():
         return False, str(resposta)
 
     def visualizar_anuncios(self):
-        return []
-        resposta = self.middleware.chamar_middleware("send")
+        resposta = self.middleware.chamar_middleware("visualizarAnuncios")
 
-        if resposta:
+        if resposta or resposta == []:
             anuncios = []
             for anuncio_dict in resposta:
                 anuncio = Anuncio.from_dict(anuncio_dict)
                 anuncios.append(anuncio)
                 imagem = anuncio.produto.imagens[0]
                 if imagem:
-                    imagem_byte = self.middleware.chamar_middleware("send", "produto", imagem)
+                    imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
                     Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncios
         return False
     
     def visualizar_anuncio(self, anuncio: Anuncio):
-        resposta = self.middleware.chamar_middleware("send", anuncio.id)
+        resposta = self.middleware.chamar_middleware("visualizarAnuncio", anuncio.id)
 
         if isinstance(resposta, dict):
             anuncio = Anuncio.from_dict(resposta)
             for imagem in anuncio.produto.imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", "produto", imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, anuncio
         return False
     
     def visualizar_produto(self, produto: Produto):
-        resposta = self.middleware.chamar_middleware("send", produto.id)
+        resposta = self.middleware.chamar_middleware("visualizarProduto", produto.id)
 
         if isinstance(resposta, dict):
             produto = Produto.from_dict(resposta)
             for imagem in produto.imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", "produto", imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, produto
         return False
     
     def visualizar_loja(self, loja: Loja):
-        resposta = self.middleware.chamar_middleware("send", loja.id)
+        resposta = self.middleware.chamar_middleware("visualizarLoja", loja.id)
 
         if isinstance(resposta, dict):
             loja = Loja.from_dict(resposta)
             if loja.imagem:
-                imagem_byte = self.middleware.chamar_middleware("send", loja.imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemLoja", loja.imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
 
             lista_imagens = [anuncio.produto.imagens[0] for anuncio in loja.anuncios]
             for imagem in lista_imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", "loja", imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
     
     def visualizar_minha_loja(self, loja: Loja):
-        resposta = self.middleware.chamar_middleware("send", loja.id)
+        resposta = self.middleware.chamar_middleware("visualizarMinhaLoja", loja.id)
 
         if isinstance(resposta, dict):
             loja = self.usuario.editar_loja(loja, Loja.from_dict(resposta))
             lista_imagens = [produto.imagens[0] for produto in loja.produtos]
             for imagem in lista_imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", "loja", imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemProduto", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, loja
         return False
     
     def visualizar_minhas_lojas(self):
-        resposta = self.middleware.chamar_middleware("send", self.usuario.id)
+        resposta = self.middleware.chamar_middleware("visualizarMinhasLojas", self.usuario.id)
 
-        if resposta:
+        if resposta or resposta == []:
             lojas = []
             for loja_dict in resposta:
                 loja = Loja.from_dict(loja_dict)
                 lojas.append(loja)
                 if loja.imagem:
-                    imagem_byte = self.middleware.chamar_middleware("send", "loja", loja.imagem)
+                    imagem_byte = self.middleware.chamar_middleware("imagemLoja", loja.imagem)
                     Utils.byte_to_image(imagem_byte, f"uploads/{loja.imagem}")
             return True, lojas
         return False
 
     def visualizar_meus_enderecos(self):
-        resposta = self.middleware.chamar_middleware("send", self.usuario.id)
+        resposta = self.middleware.chamar_middleware("visualizarMeusEnderecos", self.usuario.id)
 
         if resposta:
             enderecos = []
@@ -172,18 +171,18 @@ class ClienteAplicacao():
         return False
     
     def visualizar_pedido(self, pedido: Pedido):
-        resposta = self.middleware.chamar_middleware("send", pedido.id)
+        resposta = self.middleware.chamar_middleware("visualizarPedido", pedido.id)
 
         if isinstance(resposta, dict):
             pedido = Pedido.from_dict(resposta)
             for imagem in pedido.anuncio.produto.imagens:
-                imagem_byte = self.middleware.chamar_middleware("send", imagem)
+                imagem_byte = self.middleware.chamar_middleware("imagemPedido", imagem)
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, pedido
         return False
 
     def visualizar_meus_pedidos(self):
-        resposta = self.middleware.chamar_middleware("send", self.usuario.id)
+        resposta = self.middleware.chamar_middleware("visualizarMeusPedidos", self.usuario.id)
 
         if isinstance(resposta, dict):
             pedidos = []
@@ -194,7 +193,7 @@ class ClienteAplicacao():
         return False
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):
-        resposta = self.middleware.chamar_middleware("send", novos_dados)
+        resposta = self.middleware.chamar_middleware("editarAnuncio", novos_dados)
 
         if isinstance(resposta, dict):
             anuncio_dict = json.loads(resposta)
@@ -206,7 +205,7 @@ class ClienteAplicacao():
         return False
     
     def editar_produto(self, produto: Produto, novos_dados):
-        resposta = self.middleware.chamar_middleware("send", novos_dados)
+        resposta = self.middleware.chamar_middleware("editarProduto", novos_dados)
 
         if isinstance(resposta, dict):
             produto = Produto.from_dict(resposta)
@@ -219,7 +218,7 @@ class ClienteAplicacao():
         if editar_imagem:
             imagem_byte = Utils.image_to_byte(f"uploads/{editar_imagem}")
 
-        resposta = self.middleware.chamar_middleware("send", novos_dados, imagem_byte)
+        resposta = self.middleware.chamar_middleware("editarLoja", novos_dados, imagem_byte)
 
         if resposta:
             loja_dict = json.loads(resposta[0])
@@ -233,11 +232,11 @@ class ClienteAplicacao():
         return False
     
     def editar_usuario(self, novos_dados):
-        resposta = self.middleware.chamar_middleware("send", novos_dados)
+        resposta = self.middleware.chamar_middleware("editarUsuario", novos_dados)
         return bool(resposta), resposta
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
-        resposta = self.middleware.chamar_middleware("send", novos_dados)
+        resposta = self.middleware.chamar_middleware("editarEndereco", novos_dados)
 
         if resposta:
             endereco = Endereco.from_dict(resposta)
@@ -245,7 +244,7 @@ class ClienteAplicacao():
         return False
     
     def criar_anuncio(self, anuncio: Anuncio):
-        resposta = self.middleware.chamar_middleware("send", anuncio.to_dict_personalizado())
+        resposta = self.middleware.chamar_middleware("criarAnuncio", anuncio.to_dict_personalizado())
 
         if resposta:
             anuncio = Anuncio.from_dict(resposta)
@@ -257,7 +256,7 @@ class ClienteAplicacao():
         for imagem in produto.imagens:
             imagens_byte.append(Utils.image_to_byte(f"uploads/{imagem}"))
 
-        resposta = self.middleware.chamar_middleware("send", produto.to_dict_personalizado(), imagens_byte)
+        resposta = self.middleware.chamar_middleware("criarProduto", produto.to_dict_personalizado(), imagens_byte)
         if resposta:
             produto_resposta = Produto.from_dict(resposta[0])
             for i, imagem_byte in enumerate(resposta[1]):
@@ -271,7 +270,7 @@ class ClienteAplicacao():
         if loja.imagem:
             imagem_byte = Utils.image_to_byte(f"uploads/{loja.imagem}")
 
-        resposta = self.middleware.chamar_middleware("send", loja.to_dict_personalizado(), imagem_byte)
+        resposta = self.middleware.chamar_middleware("criarLoja", self.usuario.id, loja.to_dict_personalizado(), imagem_byte)
 
         if resposta:
             loja = Loja.from_dict(resposta[0])
@@ -281,14 +280,14 @@ class ClienteAplicacao():
         return False
     
     def criar_pedido(self, pedido: Pedido):
-        resposta = self.middleware.chamar_middleware("send", pedido.to_dict_personalizado())
+        resposta = self.middleware.chamar_middleware("criarPedido", self.usuario.id, pedido.to_dict_personalizado())
 
         if resposta:
             return True, resposta
         return False
     
     def criar_endereco(self, endereco: Endereco):
-        resposta = self.middleware.chamar_middleware("send", endereco.to_dict_personalizado())
+        resposta = self.middleware.chamar_middleware("criarEndereco", self.usuario.id, endereco.to_dict_personalizado())
 
         if resposta:
             return True, resposta
@@ -296,7 +295,7 @@ class ClienteAplicacao():
 
     def criar_imagem(self, produto: Produto, imagem):
         imagem_byte = Utils.image_to_byte(f"uploads/{imagem}")
-        resposta = self.middleware.chamar_middleware("send", produto.id, imagem_byte)
+        resposta = self.middleware.chamar_middleware("criarImagem", produto.id, imagem_byte)
 
         if resposta:
             Utils.byte_to_image(resposta[1], f"uploads/{resposta[0]}")
@@ -304,29 +303,29 @@ class ClienteAplicacao():
         return False
     
     def excluir_anuncio(self, anuncio: Anuncio):
-        resposta = self.middleware.chamar_middleware("send", anuncio.id)
+        resposta = self.middleware.chamar_middleware("excluirAnuncio", anuncio.id)
         return resposta
     
     def excluir_produto(self, produto: Produto):
-        resposta = self.middleware.chamar_middleware("send", produto.id)
+        resposta = self.middleware.chamar_middleware("excluirProduto", produto.id)
         return resposta
     
     def excluir_loja(self, loja: Loja):
-        resposta = self.middleware.chamar_middleware("send", loja.id)
+        resposta = self.middleware.chamar_middleware("excluirLoja", loja.id)
         return resposta
     
     def excluir_endereco(self, endereco: Endereco):
-        resposta = self.middleware.chamar_middleware("send", endereco.id)
+        resposta = self.middleware.chamar_middleware("excluirEndereco", endereco.id)
         return resposta
     
     def excluir_imagem(self, produto: Produto, imagem):
-        resposta = self.middleware.chamar_middleware("send", produto.id, imagem)
+        resposta = self.middleware.chamar_middleware("excluirImagem", imagem)
         return resposta
 
     def confirmar_pedido(self, pedido: Pedido):
-        resposta = self.middleware.chamar_middleware("send", pedido.id)
+        resposta = self.middleware.chamar_middleware("confirmarPedido", pedido.id)
         return resposta
     
     def cancelar_pedido(self, pedido: Pedido):
-        resposta = self.middleware.chamar_middleware("send", pedido.id)
+        resposta = self.middleware.chamar_middleware("cancelarPedido", pedido.id)
         return resposta
