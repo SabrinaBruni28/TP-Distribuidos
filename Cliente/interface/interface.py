@@ -6,7 +6,7 @@ from models.pedido import Pedido
 from models.produto import Produto
 from models.anuncio import Anuncio
 from models.endereco import Endereco
-from models.usuario import Usuario_Identificado
+from models.usuario import Usuario, Usuario_Identificado
 from cliente_aplicacao import ClienteAplicacao
 from forms import Formulario, FormularioOpcoes
 from view_utils import CarrosselImagem, WidgetHelper, CaixaConfirmacao, ViewHelper, Threads
@@ -2127,7 +2127,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_loja(loja),
-                acao=ao_criar_loja
+                acao=ao_criar_loja,
+                atualizar_tela=False
             )          
 
     def criar_endereco(self, formulario: Formulario):
@@ -2160,7 +2161,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_endereco(endereco),
-                acao=ao_criar_endereco
+                acao=ao_criar_endereco,
+                atualizar_tela=False
             )
 
     def criar_produto(self, formulario: Formulario, imagens: list, loja: Loja):
@@ -2203,7 +2205,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_produto(produto),
-                acao=ao_criar_produto
+                acao=ao_criar_produto,
+                atualizar_tela=False
             )
 
     def criar_anuncio(self, formulario: Formulario, formularioOp: FormularioOpcoes, produto: Produto):
@@ -2223,7 +2226,7 @@ class InterfaceHandler:
             formulario.exibir_erros()
 
         elif not Utils.validar_chave_pix(valores["chave_pix"]):
-            formulario.definir_erros_especificos({"Chave Pix": "Chave pix inválida!\nExemplo: (xx) xxxxx-xxxx, xxx.xxx.xxx-xx, xx.xxx.xxx/xxxx-xx, usuario@exemplo.com, ou chave aleatória"})
+            formulario.definir_erros_especificos({"Chave Pix": "Chave pix inválida!\nExemplo: (xx) xxxxx-xxxx, xxx.xxx.xxx-xx, xx.xxx.xxx/xxxx-xx, \nusuario@exemplo.com, ou chave aleatória"})
             formulario.exibir_erros()
 
         else:
@@ -2253,7 +2256,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.criar_anuncio(anuncio),
-                acao=ao_criar_anuncio
+                acao=ao_criar_anuncio,
+                atualizar_tela=False
             )
 
     def criar_imagem(self, produto: Produto, imagem):
@@ -2267,6 +2271,7 @@ class InterfaceHandler:
                 )
             else:
                 produto.criar_imagem(resposta[1])
+                self.view.atualiza_tela(self.stack)
         # Executa:
         self.thread.executar(
             acao=ao_criar_imagem,
@@ -2295,7 +2300,7 @@ class InterfaceHandler:
                         produto = loja.editar_produto(produto, resposta[1])
                         loja.atualiza_anuncio(produto)
                         self.aplicacao.atualiza_anuncio_produto(produto)
-                        self.view.abrir_tela(self.stack, lambda: tela(produto, loja), excluir_anterior=True)
+                        self.view.abrir_tela(self.stack, lambda: tela(produto), excluir_anterior=True)
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
@@ -2690,6 +2695,7 @@ class InterfaceHandler:
                 )
             else:
                 produto.apagar_imagem(imagem)
+                self.view.atualiza_tela(self.stack)
         if len(produto.imagens) == 1:
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self.parent, fontcolor="#000000",
@@ -2703,6 +2709,43 @@ class InterfaceHandler:
                 acao=ao_excluir_imagem,
                 requisicao=lambda: self.aplicacao.excluir_imagem(imagem),
             )
+
+    def excluir_usuario(self):
+        dialogo = CaixaConfirmacao(
+            self.parent, titulo="Confirmar excluir perfil",
+            mensagem=f"Você tem certeza que deseja seu perfil?",
+            largura=450
+        )
+        escolha = dialogo.exec()
+
+        if escolha == QDialog.DialogCode.Accepted:
+            def ao_excluir_usuario(resposta):
+                if resposta:
+                    if resposta:
+                        WidgetHelper.mostrar_alerta_temporario(
+                            parent_widget=self.parent,
+                            backcolor="#4CAF50",
+                            posicao="inferior_esquerda",
+                            mensagem="Perfil Excluído com Sucesso!"
+                        )
+                        self.aplicacao.usuario = Usuario()
+                        self.view.set_tela(self.stack, -2)
+                    else:
+                        WidgetHelper.mostrar_alerta_temporario(
+                            parent_widget=self.parent, 
+                            backcolor="#f44336",
+                            posicao="inferior_esquerda",
+                            mensagem="Erro ao excluir perfil!"
+                        )
+            # Executa:
+            self.thread.executar(
+                requisicao= self.aplicacao.excluir_usuario,
+                acao=ao_excluir_usuario,
+                atualizar_tela=False
+            )
+
+        else:
+            dialogo.close()
 
     def cancelar_pedido(self, pedido: Pedido):
         dialogo = CaixaConfirmacao(

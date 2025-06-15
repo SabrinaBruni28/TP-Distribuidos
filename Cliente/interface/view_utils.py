@@ -86,7 +86,7 @@ class WidgetHelper(QWidget):
 
     @staticmethod
     def label_preco(preco_label, aligment=Qt.AlignmentFlag.AlignCenter, tamanho=30):
-        preco_label = QLabel(f"<span style='font-size: {tamanho}px; color: green'>R$ {preco_label}</span>")
+        preco_label = QLabel(f"<span style='font-size: {tamanho}px; color: green'>R$ {'{:.2f}'.format(float(preco_label))}</span>")
         preco_label.setAlignment(aligment)
         return preco_label
 

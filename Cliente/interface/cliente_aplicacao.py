@@ -9,7 +9,6 @@ from models.produto import Produto
 from models.pedido import Pedido
 from models.loja import Loja
 from utils import Utils
-import json
 
 class ClienteAplicacao():
     def __init__(self, ip, porta):
@@ -168,7 +167,7 @@ class ClienteAplicacao():
     def visualizar_meus_enderecos(self):
         resposta = self.middleware.chamar_middleware("visualizarMeusEnderecos", self.usuario.id)
 
-        if resposta:
+        if resposta or resposta == []:
             enderecos = []
             for endereco_dict in resposta:
                 endereco = Endereco.from_dict(endereco_dict)
@@ -183,14 +182,15 @@ class ClienteAplicacao():
             pedido = Pedido.from_dict(resposta)
             for imagem in pedido.anuncio.produto.imagens:
                 imagem_byte = self.middleware.chamar_middleware("imagemPedido", imagem)
-                Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
+                if imagem_byte:
+                    Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, pedido
         return False
 
     def visualizar_meus_pedidos(self):
         resposta = self.middleware.chamar_middleware("visualizarMeusPedidos", self.usuario.id)
 
-        if isinstance(resposta, dict):
+        if resposta or resposta == []:
             pedidos = []
             for pedido_dict in resposta:
                 pedido = Pedido.from_dict(pedido_dict)
@@ -202,7 +202,7 @@ class ClienteAplicacao():
         resposta = self.middleware.chamar_middleware("editarAnuncio", novos_dados)
 
         if isinstance(resposta, dict):
-            anuncio_dict = json.loads(resposta)
+            anuncio_dict = resposta
             anuncio.preco = anuncio_dict.get("preco", anuncio.preco)
             anuncio.quantidade_disponivel = anuncio_dict.get("quantidade_disponivel", anuncio.quantidade_disponivel)
             anuncio.chave_pix = anuncio_dict.get("chave_pix", anuncio.chave_pix)
@@ -214,7 +214,9 @@ class ClienteAplicacao():
         resposta = self.middleware.chamar_middleware("editarProduto", novos_dados)
 
         if isinstance(resposta, dict):
-            produto = Produto.from_dict(resposta)
+            produto_dict = resposta
+            produto.nome = produto_dict.get("nome", produto.nome)
+            produto.descricao = produto_dict.get("descricao", produto.descricao)
             return True, produto
         return False
     
@@ -227,7 +229,7 @@ class ClienteAplicacao():
         resposta = self.middleware.chamar_middleware("editarLoja", novos_dados, imagem_byte)
 
         if resposta:
-            loja_dict = json.loads(resposta[0])
+            loja_dict = resposta[0]
             loja.nome = loja_dict.get("nome", loja.nome)
             loja.imagem = loja_dict.get("imagem", loja.imagem)
 
@@ -266,7 +268,7 @@ class ClienteAplicacao():
         if resposta:
             produto_resposta = Produto.from_dict(resposta[0])
             for i, imagem_byte in enumerate(resposta[1]):
-                imagem = produto.imagens[i]
+                imagem = produto_resposta.imagens[i]
                 Utils.byte_to_image(imagem_byte, f"uploads/{imagem}")
             return True, produto_resposta
         return False
@@ -326,6 +328,10 @@ class ClienteAplicacao():
     
     def excluir_imagem(self, imagem):
         resposta = self.middleware.chamar_middleware("excluirImagem", imagem)
+        return resposta
+    
+    def excluir_usuario(self):
+        resposta = self.middleware.chamar_middleware("excluirUsuario", self.usuario.id)
         return resposta
 
     def confirmar_pedido(self, pedido: Pedido):

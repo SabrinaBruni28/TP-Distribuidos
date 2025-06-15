@@ -77,8 +77,11 @@ class UnixMiddlewareClient:
 
         try:
             funcao_remota = getattr(proxy, nome_funcao)
-            resposta = funcao_remota(*args, **kwargs)
             print("⚙️  Função:", nome_funcao)
+            print("📤 Args:", args)
+            print("📤 Kwargs:", kwargs)
+            
+            resposta = funcao_remota(*args, **kwargs)
             print("📬 Resposta:", resposta)
             return resposta
         except Exception as e:
