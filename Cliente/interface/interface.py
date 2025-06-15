@@ -944,6 +944,13 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal_2.addWidget(botao_endereco, alignment=Qt.AlignmentFlag.AlignLeft)
 
+        botao_excluir = WidgetHelper.botao(
+            nome="Excluir Perfil",
+            largura=160,
+            acao=self.handler.excluir_usuario
+        )
+        layout_horizontal_2.addWidget(botao_excluir, alignment=Qt.AlignmentFlag.AlignCenter)
+
         botao_logout = WidgetHelper.botao(
             nome="Logout",
             largura=100,
@@ -2721,22 +2728,21 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_usuario(resposta):
                 if resposta:
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent,
-                            backcolor="#4CAF50",
-                            posicao="inferior_esquerda",
-                            mensagem="Perfil Excluído com Sucesso!"
-                        )
-                        self.aplicacao.usuario = Usuario()
-                        self.view.set_tela(self.stack, -2)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="inferior_esquerda",
-                            mensagem="Erro ao excluir perfil!"
-                        )
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Perfil Excluído com Sucesso!"
+                    )
+                    self.aplicacao.usuario = Usuario()
+                    self.view.set_tela(self.stack, -2)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao excluir perfil!"
+                    )
             # Executa:
             self.thread.executar(
                 requisicao= self.aplicacao.excluir_usuario,
