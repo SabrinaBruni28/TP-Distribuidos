@@ -30,7 +30,7 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar um produto específico.
     def produto(self, id_produto):
@@ -42,6 +42,8 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
     # Operação de visualizar um loja específica.
     def loja(self, id_loja):
         print("[Servidor][Visualizar][Loja] Operação de visualizar loja recebida.")
@@ -52,7 +54,7 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar a loja do usuário.
     def minhaLoja(self, id_loja):
@@ -64,7 +66,7 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Loja][Loja do Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar todas as lojas do usuário.
     def minhaListaLojas(self, id_usuario):
@@ -76,7 +78,7 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Lojas][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar a lista de endereços do usuário.
     def meusEnderecos(self, id_usuario):
@@ -88,7 +90,7 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Endereços][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar um pedido específico.
     def pedido(self, id_pedido):
@@ -100,7 +102,7 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar todos os pedidos do usuário.
     def meusPedidos(self, id_usuario):
@@ -112,4 +114,4 @@ class Visualizar():
         print(f"[Servidor][Visualizar][Pedidos][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

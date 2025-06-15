@@ -13,7 +13,7 @@ class Pedido():
         print(f"[Servidor][Pedido][Confirmar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
 
     def cancelar(self, id_pedido):
@@ -25,4 +25,4 @@ class Pedido():
         print(f"[Servidor][Pedido][Cancelar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

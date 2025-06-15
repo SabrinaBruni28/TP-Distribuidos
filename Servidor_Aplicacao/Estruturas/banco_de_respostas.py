@@ -40,7 +40,7 @@ class BancoDeRespostas:
 
             self._events.pop(id_requisicao)
 
-            print(f"[Banco de Respostas][ID: {id_requisicao[:3]}...{id_requisicao[-3:]}] Retornando resposta do banco. {resposta[-20:]}")
+            print(f"[Banco de Respostas][ID: {id_requisicao[:3]}...{id_requisicao[-3:]}] Retornando resposta do banco. {resposta}")
             return resposta
         
     def guardarResposta(self, id_requisicao, resposta):

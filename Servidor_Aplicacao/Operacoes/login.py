@@ -19,4 +19,4 @@ class Login():
         self.fila.enfileira(requisicao)
 
         # Espero a resposta do Banco de Dados para retornar ao cliente
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

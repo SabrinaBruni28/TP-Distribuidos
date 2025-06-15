@@ -14,7 +14,7 @@ class Editar():
         print(f"[Servidor][Editar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def produto(self, dados):
         """ Operação de editar um produto do usuário no marketplace. """
@@ -26,7 +26,7 @@ class Editar():
         print(f"[Servidor][Editar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def loja(self, dados, imagem):
         """
@@ -40,7 +40,7 @@ class Editar():
         print(f"[Servidor][Editar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def endereco(self, dados):
         """ Operação de editar um endereço do usuário no marketplace. """
@@ -51,7 +51,7 @@ class Editar():
         print(f"[Servidor][Editar][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def usuario(self, dados):
         """
@@ -65,4 +65,4 @@ class Editar():
         print(f"[Servidor][Editar][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

@@ -13,7 +13,7 @@ class Criar():
         print(f"[Servidor][Criar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def produto(self, dados, imagens):
         print("[Servidor][Criar][Produto] Operação de criar produto recebida.")
@@ -24,7 +24,7 @@ class Criar():
         print(f"[Servidor][Criar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def loja(self, id_usuario, dados, imagem_loja):
         print("[Servidor][Criar][Loja] Operação de criar loja recebida.")
@@ -35,7 +35,7 @@ class Criar():
         print(f"[Servidor][Criar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def pedido(self, dados):
         print("[Servidor][Criar][Pedido] Operação de criar pedido recebida.")
@@ -46,7 +46,7 @@ class Criar():
         print(f"[Servidor][Criar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def endereco(self, id_usuario, dados):
         print("[Servidor][Criar][Endereço] Operação de criar endereço recebida.")
@@ -57,7 +57,7 @@ class Criar():
         print(f"[Servidor][Criar][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def imagem(self, id_produto, imagem):
         print("[Servidor][Criar][Imagem] Operação de criar imagem recebida.")
@@ -68,4 +68,4 @@ class Criar():
         print(f"[Servidor][Criar][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

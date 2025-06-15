@@ -38,7 +38,7 @@ class Codigo():
             self.fila.enfileira(requisicao)
 
             # Espera e retorna a resposta do banco de dados
-            return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+            return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
         # Se houver algum erro, retorna o tipo de erro.
         elif status == "erro":

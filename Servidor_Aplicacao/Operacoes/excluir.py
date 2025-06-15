@@ -13,7 +13,7 @@ class Excluir():
         print(f"[Servidor][Excluir][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def produto(self, id_produto):
         print("[Servidor][Excluir][Produto] Operação de excluir produto recebida.")
@@ -24,7 +24,7 @@ class Excluir():
         print(f"[Servidor][Excluir][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def loja(self, id_loja):
         print("[Servidor][Excluir][Loja] Operação de excluir loja recebida.")
@@ -35,7 +35,7 @@ class Excluir():
         print(f"[Servidor][Excluir][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def endereco(self, id_endereco):
         print("[Servidor][Excluir][Endereço] Operação de excluir endereço recebida.")
@@ -46,7 +46,7 @@ class Excluir():
         print(f"[Servidor][Excluir][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     def imagem(self, nome_imagem):
         print("[Servidor][Excluir][Imagem] Operação de excluir imagem recebida.")
@@ -57,4 +57,4 @@ class Excluir():
         print(f"[Servidor][Excluir][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao.idRequisicao)
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
