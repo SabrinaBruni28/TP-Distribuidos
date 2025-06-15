@@ -55,7 +55,7 @@ class DAO():
             sql = f'''UPDATE {self.nome_tabelas[0]} SET
             {', '.join([f'{column} = ?' for column in persistivel.keys()])}
             WHERE id_{self.nome_tabelas[0]} = ?
-            RETURNING id_{self.nome_tabelas[0]}, {', '.join(self.nome_colunas)};'''
+            RETURNING *;'''
             print(sql, end='\n\n')
             cursor.execute(sql, list(persistivel.values())+[obj.id])
             persistivel = cursor.fetchone()

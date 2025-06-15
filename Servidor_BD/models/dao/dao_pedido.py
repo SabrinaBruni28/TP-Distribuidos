@@ -11,7 +11,18 @@ class DAOPedido(DAO):
             ['pedido', 'anuncio', 'produto', 'endereco'],
             ['id_anuncio', 'id_endereco', 'id_usuario', 'quantidade_pedido', 'data_pedido'])
     
-    def _from_tuple(self, tupla = (0, 0, 0, 0, '', False, 0, 0, 0, '', False, 0, '', '', 0, '', '', '', '', '', '')):
+    def _from_tuple(self, tupla = (0, 0, 0, 0, '', False)):
+        #confirmacao_pedido = tupla[5],
+        pedido = Pedido(
+            id = tupla[0],
+            anuncio = Anuncio(id = tupla[1]),
+            endereco = Endereco(id = tupla[2]),
+            quantidade = tupla[3],
+            data = tupla[4]
+        )
+        return pedido
+    
+    def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', False, 0, 0, 0, '', False, 0, '', '', 0, '', '', '', '', '', '')):
         #confirmacao_pedido = tupla[5],
         pedido = Pedido(
             id = tupla[0],
@@ -39,7 +50,7 @@ class DAOPedido(DAO):
                 complemento= tupla[20]
             ),
             quantidade = tupla[3],
-            data = tupla[4],
+            data = tupla[4]
         )
         return pedido
 
@@ -47,7 +58,7 @@ class DAOPedido(DAO):
         return super().insert(obj)
 
     def select(self, obj: Pedido, logic = 'OR'):
-        return [(self._from_tuple(pedido_tupla), bool(pedido_tupla[5])) for pedido_tupla in super().select(obj, logic)]
+        return [(self._from_tuple_completo(pedido_tupla), bool(pedido_tupla[5])) for pedido_tupla in super().select(obj, logic)]
 
     def update(self, obj: Pedido):
         pass

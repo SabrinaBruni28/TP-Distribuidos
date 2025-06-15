@@ -43,9 +43,11 @@ class Pedido(Persistivel):
         if self.quantidade == -1:
             #modo especial de confirmação == True
             obj_bd['confirmacao_pedido'] = True
+            self.quantidade = 0
         elif self.quantidade == -2:
             #modo especial de confirmação == False
             obj_bd['confirmacao_pedido'] = False
+            self.quantidade = 0
         
         atributos_bd = ('id_anuncio', 'id_endereco', 'id_usuario', 'quantidade', 'data')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):

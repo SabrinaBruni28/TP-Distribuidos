@@ -24,6 +24,11 @@ CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
 sys.path.append(CAMINHO_BASE)
 
 img_path = 'db/img'
+
+def seExisteImagem(pasta: str, nomeImagem: str):
+    caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
+    return os.path.exists(caminho_imagem)
+
 def obterImagem(pasta: str, nomeImagem: str):
     print(f'[Imagens][Obter] - Obtendo {nomeImagem} ...')
     caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
@@ -36,11 +41,11 @@ def obterImagem(pasta: str, nomeImagem: str):
         print(f'[Imagens][Obter] - {nomeImagem} não encontrado!')
         return False
 
-def salvarImagem(pasta: str, nomeImagem: str, imagem: bytes):
+def salvarImagem(pasta: str, nomeImagem: str, imagem):
     print(f'[Imagens][Salvar] - Salvando {nomeImagem} ...')
     caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
     with open(caminho_imagem, 'wb') as f:
-        f.write(imagem)
+        f.write( base64.b64decode(imagem.encode('utf-8')))
     print(f'[Imagens][Salvar] - {nomeImagem} salvo!')
 
 def apagarImagem(pasta: str, nomeImagem: str):
@@ -143,10 +148,11 @@ class Banqueiro():
             print(f'[Banqueiro][Criar][Usuário][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
     
-    def criarEndereco(self, endereco: dict):
+    def criarEndereco(self, id_usuario: int, endereco: dict):
         try:
             print(f'[Banqueiro][Criar][Endereço] - Iniciando tentativa de criar endereço...')
             obj = Endereco.from_dict(endereco)
+            obj.id_usuario = id_usuario
             print('[Banqueiro][Criar][Endereço] - Endereço a criar:', obj)
             print('[Banqueiro][Criar][Endereço] - Inserindo endereço no banco...')
             obj.id = self.__daoEndereco.insert(obj)
@@ -160,16 +166,17 @@ class Banqueiro():
             print(f'[Banqueiro][Criar][Endereço][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
     
-    def criarLoja(self, loja: dict, imagem= None):
+    def criarLoja(self, id_usuario: int, loja: dict, imagem= None):
         try:
             print(f'[Banqueiro][Criar][Loja] - Iniciando tentativa de criar loja...')
             obj = Loja.from_dict(loja)
+            obj.id_usuario = id_usuario
             print('[Banqueiro][Criar][Loja] - Loja a criar:', obj)
+            print('[Banqueiro][Criar][Loja] - Inserindo loja no banco...')
+            obj.id = self.__daoLoja.insert(obj)
             if imagem is not None:
                 obj.imagem = f'{obj.id}.jpg'
                 salvarImagem('loja', obj.imagem, imagem)
-            print('[Banqueiro][Criar][Loja] - Inserindo loja no banco...')
-            obj.id = self.__daoLoja.insert(obj)
             print('[Banqueiro][Criar][Loja] - Retornando loja inserido...')
             return obj.to_dict(), imagem
         except Exception as e:
@@ -229,6 +236,22 @@ class Banqueiro():
             print('[Banqueiro][Criar][Anúncio] - Anuncio a criar:', obj)
             print('[Banqueiro][Criar][Anúncio] - Inserindo anuncio no banco...')
             obj.id = self.__daoAnuncio.insert(obj)
+            if isinstance(obj.produto, Produto):
+                print('[Banqueiro][Criar][Anúncio] - Recuperando produto do anuncio inserido...')
+                if result := self.__daoProduto.select(Produto(id= obj.produto.id)):
+                    obj.produto = result[0]
+                    print('[Banqueiro][Criar][Anúncio] - Produto recuperado:', obj.produto)
+
+                    print(f'[Banqueiro][Retornar][Produto] - Recuperando imagens do produto...')
+                    for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = obj.produto.id)):
+                        obj.produto.imagens.append(imagem_produto.caminho())
+                    print(f'[Banqueiro][Retornar][Produto] - Produto recuperado + imagens:', obj.produto)
+                else:
+                    print('[Banqueiro][Criar][Anúncio] - Produto não encontrado!')
+                    return False
+            else:
+                print('[Banqueiro][Criar][Anúncio] - Falha fatal: Anúncio sem produto!')
+                return False
             print('[Banqueiro][Criar][Anúncio] - Retornando anuncio inserido...')
             return obj.to_dict()
         except Exception as e:
@@ -404,16 +427,22 @@ class Banqueiro():
             print(f'[Banqueiro][Retornar][Loja] - Iniciando tentativa de retornar loja...')
             if result := self.__daoLoja.select(Loja(id= id), logic= 'AND'):
                 loja = result[0]
+                if seExisteImagem('loja', f'{loja.id}.jpg'):
+                    loja.imagem = f'{loja.id}.jpg'
                 print(f'[Banqueiro][Retornar][Loja] - Loja recuperada:', loja)
 
                 anuncios_da_loja = []
+                loja.anuncios = []
                 print(f'[Banqueiro][Retornar][Loja] - Recuperando anúncios não pausados da loja...')
                 anuncios_da_loja += self.__daoAnuncio.select(Anuncio(produto= Produto(loja= loja))) 
                 for anuncio in anuncios_da_loja:
-                    if anuncio.pausado:
-                        anuncios_da_loja.remove(anuncio)
+                    if not anuncio.pausado:
+                        anuncio.produto.imagens = [imagem_produto.caminho() for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = anuncio.produto.id))]
+                        print()
+                        print(anuncio.produto.imagens)
+                        print()
+                        loja.anuncios.append(anuncio)
                 
-                loja.anuncios = anuncios_da_loja
                 loja.produtos = []
                 loja.pedidos_confirmados = []
                 loja.pedidos_em_andamento = []
@@ -437,15 +466,22 @@ class Banqueiro():
             print(f'[Banqueiro][Retornar][MinhaLoja] - Iniciando tentativa de retornar loja...')
             if result := self.__daoLoja.select(Loja(id= id), logic= 'AND'):
                 loja = result[0]
+                if seExisteImagem('loja', f'{loja.id}.jpg'):
+                    loja.imagem = f'{loja.id}.jpg'
                 print(f'[Banqueiro][Retornar][MinhaLoja] - Loja recuperada:', loja)
-
+                
                 produtos_da_loja = []
                 print(f'[Banqueiro][Retornar][MinhaLoja] - Recuperando produtos da loja...')
                 produtos_da_loja += self.__daoProduto.select(Produto(loja = loja))
+                for produto in produtos_da_loja:
+                    produto.imagens = [imagem_produto.caminho() for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = produto.id))]
+
 
                 anuncios_da_loja = []
                 print(f'[Banqueiro][Retornar][MinhaLoja] - Recuperando anúncios da loja...')
-                anuncios_da_loja += self.__daoAnuncio.select(Anuncio(produto= Produto(loja= loja))) 
+                anuncios_da_loja += self.__daoAnuncio.select(Anuncio(produto= Produto(loja= loja)))
+                for anuncio in anuncios_da_loja:
+                    anuncio.produto.imagens = [imagem_produto.caminho() for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = anuncio.produto.id))] 
                 
                 pedidos_confirmados = []
                 pedidos_em_andamento = []
@@ -481,6 +517,9 @@ class Banqueiro():
         try:
             print(f'[Banqueiro][Retornar][MinhasLojas] - Iniciando tentativa de retornar lojas...')
             minhasLojas = self.__daoLoja.select(Loja(id_usuario= id))
+            for loja in minhasLojas:
+                if seExisteImagem('loja', f'{loja.id}.jpg'):
+                    loja.imagem = f'{loja.id}.jpg'
             print(f'[Banqueiro][Retornar][MinhasLojas] - Lojas recuperadas:', minhasLojas)
             print(f'[Banqueiro][Retornar][MinhasLojas] - Retornando lojas...')
             return [loja.to_dict() for loja in minhasLojas]
@@ -560,11 +599,20 @@ class Banqueiro():
                 if isinstance(pedido.anuncio, Anuncio):
                     if isinstance(pedido.anuncio.produto, Produto):
                         if isinstance(pedido.anuncio.produto.loja, Loja):
-                            print(f'[Banqueiro][Retornar][VendedorPedido] - Recuperando vendedor do pedido recuperado...')
-                            if result := self.__daoUsuario.select(Usuario_Identificado(id= pedido.anuncio.produto.loja.id_usuario), logic= 'AND'):
-                                vendedor = result[0]
-                                print(f'[Banqueiro][Retornar][VendedorPedido] - Comprador recuperado:', vendedor)
-                                return vendedor.to_dict()
+                            print(f'[Banqueiro][Retornar][VendedorPedido] - Recuperando loja do produto do pedido recuperado...')
+                            if result := self.__daoLoja.select(Loja(id= pedido.anuncio.produto.loja.id), logic= 'AND'):
+                                loja = result[0]
+                                pedido.anuncio.produto.loja = loja
+                                print(f'[Banqueiro][Retornar][VendedorPedido] - Loja recuperada:', pedido.anuncio.produto.loja)
+                                
+                                print(f'[Banqueiro][Retornar][VendedorPedido] - Recuperando vendedor da loja recuperado...')
+                                if result := self.__daoUsuario.select(Usuario_Identificado(id= pedido.anuncio.produto.loja.id_usuario), logic= 'AND'):
+                                    vendedor = result[0]
+                                    print(f'[Banqueiro][Retornar][VendedorPedido] - Vendedor recuperado:', vendedor)
+                                    return vendedor.to_dict()
+                                else:
+                                    print(f'[Banqueiro][Retornar][VendedorPedido] - Usuário não encontrado!')
+                                    return False
                             else:
                                 print(f'[Banqueiro][Retornar][VendedorPedido] - Usuário não encontrado!')
                                 return False
@@ -637,27 +685,33 @@ class Banqueiro():
     def editarLoja(self, loja: dict, imagem= None):
         try:
             print('[Banqueiro][Editar][Loja] - Iniciando tentativa de editar loja...')
-            obj = Loja.from_dict(loja)
-            print('[Banqueiro][Editar][Loja] - Loja a editar:', obj)
-            if obj := self.__daoLoja.update(obj):
-                if obj.imagem:
-                    if imagem is not None:
-                        print('[Banqueiro][Editar][Loja] - Editando imagem...')
-                        obj.imagem = f'{obj.id}.jpg'
-                        salvarImagem('loja', obj.imagem, imagem)
+            print('[Banqueiro][Editar][Loja] - Loja a editar:', loja)
+            if 'id' in loja:
+                if 'imagem' in loja:
+                    if loja['imagem']:
+                        if imagem is not None:
+                            print('[Banqueiro][Editar][Loja] - Editando imagem...')
+                            loja['imagem'] = f"{loja['id']}.jpg"
+                            salvarImagem('loja', loja['imagem'], imagem)
+                        else:
+                            print('[Banqueiro][Retornar][Anúncio] - Falha fatal: Imagem nula!')
+                            return False
                     else:
-                        print('[Banqueiro][Retornar][Anúncio] - Falha fatal: Imagem nula!')
-                        return False
-                else:
-                    print('[Banqueiro][Editar][Loja] - Excluindo imagem...')
-                    if not apagarImagem('loja', f'{obj.id}.jpg'):
-                        print('[Banqueiro][Editar][Loja] - Falha fatal: Tentativa de excluir imagem de loja sem imagem!')
-                        return False
-                print('[Banqueiro][Editar][Loja] - Retornando loja modificado...')
-                return obj.to_dict()
+                        print('[Banqueiro][Editar][Loja] - Excluindo imagem...')
+                        if not apagarImagem('loja', f"{loja['id']}.jpg"):
+                            print('[Banqueiro][Editar][Loja] - Falha fatal: Tentativa de excluir imagem de loja sem imagem!')
+                            return False
             else:
-                print('[Banqueiro][Editar][Loja] - Algo saiu mal.')
+                print('[Banqueiro][Editar][Loja] - Falha fatal: Loja sem id!')
                 return False
+            if 'nome' in loja:
+                print('[Banqueiro][Editar][Loja] - Editando loja...')
+                obj = self.__daoLoja.update(Loja.from_dict(loja))
+                if not obj:
+                    print('[Banqueiro][Editar][Loja] - Algo saiu mal.')
+                    return False
+            print('[Banqueiro][Editar][Loja] - Retornando loja modificada...')
+            return loja, imagem
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
@@ -669,9 +723,9 @@ class Banqueiro():
     def editarProduto(self, produto: dict):
         try:
             print(f'[Banqueiro][Editar][Produto] - Iniciando tentativa de editar produto...')
-            obj = Endereco.from_dict(produto)
+            obj = Produto.from_dict(produto)
             print('[Banqueiro][Editar][Produto] - Produto a editar:', obj)
-            if obj := self.__daoEndereco.update(obj):
+            if obj := self.__daoProduto.update(obj):
                 print('[Banqueiro][Editar][Produto] - Retornando produto modificado...')
                 return obj.to_dict()
             else:
@@ -688,9 +742,9 @@ class Banqueiro():
     def editarAnuncio(self, anuncio: dict):
         try:
             print(f'[Banqueiro][Editar][Anúncio] - Iniciando tentativa de editar anúncio...')
-            obj = Endereco.from_dict(anuncio)
+            obj = Anuncio.from_dict(anuncio)
             print('[Banqueiro][Editar][Anúncio] - Anúncio a editar:', obj)
-            if obj := self.__daoEndereco.update(obj):
+            if obj := self.__daoAnuncio.update(obj):
                 print('[Banqueiro][Editar][Anúncio] - Retornando anúncio modificado...')
                 return obj.to_dict()
             else:
@@ -707,9 +761,9 @@ class Banqueiro():
     def editarPedido(self, pedido: dict):
         try:
             print(f'[Banqueiro][Editar][Pedido] - Iniciando tentativa de editar pedido...')
-            obj = Endereco.from_dict(pedido)
+            obj = Produto.from_dict(pedido)
             print('[Banqueiro][Editar][Pedido] - Pedido a editar:', obj)
-            if obj := self.__daoEndereco.update(obj):
+            if obj := self.__daoProduto.update(obj):
                 print('[Banqueiro][Editar][Pedido] - Retornando pedido modificado...')
                 return obj.to_dict()
             else:

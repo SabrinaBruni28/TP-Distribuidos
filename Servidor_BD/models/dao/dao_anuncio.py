@@ -9,7 +9,7 @@ class DAOAnuncio(DAO):
             ['anuncio', 'produto'],
             ['id_produto', 'id_loja', 'preco_anuncio', 'quantidade_produto', 'chave_pix', 'pausado'])
     
-    def _from_tuple(self, tupla = (0, 0, 0, 0, '', 0, 0, '', '')):
+    def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', 0, 0, '', '')):
         return Anuncio(
             id = tupla[0],
             produto = Produto(
@@ -21,12 +21,21 @@ class DAOAnuncio(DAO):
             quantidade_disponivel = tupla[3],
             chave_pix = tupla[4],
             pausado = bool(tupla[5]))
+    
+    def _from_tuple(self, tupla = (0, 0, 0, 0, '', 0,)):
+        return Anuncio(
+            id = tupla[0],
+            produto = Produto(id = tupla[1]),
+            preco = tupla[2],
+            quantidade_disponivel = tupla[3],
+            chave_pix = tupla[4],
+            pausado = bool(tupla[5]))
 
     def insert(self, obj: Anuncio):
         return super().insert(obj)
 
     def select(self, obj: Anuncio, logic = 'OR'):
-        return [self._from_tuple(tupla) for tupla in super().select(obj, logic)]
+        return [self._from_tuple_completo(tupla) for tupla in super().select(obj, logic)]
 
     def update(self, obj: Anuncio):
         return self._from_tuple(super().update(obj))
