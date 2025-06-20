@@ -2,10 +2,11 @@ from models.dao.dao import DAO
 from models.imagem_produto import Imagem_Produto
 
 class DAOImagem_Produto(DAO):
-    def __init__(self):
-        super().__init__(
-            ['imagem_produto'],
-            ['id_produto'])
+    def __init__(self,
+            nome_tabelas: list = ['imagem_produto'],
+            nome_colunas: list = ['id_produto']):
+        
+        super().__init__(nome_tabelas, nome_colunas)
     
     def _from_tuple(self, tupla = (0, 0)):
         return Imagem_Produto(
@@ -24,5 +25,5 @@ class DAOImagem_Produto(DAO):
     def delete(self, id_obj: int):
         return super().delete(id_obj)
     
-    def zerar(self, obj: Imagem_Produto):
+    def forget(self, obj: Imagem_Produto):
         pass

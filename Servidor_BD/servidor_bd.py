@@ -4,8 +4,8 @@ import Pyro5.errors
 import Pyro5.nameserver
 from banqueiro import Banqueiro
 
-ip = '192.168.1.17'
-porta = 5000
+ip = '127.0.0.1'
+porta = 9090
 try:
     nameServer = Pyro5.api.locate_ns(host=ip, port=porta)
     print("Name Server localizado.")

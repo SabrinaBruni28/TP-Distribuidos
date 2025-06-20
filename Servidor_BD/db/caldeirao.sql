@@ -21,6 +21,19 @@ CREATE TABLE IF NOT EXISTS "endereco" (
 	FOREIGN KEY("id_usuario") REFERENCES "usuario"("id_usuario"),
 	PRIMARY KEY("id_endereco")
 );
+DROP TABLE IF EXISTS "endereco_pedido";
+CREATE TABLE IF NOT EXISTS "endereco_pedido" (
+	"id_endereco"	INTEGER NOT NULL,
+	"id_usuario"	INTEGER,
+	"rua_endereco"	TEXT NOT NULL,
+	"numero_endereco"	INTEGER NOT NULL,
+	"bairro_endereco"	TEXT NOT NULL,
+	"cidade_endereco"	TEXT NOT NULL,
+	"estado_endereco"	TEXT NOT NULL,
+	"complemento_endereco"	TEXT,
+	FOREIGN KEY("id_usuario") REFERENCES "usuario"("id_usuario"),
+	PRIMARY KEY("id_endereco")
+);
 DROP TABLE IF EXISTS "anuncio";
 CREATE TABLE IF NOT EXISTS "anuncio" (
 	"id_anuncio"	INTEGER NOT NULL,
@@ -32,6 +45,17 @@ CREATE TABLE IF NOT EXISTS "anuncio" (
 	PRIMARY KEY("id_anuncio" AUTOINCREMENT),
 	FOREIGN KEY("id_produto") REFERENCES "produto"("id_produto")
 );
+DROP TABLE IF EXISTS "anuncio_pedido";
+CREATE TABLE IF NOT EXISTS "anuncio_pedido" (
+	"id_anuncio"	INTEGER NOT NULL,
+	"id_produto"	INTEGER NOT NULL,
+	"preco_anuncio"	NUMERIC NOT NULL,
+	"quantidade_produto"	INTEGER NOT NULL,
+	"chave_pix"	TEXT NOT NULL,
+	"pausado"	INTEGER NOT NULL,
+	PRIMARY KEY("id_anuncio" AUTOINCREMENT),
+	FOREIGN KEY("id_produto") REFERENCES "produto_pedido"("id_produto")
+);
 DROP TABLE IF EXISTS "pedido";
 CREATE TABLE IF NOT EXISTS "pedido" (
 	"id_pedido"	INTEGER NOT NULL,
@@ -40,12 +64,21 @@ CREATE TABLE IF NOT EXISTS "pedido" (
 	"quantidade_pedido"	INTEGER NOT NULL,
 	"data_pedido"	INTEGER NOT NULL,
 	"confirmacao_pedido"	INTEGER NOT NULL DEFAULT 0,
-	FOREIGN KEY("id_endereco") REFERENCES "endereco"("id_endereco"),
-	FOREIGN KEY("id_anuncio") REFERENCES "anuncio"("id_anuncio"),
+	FOREIGN KEY("id_endereco") REFERENCES "endereco_pedido"("id_endereco"),
+	FOREIGN KEY("id_anuncio") REFERENCES "anuncio_pedido"("id_anuncio"),
 	PRIMARY KEY("id_pedido" AUTOINCREMENT)
 );
 DROP TABLE IF EXISTS "produto";
 CREATE TABLE IF NOT EXISTS "produto" (
+	"id_produto"	INTEGER NOT NULL,
+	"id_loja"	INTEGER,
+	"nome_produto"	TEXT NOT NULL,
+	"descricao_produto"	TEXT,
+	PRIMARY KEY("id_produto" AUTOINCREMENT),
+	FOREIGN KEY("id_loja") REFERENCES "loja"("id_loja")
+);
+DROP TABLE IF EXISTS "produto_pedido";
+CREATE TABLE IF NOT EXISTS "produto_pedido" (
 	"id_produto"	INTEGER NOT NULL,
 	"id_loja"	INTEGER,
 	"nome_produto"	TEXT NOT NULL,
@@ -59,6 +92,13 @@ CREATE TABLE IF NOT EXISTS "imagem_produto" (
 	"id_produto"	INTEGER NOT NULL,
 	PRIMARY KEY("id_imagem_produto" AUTOINCREMENT),
 	FOREIGN KEY("id_produto") REFERENCES "produto"("id_produto")
+);
+DROP TABLE IF EXISTS "imagem_pedido";
+CREATE TABLE IF NOT EXISTS "imagem_pedido" (
+	"id_imagem_produto"	INTEGER NOT NULL,
+	"id_produto"	INTEGER NOT NULL,
+	PRIMARY KEY("id_imagem_produto" AUTOINCREMENT),
+	FOREIGN KEY("id_produto") REFERENCES "produto_pedido"("id_produto")
 );
 DROP TABLE IF EXISTS "loja";
 CREATE TABLE IF NOT EXISTS "loja" (
@@ -89,12 +129,12 @@ CREATE TRIGGER on_apagar_pedido
 AFTER DELETE ON pedido
 FOR EACH ROW
 BEGIN
-    -- 1. Subtrair a quantidade do anúncio
+    -- 1. Acrescentar a quantidade no anúncio
     UPDATE anuncio
     SET quantidade_produto = quantidade_produto + OLD.quantidade_pedido
     WHERE id_anuncio = OLD.id_anuncio;
 
-    -- 2. Pausar o anúncio se a quantidade chegar a 0 ou menos
+    -- 2. Despausar o anúncio se a quantidade sair de 0
     UPDATE anuncio
     SET pausado = 0
     WHERE id_anuncio = OLD.id_anuncio

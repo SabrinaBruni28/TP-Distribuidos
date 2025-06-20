@@ -1,8 +1,7 @@
-import base64
-import copy
 import traceback
 from Pyro5.api import expose
 from Pyro5.api import behavior
+import image_utils as imageu
 from models.persistivel import Persistivel
 from models.dao.dao_usuario import DAOUsuario
 from models.dao.dao_endereco import DAOEndereco
@@ -18,48 +17,6 @@ from models.produto import Produto
 from models.anuncio import Anuncio
 from models.pedido import Pedido
 from models.imagem_produto import Imagem_Produto
-
-import sys, os
-CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), '.'))
-sys.path.append(CAMINHO_BASE)
-
-img_path = 'db/img'
-
-def seExisteImagem(pasta: str, nomeImagem: str):
-    caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
-    return os.path.exists(caminho_imagem)
-
-def obterImagem(pasta: str, nomeImagem: str):
-    print(f'[Imagens][Obter] - Obtendo {nomeImagem} ...')
-    caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
-    if os.path.exists(caminho_imagem):
-        with open(caminho_imagem, 'rb') as f:
-            print(f'[Imagens][Obter] - Retornando {nomeImagem} ...')
-            data = f.read()
-        return base64.b64encode(data).decode('utf-8')
-    else:
-        print(f'[Imagens][Obter] - {nomeImagem} não encontrado!')
-        return False
-
-def salvarImagem(pasta: str, nomeImagem: str, imagem):
-    print(f'[Imagens][Salvar] - Salvando {nomeImagem} ...')
-    caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
-    with open(caminho_imagem, 'wb') as f:
-        f.write( base64.b64decode(imagem.encode('utf-8')))
-    print(f'[Imagens][Salvar] - {nomeImagem} salvo!')
-
-def apagarImagem(pasta: str, nomeImagem: str):
-    print(f'[Imagens][Apagar] - Apagando {nomeImagem} ...')
-    caminho_imagem = os.path.join(CAMINHO_BASE, img_path, pasta, nomeImagem)
-    if os.path.exists(caminho_imagem):
-        os.remove(caminho_imagem)
-        print(f'[Imagens][Apagar] - {nomeImagem} removido!')
-        return True
-    else:
-        print(f'[Imagens][Apagar] - {nomeImagem} não encontrado!')
-        return False
-
-
 
 @expose
 @behavior(instance_mode='single')
@@ -176,7 +133,7 @@ class Banqueiro():
             obj.id = self.__daoLoja.insert(obj)
             if imagem is not None:
                 obj.imagem = f'{obj.id}.jpg'
-                salvarImagem('loja', obj.imagem, imagem)
+                imageu.salvarImagem('loja', obj.imagem, imagem)
             print('[Banqueiro][Criar][Loja] - Retornando loja inserido...')
             return obj.to_dict(), imagem
         except Exception as e:
@@ -194,7 +151,7 @@ class Banqueiro():
             print('[Banqueiro][Criar][Imagem] - Imagem a criar:', imagem_produto)
             print('[Banqueiro][Criar][Imagem] - Inserindo imagem no banco...')
             imagem_produto.id = self.__daoImagem_Produto.insert(imagem_produto)
-            salvarImagem('produto', imagem_produto.caminho(), imagem)
+            imageu.salvarImagem('produto', imagem_produto.caminho(), imagem)
             print('[Banqueiro][Criar][Imagem] - Retornando nome e imagem salvos...')
             return imagem_produto.caminho(), imagem
         except Exception as e:
@@ -267,6 +224,47 @@ class Banqueiro():
             print(f'[Banqueiro][Criar][Pedido] - Iniciando tentativa de criar pedido...')
             obj = Pedido.from_dict(pedido)
             print('[Banqueiro][Criar][Pedido] - Pedido a criar:', obj)
+
+            print('[Banqueiro][Criar][Pedido] - Recuperando endereço do pedido...')
+            if isinstance(obj.endereco, Endereco):
+                if result := self.__daoEndereco.select(Endereco(id = obj.endereco.id), logic= 'AND'):
+                    obj.endereco = result[0]
+                else:
+                    print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Endereço não encontrado!')
+                    return False
+            else:
+                print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Pedido não possui endereço!')
+                return False
+            
+            print('[Banqueiro][Criar][Pedido] - Recuperando anúncio do pedido...')
+            if isinstance(obj.anuncio, Anuncio):
+                if result := self.__daoAnuncio.select(Anuncio(id = obj.anuncio.id), logic= 'AND'):
+                    obj.anuncio = result[0]
+
+                    print('[Banqueiro][Criar][Pedido] - Recuperando produto do anúncio do pedido...')
+                    if isinstance(obj.anuncio.produto, Produto):
+                        if result := self.__daoProduto.select(Produto(id = obj.anuncio.produto.id), logic= 'AND'):
+                            obj.anuncio.produto = result[0]
+                            obj.anuncio.produto.imagens = []
+
+                            print('[Banqueiro][Criar][Pedido] - Recuperando imagens do produto do pedido...')
+                            for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = obj.anuncio.produto.id)):
+                                obj.anuncio.produto.imagens.append(imagem_produto.caminho())
+                        else:
+                            print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Pedido não encontrado!')
+                            return False
+                    else:
+                        print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Anúncio do pedido não possui produto!')
+                        return False
+                    
+                else:
+                    print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Anúncio não encontrado!')
+                    return False
+            else:
+                print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Pedido não possui anúncio!')
+                return False
+            
+            print('[Banqueiro][Criar][Pedido] - Pedido a criar + endereço + anuncio + produto + imagens:', obj)
             print('[Banqueiro][Criar][Pedido] - Inserindo pedido no banco...')
             obj.id = self.__daoPedido.insert(obj)
             print('[Banqueiro][Criar][Pedido] - Retornando pedido inserido...')
@@ -302,7 +300,7 @@ class Banqueiro():
     def retornarImagem(self, tipoObj: str, nomeImagem: str):
         try:
             print(f'[Banqueiro][Retornar][Imagem] - Iniciando tentativa de retornar imagem...')
-            imagem = obterImagem(tipoObj, nomeImagem)
+            imagem = imageu.obterImagem(tipoObj, nomeImagem)
             if imagem:
                 print(f'[Banqueiro][Retornar][Imagem] - Imagem obtida! Retornando imagem...')
                 return imagem
@@ -427,7 +425,7 @@ class Banqueiro():
             print(f'[Banqueiro][Retornar][Loja] - Iniciando tentativa de retornar loja...')
             if result := self.__daoLoja.select(Loja(id= id), logic= 'AND'):
                 loja = result[0]
-                if seExisteImagem('loja', f'{loja.id}.jpg'):
+                if imageu.seExisteImagem('loja', f'{loja.id}.jpg'):
                     loja.imagem = f'{loja.id}.jpg'
                 print(f'[Banqueiro][Retornar][Loja] - Loja recuperada:', loja)
 
@@ -466,7 +464,7 @@ class Banqueiro():
             print(f'[Banqueiro][Retornar][MinhaLoja] - Iniciando tentativa de retornar loja...')
             if result := self.__daoLoja.select(Loja(id= id), logic= 'AND'):
                 loja = result[0]
-                if seExisteImagem('loja', f'{loja.id}.jpg'):
+                if imageu.seExisteImagem('loja', f'{loja.id}.jpg'):
                     loja.imagem = f'{loja.id}.jpg'
                 print(f'[Banqueiro][Retornar][MinhaLoja] - Loja recuperada:', loja)
                 
@@ -518,7 +516,7 @@ class Banqueiro():
             print(f'[Banqueiro][Retornar][MinhasLojas] - Iniciando tentativa de retornar lojas...')
             minhasLojas = self.__daoLoja.select(Loja(id_usuario= id))
             for loja in minhasLojas:
-                if seExisteImagem('loja', f'{loja.id}.jpg'):
+                if imageu.seExisteImagem('loja', f'{loja.id}.jpg'):
                     loja.imagem = f'{loja.id}.jpg'
             print(f'[Banqueiro][Retornar][MinhasLojas] - Lojas recuperadas:', minhasLojas)
             print(f'[Banqueiro][Retornar][MinhasLojas] - Retornando lojas...')
@@ -692,13 +690,13 @@ class Banqueiro():
                         if imagem is not None:
                             print('[Banqueiro][Editar][Loja] - Editando imagem...')
                             loja['imagem'] = f"{loja['id']}.jpg"
-                            salvarImagem('loja', loja['imagem'], imagem)
+                            imageu.salvarImagem('loja', loja['imagem'], imagem)
                         else:
                             print('[Banqueiro][Retornar][Anúncio] - Falha fatal: Imagem nula!')
                             return False
                     else:
                         print('[Banqueiro][Editar][Loja] - Excluindo imagem...')
-                        if not apagarImagem('loja', f"{loja['id']}.jpg"):
+                        if not imageu.apagarImagem('loja', f"{loja['id']}.jpg"):
                             print('[Banqueiro][Editar][Loja] - Falha fatal: Tentativa de excluir imagem de loja sem imagem!')
                             return False
             else:
@@ -828,7 +826,7 @@ class Banqueiro():
             if self.__daoImagem_Produto.delete(obj.id):
                 print('[Banqueiro][Excluir][Imagem] - Registro da imagem excluído!')
                 print('[Banqueiro][Excluir][Imagem] - Excluindo imagem...')
-                if apagarImagem('produto', nome_imagem):
+                if imageu.apagarImagem('produto', nome_imagem):
                     print('[Banqueiro][Excluir][Imagem] - Imagem excluída!')
                     return True
                 else:
@@ -856,7 +854,7 @@ class Banqueiro():
         pass
 
     ################################## Métodos de Delete ##################################
-
+'''
     def excluir(self, obj: Persistivel):
         return self._dao(obj).delete(obj.id)
     
@@ -876,4 +874,4 @@ class Banqueiro():
                     imagens_a_remover.append(imagem_produto.caminho())
             ans = self.excluir(obj)
         return imagens_a_remover, ans
-
+'''

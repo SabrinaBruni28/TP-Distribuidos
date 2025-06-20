@@ -30,5 +30,5 @@ class DAOLoja(DAO):
     def delete(self, id_obj: int):
         return super().delete(id_obj)
     
-    def zerar(self, obj: Loja):
+    def forget(self, obj: Loja):
         pass

@@ -4,10 +4,11 @@ from models.produto import Produto
 from models.loja import Loja
 
 class DAOAnuncio(DAO):
-    def __init__(self):
-        super().__init__(
-            ['anuncio', 'produto'],
-            ['id_produto', 'id_loja', 'preco_anuncio', 'quantidade_produto', 'chave_pix', 'pausado'])
+    def __init__(self,
+            nome_tabelas: list = ['anuncio', 'produto'],
+            nome_colunas: list = ['id_produto', 'id_loja', 'preco_anuncio', 'quantidade_produto', 'chave_pix', 'pausado']):
+        
+        super().__init__(nome_tabelas, nome_colunas)
     
     def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', 0, 0, '', '')):
         return Anuncio(
