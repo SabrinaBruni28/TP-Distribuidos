@@ -68,21 +68,47 @@ class DAOPedido(DAO):
     def insert(self, obj: Pedido):
         #IMPORTANTE: Os elementos de Pedido estão inicialmente com o id das tabelas originais, não zerados! Mudar a ordem de inserção pode causar erro irrastreável nas referências!
         if isinstance(obj.endereco, Endereco) and isinstance(obj.anuncio, Anuncio) and isinstance(obj.anuncio.produto, Produto) and isinstance(obj.anuncio.produto.loja, Loja):
-            obj.endereco.id = self.__daoEndereco_Pedido.insert(obj.endereco)
-            obj.anuncio.produto.id = self.__daoProduto_Pedido.insert(obj.anuncio.produto)
+            # Endereço
+            obj.endereco.id = 0
+            if result := self.__daoEndereco_Pedido.select(obj.endereco, logic= 'AND'):
+                obj.endereco.id = result[0].id
+            else:
+                obj.endereco.id = self.__daoEndereco_Pedido.insert(obj.endereco)
+            
+            # Produto
+            obj.anuncio.produto.id = 0
+            if result := self.__daoProduto_Pedido.select(obj.anuncio.produto, logic= 'AND'):
+                obj.anuncio.produto.id = result[0].id
+            else:
+                obj.anuncio.produto.id = self.__daoProduto_Pedido.insert(obj.anuncio.produto)
+            
+            # Imagens
             imagem_pedido = Imagem_Produto()
             imagens_pedido = []
             for imagem_produto in obj.anuncio.produto.imagens:
-                if imagem := imageu.obterImagem('produto', imagem_produto):
+                imagem_pedido.id = imagem_produto.id
+                imagem_pedido.id_produto = 0
+                if result := self.__daoImagem_Pedido.select(imagem_pedido, logic= 'AND'):
+                    imagem_pedido.id_produto = result[0].id_produto
+                    imagens_pedido.append(imagem_pedido.caminho())
+                elif imagem := imageu.obterImagem('produto', imagem_produto.caminho()):
                     imagem_pedido.id_produto = obj.anuncio.produto.id
-                    imagem_pedido.id = self.__daoImagem_Pedido.insert(imagem_pedido)
+                    self.__daoImagem_Pedido.insert(imagem_pedido)
                     imageu.salvarImagem('pedido', imagem_pedido.caminho(), imagem)
                     imagens_pedido.append(imagem_pedido.caminho())
                 else:
                     print('Erro ao salvar imagem do pedido')
             obj.anuncio.produto.imagens = imagens_pedido
+
+            # Anúncio
             obj.anuncio.id_produto = obj.anuncio.produto.id
-            obj.anuncio.id = self.__daoAnuncio_Pedido.insert(obj.anuncio)
+            obj.anuncio.id = 0
+            if result := self.__daoAnuncio_Pedido.select(obj.anuncio):
+                obj.anuncio.id = result[0].id
+            else:
+                obj.anuncio.id = self.__daoAnuncio_Pedido.insert(obj.anuncio)
+
+            # Pedido
             obj.id_endereco = obj.endereco.id
             obj.id_anuncio = obj.anuncio.id
         return super().insert(obj)

@@ -248,8 +248,8 @@ class Banqueiro():
                             obj.anuncio.produto.imagens = []
 
                             print('[Banqueiro][Criar][Pedido] - Recuperando imagens do produto do pedido...')
-                            for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = obj.anuncio.produto.id)):
-                                obj.anuncio.produto.imagens.append(imagem_produto.caminho())
+                            #Está adicionando os objetos e não os caminhos pois isso será necessário no conferimento de redundância.
+                            obj.anuncio.produto.imagens = self.__daoImagem_Produto.select(Imagem_Produto(id_produto = obj.anuncio.produto.id))
                         else:
                             print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Pedido não encontrado!')
                             return False

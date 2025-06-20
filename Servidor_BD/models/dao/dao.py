@@ -21,6 +21,8 @@ class DAO():
             cursor = conn.cursor()
             print(obj.to_dict())
             persistivel = obj.to_dict_bd(self.nome_colunas)
+            if obj.id:
+                persistivel[f'id_{self.nome_tabelas[0]}'] = obj.id
             print(persistivel)
             sql = f'''INSERT INTO {self.nome_tabelas[0]}
             ({', '.join(persistivel.keys())})
