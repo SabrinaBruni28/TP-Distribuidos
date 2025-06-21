@@ -8,7 +8,8 @@ from models.dao.dao_endereco import DAOEndereco
 from models.dao.dao_loja import DAOLoja
 from models.dao.dao_produto import DAOProduto
 from models.dao.dao_anuncio import DAOAnuncio
-from models.dao.dao_pedido import DAOPedido
+from models.dao.dao_pedido_andamento import DAOPedido_Andamento
+from models.dao.dao_pedido_confirmado import DAOPedido_Confirmado
 from models.dao.dao_imagem_produto import DAOImagem_Produto
 from models.usuario import Usuario_Identificado
 from models.endereco import Endereco
@@ -28,8 +29,10 @@ class Banqueiro():
         self.__daoLoja = DAOLoja()
         self.__daoProduto = DAOProduto()
         self.__daoAnuncio = DAOAnuncio()
-        self.__daoPedido = DAOPedido()
+        self.__daoPedido_Andamento = DAOPedido_Andamento()
+        self.__daoPedido_Confirmado = DAOPedido_Confirmado()
         self.__daoImagem_Produto = DAOImagem_Produto()
+        self.__daoImagem_Pedido = DAOImagem_Produto(['imagem_pedido'])
     
     ################################## Login ##################################
 
@@ -223,6 +226,39 @@ class Banqueiro():
         try:
             print(f'[Banqueiro][Criar][Pedido] - Iniciando tentativa de criar pedido...')
             obj = Pedido.from_dict(pedido)
+            print(f'[Banqueiro][Criar][Pedido] - Recuperando anúncio do pedido a ser criado...')
+            if isinstance(obj.anuncio, Anuncio):
+                if result := self.__daoAnuncio.select(Anuncio(id= obj.anuncio.id)):
+                    obj.anuncio = result[0]
+                else:
+                    print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Anúncio não encontrado!')
+                    return False
+            else:
+                print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Pedido não possui anúncio!')
+                return False
+            print('[Banqueiro][Criar][Pedido] - Pedido a criar:', obj)
+
+            print('[Banqueiro][Criar][Pedido] - Retirando quantidade pedida do anúncio...')
+            if isinstance(obj.anuncio, Anuncio):
+                self.__daoAnuncio.update(Anuncio(id= obj.anuncio.id, quantidade_disponivel= obj.anuncio.quantidade_disponivel-obj.quantidade))
+                print('[Banqueiro][Criar][Pedido] - Anúncio do pedido atualizado!')
+            
+            print('[Banqueiro][Criar][Pedido] - Inserindo pedido no banco...')
+            obj.id = self.__daoPedido_Andamento.insert(obj)
+            print('[Banqueiro][Criar][Pedido] - Retornando pedido inserido...')
+            return obj.to_dict()
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Criar][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+    
+    def criarPeido(self, pedido: dict):
+        try:
+            print(f'[Banqueiro][Criar][Pedido] - Iniciando tentativa de criar pedido...')
+            obj = Pedido.from_dict(pedido)
             print('[Banqueiro][Criar][Pedido] - Pedido a criar:', obj)
 
             print('[Banqueiro][Criar][Pedido] - Recuperando endereço do pedido...')
@@ -266,7 +302,7 @@ class Banqueiro():
             
             print('[Banqueiro][Criar][Pedido] - Pedido a criar + endereço + anuncio + produto + imagens:', obj)
             print('[Banqueiro][Criar][Pedido] - Inserindo pedido no banco...')
-            obj.id = self.__daoPedido.insert(obj)
+            obj.id = self.__daoPedido_Andamento.insert(obj)
             print('[Banqueiro][Criar][Pedido] - Retornando pedido inserido...')
             return obj.to_dict()
         except Exception as e:
@@ -392,32 +428,60 @@ class Banqueiro():
             print(f'[Banqueiro][Retornar][Produto][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
     
-    def retornarPedido(self, id):
+    def retornarPedidoAndamento(self, id: int):
         try:
-            print(f'[Banqueiro][Retornar][Pedido] - Iniciando tentativa de retornar pedido...')
-            if result := self.__daoPedido.select(Pedido(id= id), logic= 'AND'):
-                pedido, _ = result[0]
-                print(f'[Banqueiro][Retornar][Pedido] - Pedido recuperado:', pedido)
+            print(f'[Banqueiro][Retornar][Pedido][Andamento] - Iniciando tentativa de retornar pedido...')
+            if result := self.__daoPedido_Andamento.select(Pedido(id= id), logic= 'AND'):
+                pedido = result[0]
+                print(f'[Banqueiro][Retornar][Pedido][Andamento] - Pedido recuperado:', pedido)
                 if pedido.anuncio is not None:
                     pedido.anuncio.produto.imagens = []
-                    print(f'[Banqueiro][Retornar][Pedido] - Recuperando imagens do pedido...')
+                    print(f'[Banqueiro][Retornar][Pedido][Andamento] - Recuperando imagens do pedido...')
                     for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = pedido.anuncio.produto.id)):
                         pedido.anuncio.produto.imagens.append(imagem_produto.caminho())
-                    print(f'[Banqueiro][Retornar][Pedido] - Pedido recuperado + imagens:', pedido)
-                    print(f'[Banqueiro][Retornar][Pedido] - Retornando pedido...')
+                    print(f'[Banqueiro][Retornar][Pedido][Andamento] - Pedido recuperado + imagens:', pedido)
+                    print(f'[Banqueiro][Retornar][Pedido][Andamento] - Retornando pedido...')
                     return pedido.to_dict()
                 else:
-                    print(f'[Banqueiro][Retornar][Pedido] - Falha fatal: Pedido não possui Anúncio!')
+                    print(f'[Banqueiro][Retornar][Pedido][Andamento] - Falha fatal: Pedido não possui Anúncio!')
                     return False
             else:
-                print(f'[Banqueiro][Retornar][Pedido] - Pedido não encontrado!')
+                print(f'[Banqueiro][Retornar][Pedido][Andamento] - Pedido não encontrado!')
                 return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
             tipo = type(e).__name__
             mensagem = str(e)
-            print(f'[Banqueiro][Retornar][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            print(f'[Banqueiro][Retornar][Pedido][Andamento][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+    
+    def retornarPedidoConfirmado(self, id: int):
+        try:
+            print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Iniciando tentativa de retornar pedido...')
+            if result := self.__daoPedido_Confirmado.select(Pedido(id= id), logic= 'AND'):
+                pedido = result[0]
+                print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Pedido recuperado:', pedido)
+                if pedido.anuncio is not None:
+                    pedido.anuncio.produto.imagens = []
+                    print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Recuperando imagens do pedido...')
+                    for imagem_produto in self.__daoImagem_Pedido.select(Imagem_Produto(id_produto = pedido.anuncio.produto.id)):
+                        pedido.anuncio.produto.imagens.append(imagem_produto.caminho())
+                    print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Pedido recuperado + imagens:', pedido)
+                    print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Retornando pedido...')
+                    return pedido.to_dict()
+                else:
+                    print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Falha fatal: Pedido não possui Anúncio!')
+                    return False
+            else:
+                print(f'[Banqueiro][Retornar][Pedido][Confirmado] - Pedido não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Retornar][Pedido][Confirmado][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
     
     def retornarLoja(self, id):
@@ -481,21 +545,17 @@ class Banqueiro():
                 for anuncio in anuncios_da_loja:
                     anuncio.produto.imagens = [imagem_produto.caminho() for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = anuncio.produto.id))] 
                 
-                pedidos_confirmados = []
                 pedidos_em_andamento = []
-                for anuncio in anuncios_da_loja:
-                    print(f'[Banqueiro][Retornar][MinhaLoja] - Recuperando pedidos do anúncio', anuncio.id, '...')
-                    pedidos_do_anuncio = self.__daoPedido.select( Pedido(anuncio= Anuncio(id = anuncio.id)) )
-                    for pedido, confirmacao in pedidos_do_anuncio:
-                        if confirmacao:
-                            pedidos_confirmados.append(pedido)
-                        else:
-                            pedidos_em_andamento.append(pedido)
+                print(f'[Banqueiro][Retornar][MinhaLoja] - Recuperando pedidos em andamento...')
+                pedidos_em_andamento = self.__daoPedido_Andamento.select( Pedido(id_loja= loja.id))
+                pedidos_confirmados = []
+                print(f'[Banqueiro][Retornar][MinhaLoja] - Recuperando pedidos confirmados...')
+                pedidos_confirmados = self.__daoPedido_Confirmado.select( Pedido(id_loja= loja.id))
                 
                 loja.anuncios = anuncios_da_loja
                 loja.produtos = produtos_da_loja
-                loja.pedidos_confirmados = pedidos_confirmados
                 loja.pedidos_em_andamento = pedidos_em_andamento
+                loja.pedidos_confirmados = pedidos_confirmados
                 print(f'[Banqueiro][Retornar][MinhaLoja] - Loja recuperada + produtos + anúncios + pedidos:', loja)
                 
                 print(f'[Banqueiro][Retornar][MinhaLoja] - Retornando loja...')
@@ -547,10 +607,17 @@ class Banqueiro():
     def retornarMeusPedidos(self, id):
         try:
             print(f'[Banqueiro][Retornar][MeusPedidos] - Iniciando tentativa de retornar pedidos...')
-            meusPedidos = self.__daoPedido.select(Pedido(endereco= Endereco(id_usuario= id)))
-            print(f'[Banqueiro][Retornar][MeusPedidos] - Pedidos recuperados:', meusPedidos)
+
+            print(f'[Banqueiro][Retornar][MeusPedidos] - Recuperando pedidos em andamento...')
+            meusPedidos_Andamento = self.__daoPedido_Andamento.select(Pedido(endereco= Endereco(id_usuario= id)))
+            print(f'[Banqueiro][Retornar][MeusPedidos] - Pedidos recuperados:', meusPedidos_Andamento)
+            
+            print(f'[Banqueiro][Retornar][MeusPedidos] - Recuperando pedidos confirmados...')
+            meusPedidos_Confirmado = self.__daoPedido_Confirmado.select(Pedido(endereco= Endereco(id_usuario= id)))
+            print(f'[Banqueiro][Retornar][MeusPedidos] - Pedidos recuperados:', meusPedidos_Confirmado)
+
             print(f'[Banqueiro][Retornar][MeusPedidos] - Retornando pedidos...')
-            return [pedido.to_dict() for pedido, _ in meusPedidos]
+            return [pedido.to_dict() for pedido in meusPedidos_Andamento], [pedido.to_dict() for pedido in meusPedidos_Confirmado]
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
@@ -562,8 +629,8 @@ class Banqueiro():
     def retornarCompradorPedido(self, id_pedido: int):
         try:
             print(f'[Banqueiro][Retornar][CompradorPedido] - Iniciando tentativa de retornar comprador do pedido {id_pedido}...')
-            if result := self.__daoPedido.select(Pedido(id= id_pedido), logic= 'AND'):
-                pedido, _ = result[0]
+            if result := self.__daoPedido_Andamento.select(Pedido(id= id_pedido), logic= 'AND'):
+                pedido = result[0]
                 print(f'[Banqueiro][Retornar][CompradorPedido] - Pedido recuperado:', pedido)
                 if isinstance(pedido.endereco, Endereco):
                     print(f'[Banqueiro][Retornar][CompradorPedido] - Recuperando comprador do pedido recuperado...')
@@ -591,8 +658,8 @@ class Banqueiro():
     def retornarVendedorPedido(self, id_pedido: int):
         try:
             print(f'[Banqueiro][Retornar][VendedorPedido] - Iniciando tentativa de retornar vendedor do pedido {id_pedido}...')
-            if result := self.__daoPedido.select(Pedido(id= id_pedido), logic= 'AND'):
-                pedido, _ = result[0]
+            if result := self.__daoPedido_Andamento.select(Pedido(id= id_pedido), logic= 'AND'):
+                pedido = result[0]
                 print(f'[Banqueiro][Retornar][VendedorPedido] - Pedido recuperado:', pedido)
                 if isinstance(pedido.anuncio, Anuncio):
                     if isinstance(pedido.anuncio.produto, Produto):
@@ -755,38 +822,37 @@ class Banqueiro():
             mensagem = str(e)
             print(f'[Banqueiro][Editar][Anúncio][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
-        
-    def editarPedido(self, pedido: dict):
-        try:
-            print(f'[Banqueiro][Editar][Pedido] - Iniciando tentativa de editar pedido...')
-            obj = Produto.from_dict(pedido)
-            print('[Banqueiro][Editar][Pedido] - Pedido a editar:', obj)
-            if obj := self.__daoProduto.update(obj):
-                print('[Banqueiro][Editar][Pedido] - Retornando pedido modificado...')
-                return obj.to_dict()
-            else:
-                print('[Banqueiro][Editar][Pedido] - Algo saiu mal.')
-                return False
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            linha = tb[-1].lineno if tb else '[linha desconhecida]'
-            tipo = type(e).__name__
-            mensagem = str(e)
-            print(f'[Banqueiro][Editar][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
-            return False
     
     ################################### Confirmar ###################################
 
     def confirmarPedido(self, id: int):
         try:
             print('[Banqueiro][Confirmar][Pedido] - Iniciando tentativa de confirmar pedido...')
-            pedido, confirmado = self.__daoPedido.confirmarPedido(Pedido(id= id))
-            print('[Banqueiro][Confirmar][Pedido] - Pedido a confirmar:', pedido)
-            if confirmado:
+            print('[Banqueiro][Confirmar][Pedido] - Recuperando todos os dados do pedido em andamento...')
+            if result := self.__daoPedido_Andamento.select(Pedido(id= id)):
+                pedido = result[0]
+                print('[Banqueiro][Confirmar][Pedido] - Pedido recuperando!')
+                print('[Banqueiro][Confirmar][Pedido] - Recuperando imagens do pedido...')
+                if isinstance(pedido.anuncio, Anuncio):
+                    if isinstance(pedido.anuncio.produto, Produto):
+                        pedido.anuncio.produto.imagens = self.__daoImagem_Produto.select(Imagem_Produto(id_produto = pedido.anuncio.produto.id))
+                    else:
+                        print(f'[Banqueiro][Confirmar][Pedido] - Falha fatal: Anúncio do pedido não possui produto!')
+                        return False
+                else:
+                    print(f'[Banqueiro][Confirmar][Pedido] - Falha fatal: Pedido não possui anúncio!')
+                    return False
+                print('[Banqueiro][Confirmar][Pedido] - Pedido a confirmar:', pedido)
+            else:
+                print(f'[Banqueiro][Confirmar][Pedido] - Falha fatal: Pedido não encontrado!')
+                return False
+            print('[Banqueiro][Confirmar][Pedido] - Confirmando pedido...')
+            pedido.id = self.__daoPedido_Confirmado.insert(pedido)
+            if self.__daoPedido_Andamento.delete(pedido.id):
                 print('[Banqueiro][Confirmar][Pedido] - Pedido confirmado!')
                 return True
             else:
-                print('[Banqueiro][Confirmar][Pedido] - Algo saiu mal: Pedido não confirmado.')
+                print('[Banqueiro][Confirmar][Pedido] - Algo saiu mal: Pedido não cancelado.')
                 return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
@@ -801,12 +867,28 @@ class Banqueiro():
     def cancelarPedido(self, id: int):
         try:
             print('[Banqueiro][Cancelar][Pedido] - Iniciando tentativa de cancelar pedido...')
-            apagado = self.__daoPedido.delete(id)
-            if apagado:
-                print('[Banqueiro][Cancelar][Pedido] - Pedido cancelado!')
-                return True
+            if result := self.__daoPedido_Andamento.select(Pedido(id= id)):
+                pedido = result[0]
+                print('[Banqueiro][Cancelar][Pedido] - Pedido a cancelar:', pedido)
+
+                print('[Banqueiro][Cancelar][Pedido] - Retornando quantidade do pedido ao anúncio...')
+                if isinstance(pedido.anuncio, Anuncio):
+                    self.__daoAnuncio.update(Anuncio(id= pedido.anuncio.id, quantidade_disponivel= pedido.anuncio.quantidade_disponivel+pedido.quantidade))
+                    print('[Banqueiro][Cancelar][Pedido] - Anúncio do pedido atualizado!')
+
+                    if self.__daoPedido_Andamento.delete(id):
+                        print('[Banqueiro][Cancelar][Pedido] - Pedido cancelado!')
+                        return True
+                    else:
+                        print('[Banqueiro][Cancelar][Pedido] - Algo saiu mal: Pedido não cancelado.')
+                        return False
+                    
+                else:
+                    print(f'[Banqueiro][Cancelar][Pedido] - Falha fatal: Pedido não possui anúncio!')
+                    return False
+                
             else:
-                print('[Banqueiro][Cancelar][Pedido] - Algo saiu mal: Pedido não cancelado.')
+                print(f'[Banqueiro][Cancelar][Pedido] - Falha fatal: Pedido não encontrado!')
                 return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
@@ -842,6 +924,44 @@ class Banqueiro():
             print(f'[Banqueiro][Excluir][Imagem][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
 
+    def excluirPedido(self, id: int):
+        try:
+            print('[Banqueiro][Excluir][Pedido] - Iniciando tentativa de excluir pedido...')
+            print('[Banqueiro][Excluir][Pedido] - Nada aconteceu! Ainda não é possível excluir pedidos.')
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Excluir][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+
+    def excluirAnuncio(self, id: int):
+        try:
+            print('[Banqueiro][Excluir][Anúncio] - Iniciando tentativa de excluir anúncio...')
+            if result := self.__daoAnuncio.select(Anuncio(id= id)):
+                obj = result[0]
+                print('[Banqueiro][Excluir][Anúncio] - Anúncio a excluir:', obj)
+
+                print('[Banqueiro][Excluir][Anúncio] - Recuperando pedidos não confirmados do anúncio...')
+                for pedido in self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(id= obj.id))):
+                    self.excluirPedido(pedido.id)
+                
+                print('[Banqueiro][Excluir][Anúncio] - Excluindo anúncio...')
+                if self.__daoAnuncio.delete(obj.id):
+                    print('[Banqueiro][Excluir][Anúncio] - Anúncio excluído!')
+                    return True
+                else:
+                    print('[Banqueiro][Excluir][Anúncio] - Falha fatal: Anúncio não pôde ser excluído!')
+                    return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Excluir][Anúncio][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+
     def excluirUsuario(self):
         pass
     def excluirEndereco(self):
@@ -849,8 +969,6 @@ class Banqueiro():
     def excluirLoja(self):
         pass
     def excluirProduto(self):
-        pass
-    def excluirAnuncio(self):
         pass
 
     ################################## Métodos de Delete ##################################

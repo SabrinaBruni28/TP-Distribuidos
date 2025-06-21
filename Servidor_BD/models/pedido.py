@@ -4,7 +4,7 @@ from models.anuncio import Anuncio
 from models.endereco import Endereco
 
 class Pedido(Persistivel):
-    def __init__(self, id = 0, anuncio = None, quantidade = 0, endereco = None, data = None):
+    def __init__(self, id = 0, anuncio = None, quantidade = 0, endereco = None, data = None, id_loja = None):
         # Atributos próprios
         self.id = id
         self.data = data
@@ -20,6 +20,8 @@ class Pedido(Persistivel):
         else:
             self.id_endereco = 0
             self.id_usuario = 0
+        if id_loja is not None:
+            self.id_loja = id_loja
 
     def to_dict(self):
         return {
@@ -40,16 +42,7 @@ class Pedido(Persistivel):
     
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
-        if self.quantidade == -1:
-            #modo especial de confirmação == True
-            obj_bd['confirmacao_pedido'] = True
-            self.quantidade = 0
-        elif self.quantidade == -2:
-            #modo especial de confirmação == False
-            obj_bd['confirmacao_pedido'] = False
-            self.quantidade = 0
-        
-        atributos_bd = ('id_anuncio', 'id_endereco', 'id_usuario', 'quantidade', 'data')
+        atributos_bd = ('id_anuncio', 'id_endereco', 'id_usuario', 'id_loja', 'quantidade', 'data')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):
             valor = getattr(self, attr, None)
             if valor:

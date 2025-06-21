@@ -11,19 +11,18 @@ from models.produto import Produto
 from models.imagem_produto import Imagem_Produto
 from models.loja import Loja
 
-class DAOPedido(DAO):
+class DAOPedido_Confirmado(DAO):
     def __init__(self,
-            nome_tabelas: list = ['pedido', 'anuncio_pedido', 'produto_pedido', 'endereco_pedido'],
-            nome_colunas: list = ['id_anuncio', 'id_endereco', 'id_usuario', 'quantidade_pedido', 'data_pedido']):
+            nome_tabelas: list = ['pedido_confirmado', 'anuncio_pedido', 'produto_pedido', 'endereco_pedido'],
+            nome_colunas: list = ['id_anuncio', 'id_endereco', 'id_usuario', 'id_loja', 'quantidade_pedido', 'data_pedido']):
         
         super().__init__(nome_tabelas, nome_colunas)
         self.__daoEndereco_Pedido = DAOEndereco(['endereco_pedido'])
         self.__daoProduto_Pedido = DAOProduto(['produto_pedido'])
         self.__daoImagem_Pedido = DAOImagem_Produto(['imagem_pedido'])
-        self.__daoAnuncio_Pedido = DAOAnuncio(['anuncio_pedido'])
+        self.__daoAnuncio_Pedido = DAOAnuncio(['anuncio_pedido', 'produto_pedido'])
     
-    def _from_tuple(self, tupla = (0, 0, 0, 0, '', False)):
-        #confirmacao_pedido = tupla[5],
+    def _from_tuple(self, tupla = (0, 0, 0, 0, '')):
         pedido = Pedido(
             id = tupla[0],
             anuncio = Anuncio(id = tupla[1]),
@@ -33,32 +32,31 @@ class DAOPedido(DAO):
         )
         return pedido
     
-    def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', False, 0, 0, 0, '', False, 0, '', '', 0, '', '', '', '', '', '')):
-        #confirmacao_pedido = tupla[5],
+    def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', 0, 0, 0, '', False, 0, '', '', 0, '', '', '', '', '', '')):
         pedido = Pedido(
             id = tupla[0],
             anuncio = Anuncio(
                 id = tupla[1],
                 produto = Produto(
-                    id = tupla[6],
-                    nome = tupla[12],
-                    descricao = tupla[13],
-                    loja = Loja(id = tupla[11])
+                    id = tupla[5],
+                    nome = tupla[11],
+                    descricao = tupla[12],
+                    loja = Loja(id = tupla[10])
                 ),
-                preco = tupla[7],
-                quantidade_disponivel = tupla[8],
-                chave_pix = tupla[9],
-                pausado = tupla[10]
+                preco = tupla[6],
+                quantidade_disponivel = tupla[7],
+                chave_pix = tupla[8],
+                pausado = tupla[9]
             ),
             endereco = Endereco(
                 id = tupla[2],
-                id_usuario= tupla[14],
-                rua= tupla[15],
-                numero= tupla[16],
-                bairro= tupla[17],
-                cidade= tupla[18],
-                estado= tupla[19],
-                complemento= tupla[20]
+                id_usuario= tupla[13],
+                rua= tupla[14],
+                numero= tupla[15],
+                bairro= tupla[16],
+                cidade= tupla[17],
+                estado= tupla[18],
+                complemento= tupla[19]
             ),
             quantidade = tupla[3],
             data = tupla[4]
@@ -103,18 +101,23 @@ class DAOPedido(DAO):
             # Anúncio
             obj.anuncio.id_produto = obj.anuncio.produto.id
             obj.anuncio.id = 0
+            obj.anuncio.quantidade_disponivel = 0
+            obj.anuncio.chave_pix = ''
+            obj.anuncio.pausado = None
             if result := self.__daoAnuncio_Pedido.select(obj.anuncio):
                 obj.anuncio.id = result[0].id
             else:
+                obj.anuncio.id_loja = 0
                 obj.anuncio.id = self.__daoAnuncio_Pedido.insert(obj.anuncio)
 
             # Pedido
             obj.id_endereco = obj.endereco.id
             obj.id_anuncio = obj.anuncio.id
+            obj.id_usuario = 0
         return super().insert(obj)
 
     def select(self, obj: Pedido, logic = 'OR'):
-        return [(self._from_tuple_completo(pedido_tupla), bool(pedido_tupla[5])) for pedido_tupla in super().select(obj, logic)]
+        return [self._from_tuple_completo(pedido_tupla) for pedido_tupla in super().select(obj, logic)]
 
     def update(self, obj: Pedido):
         pass
@@ -124,9 +127,3 @@ class DAOPedido(DAO):
     
     def forget(self, obj: Pedido):
         pass
-
-    def confirmarPedido(self, obj: Pedido):
-        obj.quantidade = -1
-        pedido_tupla = super().update(obj)
-        return self._from_tuple(pedido_tupla), bool(pedido_tupla[5])
-

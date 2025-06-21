@@ -22,12 +22,12 @@ class DAO():
             print(obj.to_dict())
             persistivel = obj.to_dict_bd(self.nome_colunas)
             if obj.id:
-                persistivel[f'id_{self.nome_tabelas[0]}'] = obj.id
+                persistivel[f'id_{self.nome_tabelas[0].split("_")[0]}'] = obj.id
             print(persistivel)
             sql = f'''INSERT INTO {self.nome_tabelas[0]}
             ({', '.join(persistivel.keys())})
             VALUES ({', '.join(['?'] * len(persistivel.values()))})
-            RETURNING id_{self.nome_tabelas[0]};'''
+            RETURNING id_{self.nome_tabelas[0].split("_")[0]};'''
             print(sql, end='\n\n')
             cursor.execute(sql, tuple(persistivel.values()))
             id_persistivel = cursor.fetchone()[0]
@@ -39,7 +39,7 @@ class DAO():
             cursor = conn.cursor()
             persistivel = obj.to_dict_bd(self.nome_colunas)
             if obj.id:
-                persistivel[f'id_{self.nome_tabelas[0]}'] = obj.id
+                persistivel[f'id_{self.nome_tabelas[0].split("_")[0]}'] = obj.id
             print(persistivel, bool(persistivel))
             logic = ' '+logic+' '
             sql = f'''SELECT * FROM {' NATURAL JOIN '.join(self.nome_tabelas)}
@@ -56,7 +56,7 @@ class DAO():
 
             sql = f'''UPDATE {self.nome_tabelas[0]} SET
             {', '.join([f'{column} = ?' for column in persistivel.keys()])}
-            WHERE id_{self.nome_tabelas[0]} = ?
+            WHERE id_{self.nome_tabelas[0].split("_")[0]} = ?
             RETURNING *;'''
             print(sql, end='\n\n')
             cursor.execute(sql, list(persistivel.values())+[obj.id])
@@ -67,7 +67,7 @@ class DAO():
     def delete(self, id_obj: int):
         with self._connect() as conn:
             cursor = conn.cursor()
-            sql = f'DELETE FROM {self.nome_tabelas[0]} WHERE id_{self.nome_tabelas[0]} = ?;'
+            sql = f'DELETE FROM {self.nome_tabelas[0]} WHERE id_{self.nome_tabelas[0].split("_")[0]} = ?;'
             print(sql, end='\n\n')
             cursor.execute(sql, (id_obj,))
             conn.commit()
@@ -80,8 +80,8 @@ class DAO():
 
             sql = f'''UPDATE {self.nome_tabelas[0]} SET
             {', '.join([f'{fk} = NULL' for fk in self.chaves_estrangeiras])}
-            WHERE id_{self.nome_tabelas[0]} = ?
-            RETURNING id_{self.nome_tabelas[0]}, {', '.join(self.nome_colunas)};'''
+            WHERE id_{self.nome_tabelas[0].split("_")[0]} = ?
+            RETURNING id_{self.nome_tabelas[0].split("_")[0]}, {', '.join(self.nome_colunas)};'''
             print(sql, end='\n\n')
             cursor.execute(sql, [obj.id])
             persistivel = cursor.fetchone()
