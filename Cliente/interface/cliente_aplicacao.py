@@ -175,8 +175,8 @@ class ClienteAplicacao():
             return True, enderecos
         return False
     
-    def visualizar_pedido(self, pedido: Pedido):
-        resposta = self.middleware.chamar_middleware("visualizarPedido", pedido.id)
+    def visualizar_pedido(self, pedido: Pedido, pedido_confirmado=True):
+        resposta = self.middleware.chamar_middleware("visualizarPedido", pedido.id, pedido_confirmado)
 
         if isinstance(resposta, dict):
             pedido = Pedido.from_dict(resposta)
@@ -190,12 +190,19 @@ class ClienteAplicacao():
     def visualizar_meus_pedidos(self):
         resposta = self.middleware.chamar_middleware("visualizarMeusPedidos", self.usuario.id)
 
-        if resposta or resposta == []:
-            pedidos = []
-            for pedido_dict in resposta:
+        if resposta:
+            pedidos_andamento = []
+            pedidos_confirmados = []
+
+            for pedido_dict in resposta[0]:
                 pedido = Pedido.from_dict(pedido_dict)
-                pedidos.append(pedido)
-            return True, pedidos
+                pedidos_andamento.append(pedido)
+
+            for pedido_dict in resposta[1]:
+                pedido = Pedido.from_dict(pedido_dict)
+                pedidos_confirmados.append(pedido)
+
+            return pedidos_andamento, pedidos_confirmados
         return False
 
     def editar_anuncio(self, anuncio: Anuncio, novos_dados):

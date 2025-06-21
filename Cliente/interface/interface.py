@@ -193,7 +193,7 @@ class MarketplaceUI(QMainWindow):
         bloco.mousePressEvent = lambda e: self.handler.visualizar_produto(self.tela_editar_produto, produto)
         return bloco
     
-    def bloco_pedido(self, pedido: Pedido, largura, altura, botao_confirmar = False, botao_loja = True):
+    def bloco_pedido(self, pedido: Pedido, largura, altura, pedido_confirmado = True, botao_confirmar = False, botao_loja = True):
         bloco = WidgetHelper.bloco(largura, altura)
         layout = QVBoxLayout(bloco)
         layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -215,7 +215,7 @@ class MarketplaceUI(QMainWindow):
         layout.addWidget(label_preco, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(5)
 
-        bloco.mousePressEvent = lambda e: self.handler.visualizar_pedido(self.tela_detalhes_pedido, pedido, botao_confirmar, botao_loja)
+        bloco.mousePressEvent = lambda e: self.handler.visualizar_pedido(self.tela_detalhes_pedido, pedido, pedido_confirmado, botao_confirmar, botao_loja)
         return bloco
     
     def bloco_loja(self, loja: Loja, largura, altura):
@@ -587,20 +587,34 @@ class MarketplaceUI(QMainWindow):
         layout_vertical.addWidget(titulo)
         layout_vertical.addSpacing(40)
 
-        # Scroll area e seu conteúdo
-        scroll_area = QScrollArea()
-        scroll_area.setWidgetResizable(True)
+        layout_horizontal2 = QHBoxLayout()
 
-        conteudo_scroll = QWidget()
-        layout_pedido = QVBoxLayout(conteudo_scroll)
-        layout_pedido.setSpacing(15)
+        botao_pedidos_confirmados = WidgetHelper.botao(
+            nome="Pedidos Confirmados", fonte=18,
+            largura=250,
+        )
+        layout_horizontal2.addWidget(botao_pedidos_confirmados)
 
-        # Adiciona os blocos no layout do conteúdo do scroll
-        blocos = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos, botao_loja=True)
-        layout_pedido.addWidget(blocos)
+        botao_pedidos_em_andamento = WidgetHelper.botao(
+            nome="Pedidos Em Andamento", fonte=18,
+            largura=230
+        )
+        layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
-        scroll_area.setWidget(conteudo_scroll)
-        layout_vertical.addWidget(scroll_area)
+        lista_pedidos_confirmados = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos_confirmados, botao_loja=True)
+        lista_pedidos_em_andamento = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos_andamento, botao_loja=True)
+
+        # Container para trocar os conteúdos
+        container_listas = QStackedWidget()
+        container_listas.addWidget(lista_pedidos_confirmados)
+        container_listas.addWidget(lista_pedidos_em_andamento)
+
+        botao_pedidos_confirmados.clicked.connect(lambda: container_listas.setCurrentWidget(lista_pedidos_confirmados))
+        botao_pedidos_em_andamento.clicked.connect(lambda: container_listas.setCurrentWidget(lista_pedidos_em_andamento))
+
+        layout_vertical.addLayout(layout_horizontal2)
+        layout_vertical.addSpacing(10)
+        layout_vertical.addWidget(container_listas)
 
         return tela
     
@@ -1452,8 +1466,8 @@ class MarketplaceUI(QMainWindow):
 
         lista_anuncios = self.tela_lista_anuncios_loja(loja.anuncios, loja)
         lista_produtos = self.tela_lista_produtos(loja, loja.produtos, adicionar=True)
-        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, botao_loja=False)
-        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, botao_confirmar=True, botao_loja=False)
+        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, pedido_confirmado=True, botao_loja=False)
+        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, pedido_confirmado=False, botao_confirmar=True, botao_loja=False)
 
         # Container para trocar os conteúdos
         container_listas = QStackedWidget()
@@ -1615,11 +1629,11 @@ class MarketplaceUI(QMainWindow):
 
         return scroll
     
-    def tela_lista_pedidos(self, pedidos, botao_confirmar = False, botao_loja = True, largura=250, altura=250):
+    def tela_lista_pedidos(self, pedidos, pedido_confirmado=True, botao_confirmar = False, botao_loja = True, largura=250, altura=250):
         scroll, grid = WidgetHelper.lista_grid()
 
         for i, pedido in enumerate(pedidos):
-            bloco = self.bloco_pedido(pedido, largura, altura, botao_confirmar, botao_loja)
+            bloco = self.bloco_pedido(pedido, largura, altura, pedido_confirmado, botao_confirmar, botao_loja)
             grid.addWidget(bloco, i // 5, i % 5)
 
         return scroll
@@ -1899,7 +1913,8 @@ class InterfaceHandler:
                     mensagem=f"Erro ao visualizar!"
                 )
             else:
-                self.aplicacao.usuario.pedidos = resposta[1]
+                self.aplicacao.usuario.pedidos_andamento = resposta[0]
+                self.aplicacao.usuario.pedidos_confirmados = resposta[1]
                 self.view.abrir_tela(self.stack, tela)
         # Executa:
         self.thread.executar(
@@ -1908,7 +1923,7 @@ class InterfaceHandler:
             atualizar_tela=False
         )
 
-    def visualizar_pedido(self, tela, pedido: Pedido, botao_confirmar, botao_loja):
+    def visualizar_pedido(self, tela, pedido: Pedido, pedido_confirmado, botao_confirmar, botao_loja):
         def ao_visualizar(resposta):
             nonlocal tela, botao_confirmar, botao_loja
             if not resposta:
@@ -1924,7 +1939,7 @@ class InterfaceHandler:
         # Executa:
         self.thread.executar(
             acao=ao_visualizar,
-            requisicao=lambda: self.aplicacao.visualizar_pedido(pedido),
+            requisicao=lambda: self.aplicacao.visualizar_pedido(pedido, pedido_confirmado),
             atualizar_tela=False
         )
     
