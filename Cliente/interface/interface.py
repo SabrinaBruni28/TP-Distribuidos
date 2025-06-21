@@ -253,9 +253,15 @@ class MarketplaceUI(QMainWindow):
 
         barra_superior = self.barra_superior()
         layout_conteudo.addLayout(barra_superior)
+        
+        anuncios = self.handler.aplicacao.anuncios
 
-        tela_lista = self.tela_lista_anuncios_gerais(self.handler.aplicacao.anuncios)
-        layout_conteudo.addWidget(tela_lista)
+        if anuncios:
+            tela_lista = self.tela_lista_anuncios_gerais(anuncios)
+            layout_conteudo.addWidget(tela_lista)
+        else:
+            label = WidgetHelper.label_b("Nenhum anúncio disponível.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
+            layout_conteudo.addWidget(label)
 
         # Agora adiciona o conteúdo principal no layout horizontal
         layout_h.addLayout(layout_conteudo)
@@ -492,30 +498,35 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal2 = QHBoxLayout()
         usuario = self.handler.aplicacao.usuario
         quantidade = len(usuario.enderecos)
-        formulario = Formulario(
-            campos=[f"Endereço {i+1}" for i in range(quantidade)],
-            largura=800,
-            altura=50
-        )
-        formulario.preencher_campos(
-            {f"Endereço {i+1}": usuario.enderecos[i].__str__() for i in range(quantidade)}
-        )
-        formulario.bloquear_campos([f"Endereço {i+1}" for i in range(quantidade)])
-        layout_horizontal2.addWidget(formulario)
 
-        layout_vertical2 = QVBoxLayout()
-       
-        botao_editar = []
-        for i in range(quantidade):
-            botao = WidgetHelper.botao(
-                nome="Editar",
-                acao=lambda _, i=i: self.view.abrir_tela(self.stack, lambda: self.tela_editar_endereco(usuario.enderecos[i]))
+        if quantidade:
+            formulario = Formulario(
+                campos=[f"Endereço {i+1}" for i in range(quantidade)],
+                largura=800,
+                altura=50
             )
-            botao_editar.append(botao)
-            layout_vertical2.addWidget(botao)
+            formulario.preencher_campos(
+                {f"Endereço {i+1}": usuario.enderecos[i].__str__() for i in range(quantidade)}
+            )
+            formulario.bloquear_campos([f"Endereço {i+1}" for i in range(quantidade)])
+            layout_horizontal2.addWidget(formulario)
 
-        layout_horizontal2.addLayout(layout_vertical2)
-        layout_conteudo.addLayout(layout_horizontal2)
+            layout_vertical2 = QVBoxLayout()
+        
+            botao_editar = []
+            for i in range(quantidade):
+                botao = WidgetHelper.botao(
+                    nome="Editar",
+                    acao=lambda _, i=i: self.view.abrir_tela(self.stack, lambda: self.tela_editar_endereco(usuario.enderecos[i]))
+                )
+                botao_editar.append(botao)
+                layout_vertical2.addWidget(botao)
+
+            layout_horizontal2.addLayout(layout_vertical2)
+            layout_conteudo.addLayout(layout_horizontal2)
+        else:
+            label = WidgetHelper.label_b("Você não possui endereços.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
+            layout_conteudo.addWidget(label)
 
         botao_adicionar = WidgetHelper.botao(
                 nome="Adicionar",
@@ -563,9 +574,15 @@ class MarketplaceUI(QMainWindow):
         layout_loja = QVBoxLayout(conteudo_scroll)
         layout_loja.setSpacing(15)
 
-        # Adiciona os blocos no layout do conteúdo do scroll
-        blocos = self.tela_lista_lojas(self.handler.aplicacao.usuario.lojas)
-        layout_loja.addWidget(blocos)
+        lojas = self.handler.aplicacao.usuario.lojas
+
+        if lojas:
+            # Adiciona os blocos no layout do conteúdo do scroll
+            blocos = self.tela_lista_lojas(lojas)
+            layout_loja.addWidget(blocos)
+        else:
+            label = WidgetHelper.label_b("Você não possui lojas.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
+            layout_loja.addWidget(label)
 
         scroll_area.setWidget(conteudo_scroll)
         layout_vertical.addWidget(scroll_area)
@@ -601,8 +618,18 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
-        lista_pedidos_confirmados = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos_confirmados, botao_loja=True)
-        lista_pedidos_em_andamento = self.tela_lista_pedidos(self.handler.aplicacao.usuario.pedidos_andamento, botao_loja=True)
+        pedidos_confirmados = self.handler.aplicacao.usuario.pedidos_confirmados
+        pedidos_andamento = self.handler.aplicacao.usuario.pedidos_andamento
+
+        if pedidos_confirmados:
+            lista_pedidos_confirmados = self.tela_lista_pedidos(pedidos_confirmados, pedido_confirmado=True, botao_loja=True)
+        else:
+            lista_pedidos_confirmados = WidgetHelper.label_b("Você não possui pedidos confirmados.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        if pedidos_andamento:
+            lista_pedidos_em_andamento = self.tela_lista_pedidos(pedidos_andamento, pedido_confirmado=False, botao_loja=True)
+        else:
+            lista_pedidos_em_andamento = WidgetHelper.label_b("Você não possui pedidos em andamento.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Container para trocar os conteúdos
         container_listas = QStackedWidget()
@@ -1464,10 +1491,27 @@ class MarketplaceUI(QMainWindow):
         )
         layout_horizontal2.addWidget(botao_pedidos_em_andamento)
 
-        lista_anuncios = self.tela_lista_anuncios_loja(loja.anuncios, loja)
-        lista_produtos = self.tela_lista_produtos(loja, loja.produtos, adicionar=True)
-        lista_pedidos_confirmados = self.tela_lista_pedidos(loja.pedidos_confirmados, pedido_confirmado=True, botao_loja=False)
-        lista_pedidos_em_andamento = self.tela_lista_pedidos(loja.pedidos_em_andamento, pedido_confirmado=False, botao_confirmar=True, botao_loja=False)
+        anuncios = loja.anuncios
+        produtos = loja.produtos
+        pedidos_confirmados = loja.pedidos_confirmados
+        pedidos_em_andamento = loja.pedidos_em_andamento
+
+        if anuncios:
+            lista_anuncios = self.tela_lista_anuncios_loja(anuncios, loja)
+        else:
+            lista_anuncios = WidgetHelper.label_b("Esta loja não possui anúncios.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        lista_produtos = self.tela_lista_produtos(loja, produtos, adicionar=True)
+
+        if pedidos_confirmados:
+            lista_pedidos_confirmados = self.tela_lista_pedidos(pedidos_confirmados, pedido_confirmado=True, botao_loja=False)
+        else:
+            lista_pedidos_confirmados = WidgetHelper.label_b("Esta loja não possui pedidos confirmados.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
+
+        if pedidos_em_andamento:
+            lista_pedidos_em_andamento = self.tela_lista_pedidos(pedidos_em_andamento, pedido_confirmado=False, botao_confirmar=True, botao_loja=False)
+        else:
+            lista_pedidos_em_andamento = WidgetHelper.label_b("Esta loja não possui pedidos em andamento.", 20, alignment=Qt.AlignmentFlag.AlignCenter)
 
         # Container para trocar os conteúdos
         container_listas = QStackedWidget()
@@ -1541,17 +1585,13 @@ class MarketplaceUI(QMainWindow):
         layout_horizontal_2.addWidget(preco)
         layout_vertical.addLayout(layout_horizontal_2)
 
-        layout_horizontal_3 = QHBoxLayout()
+        data = WidgetHelper.label_span(f"Data: {pedido.data}", 25)
+        layout_vertical.addWidget(data, alignment=Qt.AlignmentFlag.AlignHCenter)
 
         endereco = WidgetHelper.label_span(f"Endereço: {pedido.endereco.__str__()}", 25)
-        layout_horizontal_3.addWidget(endereco)
+        layout_vertical.addWidget(endereco, alignment=Qt.AlignmentFlag.AlignHCenter)
 
-        data = WidgetHelper.label_span(f"Data: {pedido.data}", 25)
-        layout_horizontal_3.addWidget(data)
-
-        layout_vertical.addLayout(layout_horizontal_3)
-
-        layout_horizontal_4 = QHBoxLayout()
+        layout_horizontal_3 = QHBoxLayout()
 
         botao_cancelar = WidgetHelper.botao(
             nome="Cancelar",
@@ -1564,11 +1604,11 @@ class MarketplaceUI(QMainWindow):
         )
 
         if adicionar_botao_confirmar:
-            layout_horizontal_4.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
-            layout_horizontal_4.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
+            layout_horizontal_3.addWidget(botao_cancelar, alignment=Qt.AlignmentFlag.AlignLeft)
+            layout_horizontal_3.addWidget(botao_confirmar, alignment=Qt.AlignmentFlag.AlignRight)
 
         layout_vertical.addSpacing(10)
-        layout_vertical.addLayout(layout_horizontal_4)
+        layout_vertical.addLayout(layout_horizontal_3)
 
         return tela
     
@@ -2561,7 +2601,7 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_loja(resposta):
                 nonlocal loja
-                if resposta:
+                if resposta == True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2572,6 +2612,13 @@ class InterfaceHandler:
                         self.aplicacao.apagar_anuncio(a)
                     self.aplicacao.usuario.apagar_loja(loja)
                     self.view.set_tela(self.stack, -3)
+                elif resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita",
+                        mensagem="Você não pode excluir uma loja com pedidos pendentes!"
+                    )
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2600,7 +2647,7 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_produto(resposta):
                 nonlocal produto
-                if resposta:
+                if resposta == True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2611,6 +2658,13 @@ class InterfaceHandler:
                     loja.apagar_produto(produto)
                     self.aplicacao.apagar_anuncios(produto)
                     self.view.set_tela(self.stack, -2)
+                elif resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita",
+                        mensagem="Você não pode excluir um produto com pedidos pendentes!"
+                    )
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2639,7 +2693,7 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_anuncio(resposta):
                 nonlocal anuncio
-                if resposta:
+                if resposta == True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2650,6 +2704,13 @@ class InterfaceHandler:
                     loja.apagar_anuncio(anuncio)
                     self.aplicacao.apagar_anuncio(anuncio)
                     self.view.set_tela(self.stack, -2)
+                elif resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita",
+                        mensagem="Você não pode excluir um anúncio com pedidos pendentes!"
+                    )
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
@@ -2742,7 +2803,7 @@ class InterfaceHandler:
 
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_usuario(resposta):
-                if resposta:
+                if resposta == True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#4CAF50",
@@ -2751,6 +2812,13 @@ class InterfaceHandler:
                     )
                     self.aplicacao.usuario = Usuario()
                     self.view.set_tela(self.stack, -2)
+                elif resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita",
+                        mensagem="Você não pode excluir um perfil com lojas ou pedidos pendentes!"
+                    )
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 

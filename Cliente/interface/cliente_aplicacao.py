@@ -175,7 +175,7 @@ class ClienteAplicacao():
             return True, enderecos
         return False
     
-    def visualizar_pedido(self, pedido: Pedido, pedido_confirmado=True):
+    def visualizar_pedido(self, pedido: Pedido, pedido_confirmado):
         resposta = self.middleware.chamar_middleware("visualizarPedido", pedido.id, pedido_confirmado)
 
         if isinstance(resposta, dict):
