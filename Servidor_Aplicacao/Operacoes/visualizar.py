@@ -93,9 +93,9 @@ class Visualizar():
         return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
     # Operação de visualizar um pedido específico.
-    def pedido(self, id_pedido):
+    def pedido(self, id_pedido, flag_confirmado_andamento):
         print("[Servidor][Visualizar][Pedido] Operação de visualizar pedido recebida.")
-        requisicao = Requisicao.produzRequisicao("visualizar_pedido", id_pedido)
+        requisicao = Requisicao.produzRequisicao("visualizar_pedido", id_pedido, flag_associada=flag_confirmado_andamento)
 
         self.fila.registraRequisicao(requisicao)
 

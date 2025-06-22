@@ -9,7 +9,7 @@ class Cadastramento():
 
         requisicao = Requisicao.produzRequisicao("cadastramento", dados)
 
-        self.fila.registraRequisicao(requisicao.idRequisicao)
+        self.fila.registraRequisicao(requisicao)
 
         print(f"[Servidor][Cadastramento][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
         self.fila.enfileira(requisicao)

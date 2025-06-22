@@ -58,3 +58,14 @@ class Excluir():
         self.fila.enfileira(requisicao)
 
         return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+    def usuario(self, id_usuario):
+        print("[Servidor][Excluir][Usuário] Operação de excluir usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_usuario", id_usuario)
+
+        self.fila.registraRequisicao(requisicao)
+
+        print(f"[Servidor][Excluir][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

@@ -18,6 +18,7 @@ def RetornaCorretamenteOuFalse(funcao):
     """
     def wrapper(*args, **kwargs):
         try:
+            print("\n================================================= Nova invocação =================================================")
             return funcao(*args, **kwargs)
         except Exception as e:
             print(f"[Servidor] Erro em {funcao.__name__}: {e}")

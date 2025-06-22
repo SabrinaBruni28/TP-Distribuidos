@@ -8,7 +8,7 @@ class Codigo():
     # contém parte da comunicação envolvendo apenas o cliente e o servidor.
     # Aqui, o cliente envia seu identificador, que foi retornado na requisição de
     # cadastramento, junto ao código de confirmação.
-    def codigo(self, idCliente, codigo):
+    def codigo(self, codigo, idCliente):
         print("[Servidor][Código] Código recebido.")
         
         # O primeiro passo é verificar se:

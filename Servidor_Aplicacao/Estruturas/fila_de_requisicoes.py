@@ -12,12 +12,14 @@ from queue import Queue, Empty
 # A fila é usada na comunicação com o servidor de banco de dados
 # A comunicação entre cliente e servidor ainda é direta
 class FilaDeRequisicoes(threading.Thread):
-    def __init__(self):
+    def __init__(self, ip = '127.0.0.1', porta = 9090):
         super().__init__(daemon=True)
         self._fila = Queue()
         self._respostas = BancoDeRespostas()
         self.dadosTemp = DadosTemporariosConfirmacao()
         self.bancoURI = None
+        self.ipNameServer = ip
+        self.portaNameServer = porta
 
     def enfileira(self, requisicao: Requisicao):
         """ Essa função coloca a requisição montada pelo servidor na fila para ser enviada ao Banco de Dados.
@@ -87,7 +89,7 @@ class FilaDeRequisicoes(threading.Thread):
             self._respostas.guardarResposta(requisicao.idRequisicao, respostaBanco)
 
         # Caso a conexão com o banco de dados seja perdida, tenta reconectar e reenviar a requisição.
-        except (Pyro5.errors.CommunicationError, Pyro5.errors.ConnectionClosedError) as e:
+        except Exception as e:
             print(f"[Fila de Mensagens] Conexão perdida ou erro na comunicação: {e}. Reconectando...")
             self.bancoURI = None
             try:
@@ -100,8 +102,9 @@ class FilaDeRequisicoes(threading.Thread):
                 # Aí o cliente ligado à essa requisição específica encontra a resposta.
                 self._respostas.guardarResposta(requisicao.idRequisicao, respostaBanco)
 
-            except Pyro5.errors.CommunicationError as e:
-                print(f"[Fila de Mensagens] Banco de Dados fechado.")
+            except Exception as e:
+                print(f"[Fila de Mensagens] Banco de Dados fechado: {e}")
+                self.bancoURI = None
                 return
 
     def _decisorFila(self, requisicao: Requisicao):
@@ -190,6 +193,9 @@ class FilaDeRequisicoes(threading.Thread):
 
             case "excluir_imagem":
                 return self._excluirImagem(requisicao)
+
+            case "excluir_usuario":
+                return self._excluirUsuario(requisicao)
 
             case "confirmar_pedido":
                 return self._confirmarPedido(requisicao)
@@ -288,7 +294,10 @@ class FilaDeRequisicoes(threading.Thread):
     def _visualizarPedido(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print(f"[Fila de Mensagens][Visualizar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de visualizar pedido do Banco de Dados.")
-            return banco.retornarPedido(requisicao.dadosRequisicao)
+            if requisicao.flagAssociada:
+                return banco.retornarPedidoConfirmado(requisicao.dadosRequisicao)
+            else:
+                return banco.retornarPedidoAndamento(requisicao.dadosRequisicao)
 
     def _visualizarMeusPedidos(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
@@ -387,8 +396,13 @@ class FilaDeRequisicoes(threading.Thread):
 
     def _excluirImagem(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
-            print(f"[Fila de Mensagens][Excluir][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir anúncio do Banco de Dados.")
+            print(f"[Fila de Mensagens][Excluir][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir imagem do Banco de Dados.")
             return banco.excluirImagemProduto(requisicao.dadosRequisicao)
+
+    def _excluirUsuario(self, requisicao: Requisicao):
+        with Pyro5.api.Proxy(self.bancoURI) as banco:
+            print(f"[Fila de Mensagens][Excluir][Usuario][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de excluir usuário do Banco de Dados.")
+            return banco.excluirUsuario(requisicao.dadosRequisicao)
 
 
 
@@ -435,16 +449,15 @@ class FilaDeRequisicoes(threading.Thread):
 
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print(f"[Fila de Mensagens][Imagem][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Chamando função de retornar imagem de um pedido do Banco de Dados.")
-            return banco.retornarImagem("produto", requisicao.dadosRequisicao)
+            return banco.retornarImagem("pedido", requisicao.dadosRequisicao)
 
     def _confirmarPedido(self, requisicao: Requisicao):
         with Pyro5.api.Proxy(self.bancoURI) as banco:
             print("[Fila de Mensagens][Pedido][Confirmar] Chamando função de confirmar pedido do Banco de Dados.")
+            usuario = banco.retornarCompradorPedido(requisicao.dadosRequisicao)
             resposta = banco.confirmarPedido(requisicao.dadosRequisicao)
 
             if resposta is (True or "ok"):
-                usuario = banco.retornarCompradorPedido(requisicao.dadosRequisicao)
-
                 emailUsuario = usuario.get("email")
                 nomeUsuario = usuario.get("nome")
 
@@ -473,7 +486,7 @@ class FilaDeRequisicoes(threading.Thread):
 
     def conectaBanco(self):
         print("[Fila de Mensagens] Conectando ao Banco de Dados via Pyro5...")
-        ns = Pyro5.api.locate_ns(host='192.168.1.17', port=5000)
+        ns = Pyro5.api.locate_ns(host=self.ipNameServer, port=self.portaNameServer)
         print("[Fila de Mensagens] Tentando fazer o lookup.")
         self.bancoURI = ns.lookup("Caldeirao:servicos.banqueiro")
         print(f"[Fila de Mensagens] URI do Banco de Dados: {self.bancoURI}")

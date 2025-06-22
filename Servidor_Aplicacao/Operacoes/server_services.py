@@ -80,9 +80,9 @@ class ServicosServidorAplicacao:
         return Visualizar(self.filaDeMensagens).meusEnderecos(idUsuario)
 
     @op.RetornaCorretamenteOuFalse
-    def visualizarPedido(self, idPedido):
+    def visualizarPedido(self, idPedido, flag_confirmado_andamento):
         """ Função exposta via Pyro para o cliente visualizar os detalhes de um pedido. Recebe o ID do pedido. """
-        return Visualizar(self.filaDeMensagens).pedido(idPedido)
+        return Visualizar(self.filaDeMensagens).pedido(idPedido, flag_confirmado_andamento)
 
     @op.RetornaCorretamenteOuFalse
     def visualizarMeusPedidos(self, idUsuario):
@@ -177,6 +177,11 @@ class ServicosServidorAplicacao:
     def excluirImagem(self, nome_imagem):
         """ Função exposta via Pyro para o cliente excluir uma imagem. Recebe apenas o nome da imagem. """
         return Excluir(self.filaDeMensagens).imagem(nome_imagem)
+
+    @op.RetornaCorretamenteOuFalse
+    def excluirUsuario(self, id_usuario):
+        """ Função exposta via Pyro para o cliente excluir um usuário. Recebe apenas o id do usuário. """
+        return Excluir(self.filaDeMensagens).usuario(id_usuario)
     # ============================================================
 
 

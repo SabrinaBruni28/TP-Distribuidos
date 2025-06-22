@@ -8,9 +8,6 @@ from Operacoes.server_services import ServicosServidorAplicacao
 
 print(f"Iniciando servidor Pyro5...")
 
-filaDeMensagem = FilaDeRequisicoes()
-filaDeMensagem.start()
-
 # Valores padrão
 ip = "127.0.0.1"
 porta = 9090
@@ -29,6 +26,8 @@ while True:
         print("Name Server não encontrado. Tentando novamente em 2 segundos...")
         time.sleep(2)
 
+filaDeMensagem = FilaDeRequisicoes(ip=ip, porta=porta)
+filaDeMensagem.start()
 
 with Pyro5.server.Daemon(host=ip) as daemon:
     servicos = ServicosServidorAplicacao(filaDeMensagem)

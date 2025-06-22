@@ -1,17 +1,25 @@
-ccriar_ambiente:
-	python3 -m venv .venv
+.PHONY: criar_ambiente instalar_bibliotecas salvar_bibliotecas run name_server servidorAP
+
+VENV=.venv
+PYTHON=$(VENV)\Scripts\python.exe
+PIP=$(VENV)\Scripts\pip.exe
+
+criar_ambiente:
+	@if not exist $(VENV) (\
+		python -m venv $(VENV) \
+	)
+
+instalar_bibliotecas: criar_ambiente
+	$(PYTHON) -m pip install --upgrade pip
+	$(PIP) install -r requirements.txt
 
 salvar_bibliotecas:
-	pip freeze > requirements.txt
+	$(PIP) freeze > requirements.txt
 
-instalar_bibliotecas:
-	pip install -r requirements.txt
-	python3 -m pip install --upgrade pip
-
-name_server:
+name_server: instalar_bibliotecas
 	@echo "Iniciando Name Server"
-	@python3 name_server.py $(if $(IP),$(IP),) $(if $(PORTA),$(PORTA),)
+	$(PYTHON) name_server.py $(IP) $(PORTA)
 
-servidorAP:
+servidorAP: instalar_bibliotecas
 	@echo "Iniciando processo servidor"
-	@python3 servidor.py $(if $(IP),$(IP),) $(if $(PORTA),$(PORTA),)
+	$(PYTHON) servidor.py $(IP) $(PORTA)
