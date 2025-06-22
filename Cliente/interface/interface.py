@@ -2616,7 +2616,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita", largura=500,
+                        posicao="superior_direita", largura=600,
                         mensagem="Você não pode excluir uma loja com pedidos pendentes!"
                     )
                 else:
@@ -2816,15 +2816,16 @@ class InterfaceHandler:
                         posicao="superior_direita",
                         mensagem="Perfil Excluído com Sucesso!"
                     )
-                    anuncios = self.aplicacao.usuario.anuncios
-                    self.aplicacao.apagar_anuncios(anuncios)
+                    lojas = self.aplicacao.usuario.lojas
+                    for loja in lojas:
+                        self.aplicacao.apagar_anuncios(loja.anuncios)
                     self.aplicacao.usuario = Usuario()
                     self.view.set_tela(self.stack, -2)
                 elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita", largura=610,
+                        posicao="superior_direita", largura=650,
                         mensagem="Você não pode excluir um perfil com lojas ou pedidos pendentes!"
                     )
                 else:
