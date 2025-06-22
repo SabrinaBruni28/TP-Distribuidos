@@ -48,10 +48,10 @@ class Loja:
         return False
     
     def apagar_anuncios(self, produto: Produto):
-        for i, a in enumerate(self.anuncios):
-            if a.produto.id == produto.id:
+        for i in reversed(range(len(self.anuncios))):
+            if self.anuncios[i].produto.id == produto.id:
                 del self.anuncios[i]
-    
+
     def editar_produto(self, produto, novo_produto):
         for i, p in enumerate(self.produtos):
             if p.id == produto.id:

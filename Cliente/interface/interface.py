@@ -1554,8 +1554,8 @@ class MarketplaceUI(QMainWindow):
                 WidgetHelper.mostrar_alerta_temporario(
                     parent_widget=self,
                     backcolor="#FFC107", fontcolor="#000000",
-                    posicao="superior_direita",
-                    mensagem="Produto ou Loja excluídos!"
+                    posicao="superior_direita", largura=300,
+                    mensagem="Loja excluída!"
                 )
             )
         )
@@ -2616,7 +2616,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita",
+                        posicao="superior_direita", largura=500,
                         mensagem="Você não pode excluir uma loja com pedidos pendentes!"
                     )
                 else:
@@ -2662,7 +2662,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita",
+                        posicao="superior_direita", largura=600,
                         mensagem="Você não pode excluir um produto com pedidos pendentes!"
                     )
                 else:
@@ -2708,7 +2708,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita",
+                        posicao="superior_direita", largura=600,
                         mensagem="Você não pode excluir um anúncio com pedidos pendentes!"
                     )
                 else:
@@ -2752,7 +2752,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita",
+                        posicao="superior_direita", largura=610,
                         mensagem="Você não pode excluir um endereço com pedidos pendentes!"
                     )
                 else:
@@ -2816,13 +2816,15 @@ class InterfaceHandler:
                         posicao="superior_direita",
                         mensagem="Perfil Excluído com Sucesso!"
                     )
+                    anuncios = self.aplicacao.usuario.anuncios
+                    self.aplicacao.apagar_anuncios(anuncios)
                     self.aplicacao.usuario = Usuario()
                     self.view.set_tela(self.stack, -2)
                 elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
-                        posicao="superior_direita",
+                        posicao="superior_direita", largura=610,
                         mensagem="Você não pode excluir um perfil com lojas ou pedidos pendentes!"
                     )
                 else:
@@ -2900,7 +2902,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        posicao="inferior_direita",
+                        posicao="superior_direita",
                         mensagem="Pedido Confirmado com Sucesso!"
                     )
                     loja = self.aplicacao.usuario.get_loja(pedido.anuncio.produto.loja)
@@ -2910,7 +2912,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        posicao="inferior_direita",
+                        posicao="superior_direita",
                         mensagem="Erro ao confirmar pedido!"
                     )
             # Executa:
