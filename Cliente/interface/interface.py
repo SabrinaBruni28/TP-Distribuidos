@@ -2605,7 +2605,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Loja Excluída com Sucesso!"
                     )
                     for a in loja.anuncios:
@@ -2623,7 +2623,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Erro ao excluir loja!"
                     )
             # Executa:
@@ -2651,7 +2651,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Produto Excluído com Sucesso!"
                     )
                     loja = self.aplicacao.usuario.get_loja(produto.loja)
@@ -2669,7 +2669,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Erro ao excluir produto!"
                     )
             # Executa:
@@ -2697,7 +2697,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Anúncio Excluído com Sucesso!"
                     )
                     loja = self.aplicacao.usuario.get_loja(anuncio.produto.loja)
@@ -2715,7 +2715,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Erro ao excluir anúncio!"
                     )
             # Executa:
@@ -2740,20 +2740,27 @@ class InterfaceHandler:
             def ao_excluir_endereco(resposta):
                 nonlocal endereco
                 if resposta:
-                    if resposta:
+                    if resposta == True:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent,
                             backcolor="#4CAF50",
-                            posicao="inferior_esquerda",
+                            posicao="superior_direita",
                             mensagem="Endereço Excluído com Sucesso!"
                         )
                         self.aplicacao.usuario.apagar_endereco(endereco)
                         self.view.set_tela(self.stack, -2)
+                    elif resposta:
+                        WidgetHelper.mostrar_alerta_temporario(
+                            parent_widget=self.parent,
+                            backcolor="#FFC107", fontcolor="#000000",
+                            posicao="superior_direita",
+                            mensagem="Você não pode excluir um endereço com pedidos pendentes!"
+                        )
                     else:
                         WidgetHelper.mostrar_alerta_temporario(
                             parent_widget=self.parent, 
                             backcolor="#f44336",
-                            posicao="inferior_esquerda",
+                            posicao="superior_direita",
                             mensagem="Erro ao excluir endereço!"
                         )
             # Executa:
@@ -2851,7 +2858,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Pedido Cancelado com Sucesso!"
                     )
                     loja = self.aplicacao.usuario.get_loja(pedido.anuncio.produto.loja)
@@ -2866,7 +2873,7 @@ class InterfaceHandler:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#f44336",
-                        posicao="inferior_esquerda",
+                        posicao="superior_direita",
                         mensagem="Erro ao cancelar pedido!"
                     )
             # Executa:
