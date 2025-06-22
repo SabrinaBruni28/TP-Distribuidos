@@ -1,78 +1,71 @@
-import socket
-import threading
-from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Operacoes import operacao
-from Estruturas import Mensagem
+from Estruturas.requisicao import Requisicao
 
-class Excluir(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
+class Excluir():
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
-    def run(self):
-        self.getOperacao()
+    def anuncio(self, id_anuncio):
+        print("[Servidor][Excluir][Anúncio] Operação de excluir anúncio recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_anuncio", id_anuncio)
 
-    def getOperacao(self):
-        self.decisor()
+        self.fila.registraRequisicao(requisicao)
 
-    def decisor(self):
-        operacao = self.mensagemCliente.camposMensagem[1]
+        print(f"[Servidor][Excluir][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        match operacao:
-            case "anuncio":
-                self.anuncio()
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-            case "produto":
-                self.produto()
+    def produto(self, id_produto):
+        print("[Servidor][Excluir][Produto] Operação de excluir produto recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_produto", id_produto)
 
-            case "loja":
-                self.loja()
+        self.fila.registraRequisicao(requisicao)
 
-            case "endereco":
-                self.endereco()
+        print(f"[Servidor][Excluir][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-            case "imagem":
-                self.imagem()
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-            case _:
-                print("[Servidor] Mensagem inválida.")
+    def loja(self, id_loja):
+        print("[Servidor][Excluir][Loja] Operação de excluir loja recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_loja", id_loja)
 
-    def anuncio(self):
-        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
-        idAnuncio = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"excluir | anuncio | {idAnuncio}")
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.excluirAnuncioCallback, self.conexaoCliente, "excluir")
+        print(f"[Servidor][Excluir][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def produto(self):
-        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
-        idProduto = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"excluir | produto | {idProduto}")
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.excluirProdutoCallback, self.conexaoCliente, "excluir")
+    def endereco(self, id_endereco):
+        print("[Servidor][Excluir][Endereço] Operação de excluir endereço recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_endereco", id_endereco)
 
-    def loja(self):
-        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
-        idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"excluir | loja | {idLoja}")
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.excluirLojaCallback, self.conexaoCliente, "excluir")
+        print(f"[Servidor][Excluir][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def endereco(self):
-        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
-        idEndereco = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"excluir | endereco | {idEndereco}")
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.excluirEnderecoCallback, self.conexaoCliente, "excluir")
+    def imagem(self, nome_imagem):
+        print("[Servidor][Excluir][Imagem] Operação de excluir imagem recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_imagem", nome_imagem)
 
-    def imagem(self):
-        print("[Servidor][Excluir] Operação de excluir anúncio recebida.")
-        nomeImagem = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"excluir | imagem | {nomeImagem}")
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.excluirImagemCallback, self.conexaoCliente, "excluir")
+        print(f"[Servidor][Excluir][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+    def usuario(self, id_usuario):
+        print("[Servidor][Excluir][Usuário] Operação de excluir usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("excluir_usuario", id_usuario)
+
+        self.fila.registraRequisicao(requisicao)
+
+        print(f"[Servidor][Excluir][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

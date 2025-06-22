@@ -1,80 +1,68 @@
-import socket
-import threading
-from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Operacoes import operacao
-from Estruturas.mensagem import Mensagem
+from Estruturas.requisicao import Requisicao
 
-class Editar(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, socket_servidor, fila_mensagens, imagens: list =None):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
-        self.conexaoServidor = socket_servidor
-        self.imagem = imagens
+class Editar():
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
-    def run(self):
-        self.getOperacao()
+    def anuncio(self, dados):
+        """ Operação de editar um anuncio do unuário no marketplace. """
+        print("[Servidor][Editar][Anúncio] Operação de editar anúncio recebida.")
+        requisicao = Requisicao.produzRequisicao("editar_anuncio", dados)
 
-    def getOperacao(self):
-        self.decisor()
+        self.fila.registraRequisicao(requisicao)
 
-    def decisor(self):
-        operacao = self.mensagemCliente.camposMensagem[1]
+        print(f"[Servidor][Editar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        match operacao:
-            case "anuncio":
-                self.anuncio()
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-            case "produto":
-                self.produto()
+    def produto(self, dados):
+        """ Operação de editar um produto do usuário no marketplace. """
+        print("[Servidor][Editar][Produto] Operação de editar produto recebida.")
+        requisicao = Requisicao.produzRequisicao("editar_produto", dados)
 
-            case "loja":
-                self.loja()
+        self.fila.registraRequisicao(requisicao)
 
-            case "endereco":
-                self.endereco()
+        print(f"[Servidor][Editar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-            case "usuario":
-                self.usuario()
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-            case _:
-                print("[Servidor] Mensagem inválida.")
+    def loja(self, dados, imagem):
+        """
+        Operação de editar a loja do usuário no marketplace.
+        Na operação de edição da loja, a imagem pode ser editada.
+        """
+        print("[Servidor][Editar][Loja] Operação de editar loja recebida.")
+        requisicao = Requisicao.produzRequisicao("editar_loja", dados, imagens=imagem)
+        self.fila.registraRequisicao(requisicao)
 
-    def anuncio(self):
-        print("[Servidor][Editar] Operação de editar anúncio recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | anuncio | {dados}")
+        print(f"[Servidor][Editar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarAnuncioCallback, self.conexaoCliente, "editar")
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-    def produto(self):
-        print("[Servidor][Editar] Operação de editar produto recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | produto | {dados}")
+    def endereco(self, dados):
+        """ Operação de editar um endereço do usuário no marketplace. """
+        print("[Servidor][Editar][Endereço] Operação de editar endereço recebida.")
+        requisicao = Requisicao.produzRequisicao("editar_endereco", dados)
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarProdutoCallback, self.conexaoCliente, "editar")
+        print(f"[Servidor][Editar][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def loja(self):
-        print("[Servidor][Editar] Operação de editar loja recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | loja | {dados}")
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarLojaCallback, self.conexaoCliente, "editar", imagem=self.imagem)
+    def usuario(self, dados):
+        """
+        Operação de editar dados do usuário no marketplace.
+        No caso, os dados enviados pelo usuário nos parâmetros da função são os dados editados.
+        """
+        print("[Servidor][Editar][Usuário] Operação de editar usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("editar_usuario", dados)
+        self.fila.registraRequisicao(requisicao)
 
-    def endereco(self):
-        print("[Servidor][Editar] Operação de editar endereço recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | endereco | {dados}")
+        print(f"[Servidor][Editar][Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarEnderecoCallback, self.conexaoCliente, "editar")
-
-    def usuario(self):
-        print("[Servidor][Editar] Operação de editar usuário recebida.")
-        dados = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"editar | usuario | {dados}")
-
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.editarUsuarioCallback, self.conexaoCliente, "editar")
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

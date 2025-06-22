@@ -1,4 +1,4 @@
-.PHONY: cliente, servidorAp, servidorBD
+.PHONY: cliente, servidorAp, servidorBD, name_server
 
 criar_ambiente:
 	python3 -m venv .venv
@@ -14,7 +14,10 @@ cliente:
 	@$(MAKE) --no-print-directory -C Cliente cliente $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
 servidorAp:
-	@$(MAKE) --no-print-directory -C Servidor_Aplicacao servidorAp
+	@$(MAKE) --no-print-directory -C Servidor_Aplicacao servidorAp $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
 servidorBD:
 	@$(MAKE) --no-print-directory -C Servidor_BD servidorBD
+
+name_server:
+	@$(MAKE) --no-print-directory -C Servidor_Aplicacao name_server $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))

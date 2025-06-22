@@ -19,8 +19,8 @@ from PyQt6.QtWidgets import (
    QVBoxLayout, QHBoxLayout, QScrollArea, QFrame, QStackedWidget
 )
 
-ip = "localhost"
-porta = 5000
+ip = "127.0.0.1"
+porta = 9090
 
 class MarketplaceUI(QMainWindow):
     def __init__(self):
