@@ -203,8 +203,7 @@ class Banqueiro():
                     print('[Banqueiro][Criar][Anúncio] - Produto recuperado:', obj.produto)
 
                     print(f'[Banqueiro][Retornar][Produto] - Recuperando imagens do produto...')
-                    for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = obj.produto.id)):
-                        obj.produto.imagens.append(imagem_produto.caminho())
+                    obj.produto.imagens = [imagem_produto.caminho() for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto = obj.produto.id))]
                     print(f'[Banqueiro][Retornar][Produto] - Produto recuperado + imagens:', obj.produto)
                 else:
                     print('[Banqueiro][Criar][Anúncio] - Produto não encontrado!')
@@ -265,7 +264,6 @@ class Banqueiro():
                     if isinstance(obj.anuncio.produto, Produto):
                         if result := self.__daoProduto.select(Produto(id = obj.anuncio.produto.id), logic= 'AND'):
                             obj.anuncio.produto = result[0]
-                            obj.anuncio.produto.imagens = []
 
                             print('[Banqueiro][Criar][Pedido] - Recuperando imagens do produto do pedido...')
                             #Está adicionando os objetos e não os caminhos pois isso será necessário no conferimento de redundância.
@@ -832,7 +830,7 @@ class Banqueiro():
                 return False
             print('[Banqueiro][Confirmar][Pedido] - Confirmando pedido...')
             pedido.id = self.__daoPedido_Confirmado.insert(pedido)
-            if self.__daoPedido_Andamento.delete(pedido.id):
+            if self.__daoPedido_Andamento.delete(Pedido(id= pedido.id)):
                 print('[Banqueiro][Confirmar][Pedido] - Pedido confirmado!')
                 return True
             else:
@@ -889,7 +887,7 @@ class Banqueiro():
             print(f'[Banqueiro][Excluir][Imagem] - Iniciando tentativa de excluir imagem de produto...')
             obj = Imagem_Produto.from_name(nome_imagem)
             print('[Banqueiro][Excluir][Imagem] - Imagem a excluir:', obj)
-            if self.__daoImagem_Produto.delete(obj):
+            if self.__daoImagem_Produto.delete(Imagem_Produto(id= obj.id)):
                 print('[Banqueiro][Excluir][Imagem] - Registro da imagem excluído!')
                 print('[Banqueiro][Excluir][Imagem] - Excluindo imagem...')
                 if imageu.apagarImagem('produto', nome_imagem):
@@ -1018,7 +1016,7 @@ class Banqueiro():
                 print('[Banqueiro][Excluir][Loja] - Loja a excluir:', obj)
 
                 print('[Banqueiro][Excluir][Loja] - Verificando se a loja possui pedidos em andamento...')
-                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(produto= Produto(loja= obj.id)))):
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(produto= Produto(loja= Loja(id= obj.id))))):
                     print(f'[Banqueiro][Excluir][Loja] - Loja não pode ser excluída: {len(pedidos)} pedidos em andamneto!')
                     return 'pedidos_pendentes'
                 else:
@@ -1027,7 +1025,7 @@ class Banqueiro():
                         result = self.excluirProduto(produto.id)
                         if result == 'pedidos_pendentes':
                             print(f'[Banqueiro][Excluir][Loja] - Falha fatal: Produto {produto.id} possui pedidos em andamento!')
-                            return False
+                            return 'pedidos_pendentes'
                         elif result is False:
                             print(f'[Banqueiro][Excluir][Loja] - Falha fatal: Produto {produto.id} não pôde ser excluído!')
                             return False
@@ -1063,7 +1061,7 @@ class Banqueiro():
                     result = self.excluirLoja(loja.id)
                     if result == 'pedidos_pendentes':
                         print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Loja {loja.id} possui pedidos em andamento!')
-                        return False
+                        return 'pedidos_pendentes'
                     elif result is False:
                         print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Loja {loja.id} não pôde ser excluída!')
                         return False
@@ -1074,7 +1072,7 @@ class Banqueiro():
                     result = self.excluirEndereco(endereco.id)
                     if result == 'pedidos_pendentes':
                         print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Endereço {endereco.id} possui pedidos em andamento!')
-                        return False
+                        return 'pedidos_pendentes'
                     elif result is False:
                         print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Endereço {endereco.id} não pôde ser excluído!')
                         return False

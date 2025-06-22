@@ -71,7 +71,7 @@ class DAO():
             if obj.id:
                 persistivel[f'id_{self.nome_tabelas[0].split("_")[0]}'] = obj.id
 
-            sql = f'''DELETE FROM {self.nome_tabelas[0]} WHERE {'AND'.join([f'{column} = ?' for column in persistivel.keys()])};'''
+            sql = f'''DELETE FROM {self.nome_tabelas[0]} WHERE {' AND '.join([f'{column} = ?' for column in persistivel.keys()])};'''
             print(sql, end='\n\n')
             cursor.execute(sql, tuple(persistivel.values()))
             conn.commit()

@@ -41,7 +41,7 @@ class DAOPedido_Confirmado(DAO):
                     id = tupla[5],
                     nome = tupla[8],
                     descricao = tupla[9],
-                    loja = Loja(id = tupla[7])
+                    loja = Loja(id = tupla[7]) if tupla[7] is not None else None
                 ),
                 preco = tupla[6],
             ),
