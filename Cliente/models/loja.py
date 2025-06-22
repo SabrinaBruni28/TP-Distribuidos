@@ -48,10 +48,10 @@ class Loja:
         return False
     
     def apagar_anuncios(self, produto: Produto):
-        for i, a in enumerate(self.anuncios):
-            if a.produto.id == produto.id:
+        for i in reversed(range(len(self.anuncios))):
+            if self.anuncios[i].produto.id == produto.id:
                 del self.anuncios[i]
-    
+
     def editar_produto(self, produto, novo_produto):
         for i, p in enumerate(self.produtos):
             if p.id == produto.id:
@@ -95,7 +95,7 @@ class Loja:
         return None
     
     def to_dict(self):
-        return json.dumps({
+        return {
             "id": self.id,
             "nome": self.nome,
             "imagem": self.imagem,
@@ -103,13 +103,13 @@ class Loja:
             "anuncios": [anuncio.produto.nome for anuncio in self.anuncios] if self.anuncios else [],
             "pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados] if self.pedidos_confirmados else [],
             "pedidos_em_andamento": [pedido.to_dict() for pedido in self.pedidos_em_andamento] if self.pedidos_em_andamento else [],
-        }) 
+        }
     
     def to_dict_personalizado(self):
-        return json.dumps({
+        return {
             "nome": self.nome,
             "imagem": self.imagem if self.imagem else "",
-        })
+        }
     
     @classmethod
     def from_dict(cls, data):

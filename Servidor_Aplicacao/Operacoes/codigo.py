@@ -1,35 +1,49 @@
-from Operacoes import operacao
-from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Estruturas.mensagem import Mensagem
-import json
+from Estruturas.requisicao import Requisicao
 
-class Codigo(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
+class Codigo():
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
-    def run(self):
-        self.getOperacao()
-
-    def getOperacao(self):
-        self.codigo()
-
-    def codigo(self):
-        from Estruturas.mensagem import Mensagem
+    # O fim da requisição de cadastramento, o envio do código de confirmação pelo cliente
+    # contém parte da comunicação envolvendo apenas o cliente e o servidor.
+    # Aqui, o cliente envia seu identificador, que foi retornado na requisição de
+    # cadastramento, junto ao código de confirmação.
+    def codigo(self, codigo, idCliente):
         print("[Servidor][Código] Código recebido.")
-
-        codigoEnviadoCliente = self.mensagemCliente.camposMensagem[1]
         
-        status, dados = self.fila.dadosTemp.verificarCodigo(self.conexaoCliente, codigoEnviadoCliente)
+        # O primeiro passo é verificar se:
+        #   - O tempo de enviar o código já expirou
+        #   - As três tentativas já foram
+        #   - Por fim, se o código está correto
+        status, dados = self.fila.dadosTemp.verificarCodigo(idCliente, codigo)
 
-        self.decisorCodigo(status, dados)
+        print(f"[Servidor][Código] Código que o cliente enviou: {codigo}")
+        print(f"[Servidor][Código] ID do código: {idCliente}")
+        return self.decisorCodigo(status, dados)
 
+    # Com a resposta do verificador de código de confirmação, decidimos a resposta
+    # pro cliente.
     def decisorCodigo(self, status, dados):
+        # Se a resposta for "ok", significa que o código não expirou e está correto.
         if status == "ok":
-            dadosJson = json.dumps(dados)
-            mensagemServidor = Mensagem.produtorMensagem(f"criar | usuario | {dadosJson}")
-            self.fila.enfileira(mensagemServidor, cb.codigoCallback, self.conexaoCliente, tipo="codigo")
+            # Então segue o padrão, cria um ID de requisição para o banco de dados,
+            print("[Servidor][Código] Código confirmado.")
+            requisicao = Requisicao.produzRequisicao("codigo", dados)
 
+            # Registra a requisição,
+            self.fila.registraRequisicao(requisicao)
+
+            # Coloca a requisição na fila
+            print(f"[Servidor][Código][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+            self.fila.enfileira(requisicao)
+
+            # Espera e retorna a resposta do banco de dados
+            return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+        # Se houver algum erro, retorna o tipo de erro.
         elif status == "erro":
-            mensagemAoCliente = Mensagem.produtorMensagem(f"{status} | {dados}")
-            op.enviaMensagem(self.conexaoCliente, mensagemAoCliente)
+            print("[Servidor][Código] Código inválido. Retornando ao cliente.")
+            return dados
+
+        else:
+            return False

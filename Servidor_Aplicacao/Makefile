@@ -1,13 +1,18 @@
-ccriar_ambiente:
+
+criar_ambiente:
 	python3 -m venv .venv
 
-salvar_bibliotecas:
-	pip freeze > requirements.txt
-
 instalar_bibliotecas:
-	pip install -r requirements.txt
-	python3 -m pip install --upgrade pip
+	@python3 -m pip install --upgrade pip
+	@pip install -r requirements.txt
 
-servidorAp:
+salvar_bibliotecas:
+	@pip freeze > requirements.txt
+
+nameServer:
+	@echo "Iniciando Name Server"
+	@python3 name_server.py $(IP) $(PORTA)
+
+servidorAP:
 	@echo "Iniciando processo servidor"
-	@python3 servidor.py
+	@python3 servidor.py $(IP) $(PORTA) $(HOST)

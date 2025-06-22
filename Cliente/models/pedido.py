@@ -19,21 +19,21 @@ class Pedido:
         return total
     
     def to_dict(self):
-        return json.dumps({
+        return {
             "id": self.id,
             "data": self.data if self.data else "",
             "anuncio": self.anuncio.to_dict() if self.anuncio else None,
             "quantidade": self.quantidade,
             "endereco": self.endereco.to_dict() if self.endereco else None,
-        })
+        }
     
     def to_dict_personalizado(self):
-        return json.dumps({
+        return {
             "data": self.data,
             "anuncio": {"id": f"{self.anuncio.id}"} if self.anuncio else None,
             "quantidade": self.quantidade,
             "endereco": {"id": f"{self.endereco.id}"} if self.endereco else None,
-        })
+        }
     
     @classmethod
     def from_dict(cls, dados):

@@ -1,125 +1,117 @@
-import socket
-import threading
-from Operacoes import server_operation as op
-from Operacoes import callback as cb
-from Operacoes import operacao
-from Estruturas.mensagem import Mensagem
+from Estruturas.requisicao import Requisicao
 
-class Visualizar(operacao.Operacao):
-    def __init__(self, mensagem, socket_cliente, fila_mensagens):
-        super().__init__(mensagem, socket_cliente, fila_mensagens)
+# Operação de visualizar.
+# Excluso o Login, provavelmente a operação mais simples. Não carrega imagens do cliente e nem
+# tem duas fases (como o Cadastramento e o Código de confirmação).
+class Visualizar():
+    def __init__(self, fila_requisicoes):
+        self.fila = fila_requisicoes
 
-    def run(self):
-        self.getOperacao()
-
-    def getOperacao(self):
-        if self.mensagemCliente.tamanho < 3:
-            self.todosAnuncios()
-
-        else:
-            self.decisor()
-
-    def decisor(self):
-        operacao = self.mensagemCliente.camposMensagem[1]
-
-        match operacao:
-            case "todos_anuncios":
-                self.todosAnuncios()
-
-            case "anuncio":
-                self.anuncio()
-
-            case "produto":
-                self.produto()
-
-            case "loja":
-                self.loja()
-
-            case "minha_loja":
-                self.minhaLoja()
-
-            case "minhas_lojas":
-                self.minhasListaLojas()
-
-            case "pedido":
-                self.pedido()
-
-            case "meus_pedidos":
-                self.meusPedidos()
-
-            case "meus_enderecos":
-                self.meusEnderecos()
-            
-            case _:
-                print("[Servidor] Mensagem inválida.")
-
+    # Operação de visualizar todos os anúncios do marketplace.
     def todosAnuncios(self):
-        print("[Servidor][Visualizar] Operação de visualizar todos os anúncios recebida.")
-        mensagemServidor = Mensagem.produtorMensagem("retornar | anuncios")
+        print("[Servidor][Visualizar][Todos os Anúncios] Operação de visualizar todos os anúncios recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_anuncios", None)
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarTodosAnunciosCallback, self.conexaoCliente, "visualizar")
+        # Como a requisição de visualizar todos os anúnicos não recebe parãmetros, ao invés de criar uma
+        # outra versão de enfileiramento, envio True para que a fila não tenha problemas com essa chamada aqui.
+        print(f"[Servidor][Visualizar][Todos os Anúncios][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def anuncio(self):
-        print("[Servidor][Visualizar] Operação de visualizar anúncio recebida.")
-        idAnuncio = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"retornar | anuncio | {str(idAnuncio)}")
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarAnuncioCallback, self.conexaoCliente, "visualizar")
+    # Operação de visualizar um único anúncio do marketplace.
+    def anuncio(self, id_anuncio):
+        print("[Servidor][Visualizar][Anúncio] Operação de visualizar anúncio recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_anuncio", id_anuncio)
 
-    def produto(self):
-        print("[Servidor][Visualizar] Operação de visualizar produto recebida.")
-        idProduto = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"retornar | produto | {str(idProduto)}")
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarProdutoCallback, self.conexaoCliente, "visualizar")
+        print(f"[Servidor][Visualizar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def loja(self):
-        print("[Servidor][Visualizar] Operação de visualizar loja recebida.")
-        idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem("retornar | loja | " + str(idLoja))
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarLojaCallback, self.conexaoCliente, "visualizar")
+    # Operação de visualizar um produto específico.
+    def produto(self, id_produto):
+        print("[Servidor][Visualizar][Produto] Operação de visualizar produto recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_produto", id_produto)
 
-    def minhaLoja(self):
-        print("[Servidor][Visualizar] Operação de visualizar loja do usuário recebida.")
-        idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem("retornar | minha_loja | " + str(idLoja))
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarLojaUsuarioCallback,  self.conexaoCliente, "visualizar")
+        print(f"[Servidor][Visualizar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def minhasListaLojas(self):
-        print("[Servidor][Visualizar] Operação de visualizar lojas do usuário recebida.")
-        idUsuario = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem("retornar | minhas_lojas | " + str(idUsuario))
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarListaLojasUsuarioCallback,  self.conexaoCliente, "visualizar")
+    # Operação de visualizar um loja específica.
+    def loja(self, id_loja):
+        print("[Servidor][Visualizar][Loja] Operação de visualizar loja recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_loja", id_loja)
 
-    def pedido(self):
-        print("[Servidor][Visualizar] Operação de visualizar pedido recebida.")
-        idLoja = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem("retornar | pedido | " + str(idLoja))
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarPedidoCallback,  self.conexaoCliente, "visualizar")
+        print(f"[Servidor][Visualizar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
 
-    def meusPedidos(self):
-        print("[Servidor][Visualizar] Operação de visualizar pedidos do usuário recebida.")
-        idUsuario = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem("retornar | meus_pedidos | " + str(idUsuario))
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarListaPedidosUsuarioCallback,  self.conexaoCliente, "visualizar")
+    # Operação de visualizar a loja do usuário.
+    def minhaLoja(self, id_loja):
+        print("[Servidor][Visualizar][Loja do Usuário] Operação de visualizar loja do usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_minha_loja", id_loja)
 
-    def meusEnderecos(self):
-        print("[Servidor][Visualizar] Operação de visualizar endereços do usuário recebida.")
-        idUsuario = self.mensagemCliente.camposMensagem[2]
-        mensagemServidor = Mensagem.produtorMensagem(f"retornar | meus_enderecos | {str(idUsuario)}")
+        self.fila.registraRequisicao(requisicao)
 
-        print("[Servidor] Enviando requisição para fila...")
-        self.fila.enfileira(mensagemServidor, cb.visualizarEnderecosUsuarioCallback, self.conexaoCliente, "visualizar")
+        print(f"[Servidor][Visualizar][Loja][Loja do Usuário][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+    # Operação de visualizar todas as lojas do usuário.
+    def minhaListaLojas(self, id_usuario):
+        print("[Servidor][Visualizar][Lojas] Operação de visualizar lojas do usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_minhas_lojas", id_usuario)
+
+        self.fila.registraRequisicao(requisicao)
+
+        print(f"[Servidor][Visualizar][Lojas][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+    # Operação de visualizar a lista de endereços do usuário.
+    def meusEnderecos(self, id_usuario):
+        print("[Servidor][Visualizar][Endereços] Operação de visualizar endereços do usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_meus_enderecos", id_usuario)
+
+        self.fila.registraRequisicao(requisicao)
+
+        print(f"[Servidor][Visualizar][Endereços][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+    # Operação de visualizar um pedido específico.
+    def pedido(self, id_pedido, flag_confirmado_andamento):
+        print("[Servidor][Visualizar][Pedido] Operação de visualizar pedido recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_pedido", id_pedido, flag_associada=flag_confirmado_andamento)
+
+        self.fila.registraRequisicao(requisicao)
+
+        print(f"[Servidor][Visualizar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+
+    # Operação de visualizar todos os pedidos do usuário.
+    def meusPedidos(self, id_usuario):
+        print("[Servidor][Visualizar][Pedidos] Operação de visualizar pedidos do usuário recebida.")
+        requisicao = Requisicao.produzRequisicao("visualizar_meus_pedidos", id_usuario)
+
+        self.fila.registraRequisicao(requisicao)
+
+        print(f"[Servidor][Visualizar][Pedidos][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
+        self.fila.enfileira(requisicao)
+
+        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)

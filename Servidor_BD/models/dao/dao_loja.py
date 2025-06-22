@@ -27,8 +27,8 @@ class DAOLoja(DAO):
         loja.imagem = obj.imagem
         return loja
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Loja):
+        return super().delete(obj)
     
-    def zerar(self, obj: Loja):
+    def forget(self, obj: Loja):
         pass

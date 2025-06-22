@@ -11,7 +11,8 @@ class Usuario:
 class Usuario_Identificado(Usuario):
     def __init__(
             self, id: int = 0, nome: str = "", cpf: str = "", email: str = "", senha: str = "", 
-            lojas: Optional[Loja] = [], enderecos: Optional[Endereco] = [], pedidos: Optional[Pedido] = []
+            lojas: Optional[Loja] = [], enderecos: Optional[Endereco] = [], 
+            pedidos_confirmados: Optional[Pedido] = [], pedidos_andamento: Optional[Pedido] = []
         ):
         self.id = id
         self.nome = nome
@@ -21,7 +22,8 @@ class Usuario_Identificado(Usuario):
 
         self.lojas = lojas
         self.enderecos = enderecos
-        self.pedidos = pedidos
+        self.pedidos_confirmados = pedidos_confirmados
+        self.pedidos_andamento = pedidos_andamento
 
     def criar_loja(self, loja):
         self.lojas.append(loja)
@@ -32,7 +34,7 @@ class Usuario_Identificado(Usuario):
         return endereco
     
     def criar_pedido(self, pedido):
-        self.pedidos.append(pedido)
+        self.pedidos_andamento.append(pedido)
         return pedido
     
     def editar_endereco(self, endereco, novo_endereco):
@@ -84,7 +86,7 @@ class Usuario_Identificado(Usuario):
         return None
     
     def to_dict(self):
-        return json.dumps({
+        return {
             "id": self.id,
             "nome": self.nome,
             "cpf": self.cpf,
@@ -92,22 +94,23 @@ class Usuario_Identificado(Usuario):
             "senha": self.senha,
             "lojas": [loja.to_dict() for loja in self.lojas] if self.lojas else [],
             "enderecos": [endereco.to_dict() for endereco in self.enderecos] if self.enderecos else [],
-            "pedidos": [pedido.to_dict() for pedido in self.pedidos] if self.pedidos else []
-        })
+            "pedidos_confirmados": [pedido.to_dict() for pedido in self.pedidos_confirmados] if self.pedidos_confirmados else [],
+            "pedidos_andamento": [pedido.to_dict() for pedido in self.pedidos_andamento] if self.pedidos_andamento else []
+        }
 
     def to_dict_cadastramento(self):
-        return json.dumps({
+        return {
             "nome": self.nome,
             "cpf": self.cpf,
             "email": self.email,
             "senha": self.senha,
-        })
+        }
     
     def to_dict_login(self):
-        return json.dumps({
+        return {
             "email": self.email,
             "senha": self.senha,
-        })
+        }
     
     @classmethod
     def from_dict(cls, data):
@@ -120,9 +123,10 @@ class Usuario_Identificado(Usuario):
         senha = data.get("senha", "")
         lojas = [Loja.from_dict(loja) for loja in data["lojas"]] if "lojas" in data else []
         enderecos = [Endereco.from_dict(endereco) for endereco in data["enderecos"]] if "enderecos" in data else []
-        pedidos = [Pedido.from_dict(pedido) for pedido in data["pedidos"]] if "pedidos" in data else []
+        pedidos_confirmados = [Pedido.from_dict(pedido) for pedido in data["pedidos_confirmados"]] if "pedidos_confirmados" in data else []
+        pedidos_andamento = [Pedido.from_dict(pedido) for pedido in data["pedidos_andamento"]] if "pedidos_andamento" in data else []
 
-        return cls(id, nome, cpf, email, senha, lojas, enderecos, pedidos)
-    
+        return cls(id, nome, cpf, email, senha, lojas, enderecos, pedidos_confirmados, pedidos_andamento)
+
     def __str__(self):
         return f"Usuario(id={self.id}, nome={self.nome}, cpf={self.cpf}, email={self.email}, senha={self.senha})"

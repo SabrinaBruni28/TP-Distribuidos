@@ -1,4 +1,4 @@
-.PHONY: cliente, servidorAp, servidorBD
+.PHONY: cliente, servidorAp, servidorBD, nameServer
 
 criar_ambiente:
 	python3 -m venv .venv
@@ -13,8 +13,11 @@ instalar_bibliotecas:
 cliente:
 	@$(MAKE) --no-print-directory -C Cliente cliente $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
-servidorAp:
-	@$(MAKE) --no-print-directory -C Servidor_Aplicacao servidorAp
+servidorAP:
+	@$(MAKE) --no-print-directory -C Servidor_Aplicacao servidorAP $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA)) $(if $(HOST),HOST=$(HOST))
 
 servidorBD:
-	@$(MAKE) --no-print-directory -C Servidor_BD servidorBD
+	@$(MAKE) --no-print-directory -C Servidor_BD servidorBD $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA)) $(if $(HOST),HOST=$(HOST))
+
+nameServer:
+	@$(MAKE) --no-print-directory -C Servidor_Aplicacao nameServer $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))

@@ -3,7 +3,7 @@ CAMINHO_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 sys.path.append(CAMINHO_BASE)
 
 from pybrcode.pix import generate_simple_pix
-import re, uuid, unicodedata
+import re, uuid, unicodedata, base64
 
 class Utils:
     @staticmethod
@@ -16,8 +16,19 @@ class Utils:
         return os.path.join(CAMINHO_BASE, path)
 
     @staticmethod
-    def criar_dict_de_atributos(obj, atributos: list):
-        return {attr: getattr(obj, attr, None) for attr in atributos}
+    def image_to_byte(image_path: str):
+        caminho = Utils.caminho_imagem(image_path)
+        with open(caminho, 'rb') as f:
+            data = f.read()
+        return base64.b64encode(data).decode('utf-8')
+
+    @staticmethod
+    def byte_to_image(image_bytes, path='received_image.png'):
+        caminho = Utils.caminho_imagem(path)
+        image_bytes = base64.b64decode(image_bytes.encode('utf-8'))
+        with open(caminho, 'wb') as f:
+            f.write(image_bytes)
+        return path
     
     @staticmethod
     def check_cpf(cpf: str) -> bool:
@@ -137,8 +148,8 @@ class Utils:
         if re.fullmatch(r"[^@]+@[^@]+\.[^@]+", chave):
             return True
 
-        # Telefone no formato E.164 (ex: +5511999999999)
-        if re.fullmatch(r"\+[1-9]\d{1,14}$", chave):
+        # Telefone no formato E.164 (ex: (##) ####-#### / (##) #####-####)
+        if re.fullmatch(r"\(\d{2}\) \d{4,5}-\d{4}", chave):
             return True
 
         # Chave aleatória (UUID v4)
