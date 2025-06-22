@@ -40,17 +40,20 @@
    ```
    Onde `{processo}` pode ser:
    - `cliente`
-   - `servidorAp`
+   - `servidorAP`
    - `servidorBD`
 
-   Para executar o qualquer processo com IP e Porta personalizados:
+   Para executar o cliente com IP e Porta personalizados:
    ```bash
-   make {processo} IP="ip" PORTA=porta
+   make cliente IP="ip" PORTA=porta
    ```
-   > Por padrão: IP = `"localhost"`, PORTA = `5000`
+   Para executar o servidor de Aplicação ou de Banco de Dados com IP e Porta personalizados:
+   ```bash
+   make {processo} IP="ip" PORTA=porta HOST=host
+   ```
+   > Por padrão: IP = `"127.0.0.1"`, PORTA = `9090`
 
-   > Com o uso do middleware o IP e a PORTA são associados ao name server.
-
+   > O IP a a PORTA são referetes ao name server e o HOST é referente ao ip da máquina que está sendo executado.
 ---
 
 ### 🧪 Execução Conjunta (na mesma máquina com terminais diferentes)
@@ -86,7 +89,7 @@
 
    - **Servidor de Aplicação** (opcionalmente com IP e porta):
      ```bash
-     make servidorAp
+     make servidorAP
      ```
 
    - **Cliente** (opcionalmente com IP e porta):

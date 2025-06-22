@@ -11,10 +11,12 @@ print(f"Iniciando servidor Pyro5...")
 # Valores padrão
 ip = "127.0.0.1"
 porta = 9090
+host = "127.0.0.1"
 
 if len(sys.argv) >= 3:
     ip = sys.argv[1]
     porta = int(sys.argv[2])
+    host = sys.argv[3]
 
 while True:
     try:
@@ -29,7 +31,7 @@ while True:
 filaDeMensagem = FilaDeRequisicoes(ip=ip, porta=porta)
 filaDeMensagem.start()
 
-with Pyro5.server.Daemon(host=ip) as daemon:
+with Pyro5.server.Daemon(host=host) as daemon:
     servicos = ServicosServidorAplicacao(filaDeMensagem)
     uri = daemon.register(servicos)
 

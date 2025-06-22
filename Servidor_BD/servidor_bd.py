@@ -8,9 +8,11 @@ from banqueiro import Banqueiro
 if len(sys.argv) > 1:
     ip = sys.argv[1]
     porta = int(sys.argv[2])
+    host = sys.argv[3]
 else:
     ip = "127.0.0.1"
     porta = 9090
+    host = "127.0.0.1"
 try:
     nameServer = Pyro5.api.locate_ns(host=ip, port=porta)
     print("Name Server localizado.")
@@ -20,7 +22,7 @@ except Pyro5.errors.NamingError:
     Pyro5.nameserver.start_ns_loop()
 
 print("É ali em baixo.")
-with Pyro5.server.Daemon(host= '192.168.1.15') as daemon:
+with Pyro5.server.Daemon(host=host) as daemon:
     banqueiro = Banqueiro()
     uri = daemon.register(banqueiro)
 

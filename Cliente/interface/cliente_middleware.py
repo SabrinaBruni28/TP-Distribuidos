@@ -78,8 +78,6 @@ class UnixMiddlewareClient:
         try:
             funcao_remota = getattr(proxy, nome_funcao)
             print("⚙️  Função:", nome_funcao)
-            print("📤 Args:", args)
-            print("📤 Kwargs:", kwargs)
             
             resposta = funcao_remota(*args, **kwargs)
             print("📬 Resposta:", resposta)
