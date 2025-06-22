@@ -14,7 +14,7 @@ from models.loja import Loja
 class DAOPedido_Confirmado(DAO):
     def __init__(self,
             nome_tabelas: list = ['pedido_confirmado', 'anuncio_pedido', 'produto_pedido', 'endereco_pedido'],
-            nome_colunas: list = ['id_anuncio', 'id_endereco', 'id_usuario', 'id_loja', 'quantidade_pedido', 'data_pedido']):
+            nome_colunas: list = ['id_anuncio', 'id_endereco', 'id_usuario', 'id_produto', 'id_loja', 'quantidade_pedido', 'data_pedido']):
         
         super().__init__(nome_tabelas, nome_colunas)
         self.__daoEndereco_Pedido = DAOEndereco(['endereco_pedido'])

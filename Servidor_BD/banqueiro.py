@@ -944,7 +944,7 @@ class Banqueiro():
                 print('[Banqueiro][Excluir][Produto] - Produto a excluir:', obj)
 
                 print('[Banqueiro][Excluir][Produto] - Verificando se há anúncios sobre o produto com pedidos ainda em andamento...')
-                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(produto= Produto(id= obj.id)))):
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(id_produto= obj.id)):
                     print(f'[Banqueiro][Excluir][Produto] - Produto não pode ser excluído: {len(pedidos)} pedidos em andamneto!')
                     return 'pedidos_pendentes'
                 else:
@@ -1016,7 +1016,7 @@ class Banqueiro():
                 print('[Banqueiro][Excluir][Loja] - Loja a excluir:', obj)
 
                 print('[Banqueiro][Excluir][Loja] - Verificando se a loja possui pedidos em andamento...')
-                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(produto= Produto(loja= Loja(id= obj.id))))):
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(id_loja= obj.id)):
                     print(f'[Banqueiro][Excluir][Loja] - Loja não pode ser excluída: {len(pedidos)} pedidos em andamneto!')
                     return 'pedidos_pendentes'
                 else:
