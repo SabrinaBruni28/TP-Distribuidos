@@ -102,10 +102,11 @@ class MarketplaceUI(QMainWindow):
 
     def atualizar_lista_anuncios(self, nova_lista):
         # Remove widgets antigos
-        for i in reversed(range(self.grid.count())):
-            widget = self.grid.itemAt(i).widget()
-            if widget:
-                widget.setParent(None)
+        if self.grid:
+            for i in reversed(range(self.grid.count())):
+                widget = self.grid.itemAt(i).widget()
+                if widget:
+                    widget.setParent(None)
 
         largura_bloco = 250
         altura_bloco = 300
@@ -2818,7 +2819,8 @@ class InterfaceHandler:
                     )
                     lojas = self.aplicacao.usuario.lojas
                     for loja in lojas:
-                        self.aplicacao.apagar_anuncios(loja.anuncios)
+                        for anuncio in loja.anuncios:
+                            self.aplicacao.apagar_anuncio(anuncio)
                     self.aplicacao.usuario = Usuario()
                     self.view.set_tela(self.stack, -2)
                 elif resposta == "pedidos_pendentes":

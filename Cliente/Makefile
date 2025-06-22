@@ -1,6 +1,6 @@
 # Definindo valores padrão
-IP ?= "127.0.0.1"
-PORTA ?= 9090
+IP ?= "192.168.1.16"
+PORTA ?= 5000
 
 criar_ambiente:
 	python3 -m venv .venv

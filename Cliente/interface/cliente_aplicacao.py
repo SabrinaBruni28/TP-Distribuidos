@@ -33,7 +33,7 @@ class ClienteAplicacao():
         self.anuncios = anuncios 
 
     def apagar_anuncios(self, produto: Produto):
-        for i, a in enumerate(self.anuncios):
+        for i, a in reversed(range(len(self.anuncios))):
             if a.produto.id == produto.id:
                 del self.anuncios[i]
 
