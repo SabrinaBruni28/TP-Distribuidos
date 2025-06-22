@@ -68,8 +68,8 @@ class DAOPedido_Andamento(DAO):
     def update(self, obj: Pedido):
         pass
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Pedido):
+        return super().delete(obj)
     
     def forget(self, obj: Pedido):
         pass

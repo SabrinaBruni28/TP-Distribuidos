@@ -22,8 +22,8 @@ class DAOImagem_Produto(DAO):
     def update(self, obj: Imagem_Produto):
         return self._from_tuple(super().update(obj))
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Imagem_Produto):
+        return super().delete(obj)
     
     def forget(self, obj: Imagem_Produto):
         pass

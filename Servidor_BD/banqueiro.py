@@ -226,23 +226,7 @@ class Banqueiro():
         try:
             print(f'[Banqueiro][Criar][Pedido] - Iniciando tentativa de criar pedido...')
             obj = Pedido.from_dict(pedido)
-            print(f'[Banqueiro][Criar][Pedido] - Recuperando anúncio do pedido a ser criado...')
-            if isinstance(obj.anuncio, Anuncio):
-                if result := self.__daoAnuncio.select(Anuncio(id= obj.anuncio.id)):
-                    obj.anuncio = result[0]
-                else:
-                    print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Anúncio não encontrado!')
-                    return False
-            else:
-                print(f'[Banqueiro][Criar][Pedido] - Falha fatal: Pedido não possui anúncio!')
-                return False
             print('[Banqueiro][Criar][Pedido] - Pedido a criar:', obj)
-
-            print('[Banqueiro][Criar][Pedido] - Retirando quantidade pedida do anúncio...')
-            if isinstance(obj.anuncio, Anuncio):
-                self.__daoAnuncio.update(Anuncio(id= obj.anuncio.id, quantidade_disponivel= obj.anuncio.quantidade_disponivel-obj.quantidade))
-                print('[Banqueiro][Criar][Pedido] - Anúncio do pedido atualizado!')
-            
             print('[Banqueiro][Criar][Pedido] - Inserindo pedido no banco...')
             obj.id = self.__daoPedido_Andamento.insert(obj)
             print('[Banqueiro][Criar][Pedido] - Retornando pedido inserido...')
@@ -876,7 +860,7 @@ class Banqueiro():
                     self.__daoAnuncio.update(Anuncio(id= pedido.anuncio.id, quantidade_disponivel= pedido.anuncio.quantidade_disponivel+pedido.quantidade))
                     print('[Banqueiro][Cancelar][Pedido] - Anúncio do pedido atualizado!')
 
-                    if self.__daoPedido_Andamento.delete(id):
+                    if self.__daoPedido_Andamento.delete(Pedido(id= id)):
                         print('[Banqueiro][Cancelar][Pedido] - Pedido cancelado!')
                         return True
                     else:
@@ -905,7 +889,7 @@ class Banqueiro():
             print(f'[Banqueiro][Excluir][Imagem] - Iniciando tentativa de excluir imagem de produto...')
             obj = Imagem_Produto.from_name(nome_imagem)
             print('[Banqueiro][Excluir][Imagem] - Imagem a excluir:', obj)
-            if self.__daoImagem_Produto.delete(obj.id):
+            if self.__daoImagem_Produto.delete(obj):
                 print('[Banqueiro][Excluir][Imagem] - Registro da imagem excluído!')
                 print('[Banqueiro][Excluir][Imagem] - Excluindo imagem...')
                 if imageu.apagarImagem('produto', nome_imagem):
@@ -924,18 +908,6 @@ class Banqueiro():
             print(f'[Banqueiro][Excluir][Imagem][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
 
-    def excluirPedido(self, id: int):
-        try:
-            print('[Banqueiro][Excluir][Pedido] - Iniciando tentativa de excluir pedido...')
-            print('[Banqueiro][Excluir][Pedido] - Nada aconteceu! Ainda não é possível excluir pedidos.')
-        except Exception as e:
-            tb = traceback.extract_tb(e.__traceback__)
-            linha = tb[-1].lineno if tb else '[linha desconhecida]'
-            tipo = type(e).__name__
-            mensagem = str(e)
-            print(f'[Banqueiro][Excluir][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
-            return False
-
     def excluirAnuncio(self, id: int):
         try:
             print('[Banqueiro][Excluir][Anúncio] - Iniciando tentativa de excluir anúncio...')
@@ -943,17 +915,21 @@ class Banqueiro():
                 obj = result[0]
                 print('[Banqueiro][Excluir][Anúncio] - Anúncio a excluir:', obj)
 
-                print('[Banqueiro][Excluir][Anúncio] - Recuperando pedidos não confirmados do anúncio...')
-                for pedido in self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(id= obj.id))):
-                    self.excluirPedido(pedido.id)
-                
-                print('[Banqueiro][Excluir][Anúncio] - Excluindo anúncio...')
-                if self.__daoAnuncio.delete(obj.id):
-                    print('[Banqueiro][Excluir][Anúncio] - Anúncio excluído!')
-                    return True
+                print('[Banqueiro][Excluir][Anúncio] - Verificando se o anúncio ainda possui pedidos em andamento...')
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(id= obj.id))):
+                    print(f'[Banqueiro][Excluir][Anúncio] - Anúncio não pode ser excluído: {len(pedidos)} pedidos em andamneto!')
+                    return 'pedidos_pendentes'
                 else:
-                    print('[Banqueiro][Excluir][Anúncio] - Falha fatal: Anúncio não pôde ser excluído!')
-                    return False
+                    print('[Banqueiro][Excluir][Anúncio] - Excluindo anúncio...')
+                    if self.__daoAnuncio.delete(Anuncio(id= obj.id)):
+                        print('[Banqueiro][Excluir][Anúncio] - Anúncio excluído!')
+                        return True
+                    else:
+                        print('[Banqueiro][Excluir][Anúncio] - Falha fatal: Anúncio não pôde ser excluído!')
+                        return False
+            else:
+                print('[Banqueiro][Excluir][Anúncio] - Falha fatal: Anúncio não encontrado!')
+                return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
@@ -961,35 +937,162 @@ class Banqueiro():
             mensagem = str(e)
             print(f'[Banqueiro][Excluir][Anúncio][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
-
-    def excluirUsuario(self):
-        pass
-    def excluirEndereco(self):
-        pass
-    def excluirLoja(self):
-        pass
-    def excluirProduto(self):
-        pass
-
-    ################################## Métodos de Delete ##################################
-'''
-    def excluir(self, obj: Persistivel):
-        return self._dao(obj).delete(obj.id)
     
-    def excluirProuto(self, obj: Produto):
-        imagens_a_remover = []
-        ans = 'erro'
-        pedidos = self.buscar(Pedido(anuncio = obj))
-        if pedidos:
-            result = self.encontrar(obj)
-            if isinstance(result, Produto):
-                obj = result
-                self.__daoProduto.zerar(Produto(id = obj.id))
-                ans = 'ok'
-        else:
-            for imagem_produto in self.buscar(Imagem_Produto(id_produto = obj.id)):
-                if self.excluir(imagem_produto) == 'ok':
-                    imagens_a_remover.append(imagem_produto.caminho())
-            ans = self.excluir(obj)
-        return imagens_a_remover, ans
-'''
+    def excluirProduto(self, id: int):
+        try:
+            print('[Banqueiro][Excluir][Produto] - Iniciando tentativa de excluir produto...')
+            if result := self.__daoProduto.select(Produto(id= id)):
+                obj = result[0]
+                print('[Banqueiro][Excluir][Produto] - Produto a excluir:', obj)
+
+                print('[Banqueiro][Excluir][Produto] - Verificando se há anúncios sobre o produto com pedidos ainda em andamento...')
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(produto= Produto(id= obj.id)))):
+                    print(f'[Banqueiro][Excluir][Produto] - Produto não pode ser excluído: {len(pedidos)} pedidos em andamneto!')
+                    return 'pedidos_pendentes'
+                else:
+                    print('[Banqueiro][Excluir][Produto] - Excluindo anúncios do produto...')
+                    if self.__daoAnuncio.delete(Anuncio(produto= Produto(id= obj.id))):
+                        print('[Banqueiro][Excluir][Produto] - Anúncios excluídos!')
+                    else:
+                        print('[Banqueiro][Excluir][Produto] - Falha fatal: Anúncios do produto não puderam ser excluídos!')
+                        return False
+                    
+                    print('[Banqueiro][Excluir][Produto] - Excluindo imagens do produto...')
+                    for imagem_produto in self.__daoImagem_Produto.select(Imagem_Produto(id_produto= obj.id)):
+                        if not self.excluirImagemProduto(imagem_produto.caminho()):
+                            print('[Banqueiro][Excluir][Produto] - Falha fatal: Imagem do produto não pôde ser excluído!')
+                            return False
+                    print('[Banqueiro][Excluir][Produto] - Imagens excluídas!')
+
+                    if self.__daoProduto.delete(Produto(id= obj.id)):
+                        print('[Banqueiro][Excluir][Produto] - Produto excluído!')
+                        return True
+                    else:
+                        print('[Banqueiro][Excluir][Produto] - Falha fatal: Produto não pôde ser excluído!')
+                        return False
+            else:
+                print('[Banqueiro][Excluir][Produto] - Falha fatal: Produto não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Excluir][Produto][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+    
+    def excluirEndereco(self, id: int):
+        try:
+            print('[Banqueiro][Excluir][Endereço] - Iniciando tentativa de excluir endereço...')
+            if result := self.__daoEndereco.select(Endereco(id= id)):
+                obj = result[0]
+                print('[Banqueiro][Excluir][Endereço] - Endereço a excluir:', obj)
+
+                print('[Banqueiro][Excluir][Endereço] - Verificando se há pedidos em andamento para este endereço...')
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(endereco= Endereco(id= obj.id))):
+                    print(f'[Banqueiro][Excluir][Endereço] - Endereço não pode ser excluído: {len(pedidos)} pedidos em andamneto!')
+                    return 'pedidos_pendentes'
+                else:
+                    if self.__daoEndereco.delete(Endereco(id= obj.id)):
+                        print('[Banqueiro][Excluir][Endereço] - Endereço excluído!')
+                        return True
+                    else:
+                        print('[Banqueiro][Excluir][Endereço] - Falha fatal: Endereço não pôde ser excluído!')
+                        return False
+            else:
+                print('[Banqueiro][Excluir][Endereço] - Falha fatal: Endereço não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Excluir][Endereço][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+
+    def excluirLoja(self, id: int):
+        try:
+            print('[Banqueiro][Excluir][Loja] - Iniciando tentativa de excluir loja...')
+            if result := self.__daoLoja.select(Loja(id= id)):
+                obj = result[0]
+                print('[Banqueiro][Excluir][Loja] - Loja a excluir:', obj)
+
+                print('[Banqueiro][Excluir][Loja] - Verificando se a loja possui pedidos em andamento...')
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(produto= Produto(loja= obj.id)))):
+                    print(f'[Banqueiro][Excluir][Loja] - Loja não pode ser excluída: {len(pedidos)} pedidos em andamneto!')
+                    return 'pedidos_pendentes'
+                else:
+                    print('[Banqueiro][Excluir][Loja] - Excluindo produtos da loja...')
+                    for produto in self.__daoProduto.select(Produto(loja= Loja(id= obj.id))):
+                        result = self.excluirProduto(produto.id)
+                        if result == 'pedidos_pendentes':
+                            print(f'[Banqueiro][Excluir][Loja] - Falha fatal: Produto {produto.id} possui pedidos em andamento!')
+                            return False
+                        elif result is False:
+                            print(f'[Banqueiro][Excluir][Loja] - Falha fatal: Produto {produto.id} não pôde ser excluído!')
+                            return False
+                    
+                    print('[Banqueiro][Excluir][Loja] - Excluindo loja...')
+                    if self.__daoLoja.delete(Loja(id= obj.id)):
+                        print('[Banqueiro][Excluir][Loja] - Loja excluída!')
+                        return True
+                    else:
+                        print('[Banqueiro][Excluir][Loja] - Falha fatal: Loja não pôde ser excluída!')
+                        return False
+            else:
+                print('[Banqueiro][Excluir][Loja] - Falha fatal: Loja não encontrada!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Excluir][Loja][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+
+    def excluirUsuario(self, id: int):
+        try:
+            print('[Banqueiro][Excluir][Usuário] - Iniciando tentativa de excluir usuário...')
+            if result := self.__daoUsuario.select(Usuario_Identificado(id= id)):
+                obj = result[0]
+                print('[Banqueiro][Excluir][Usuário] - Usuário a excluir:', obj)
+
+                print('[Banqueiro][Excluir][Usuário] - Tentando excluir lojas do usuário...')
+                for loja in self.__daoLoja.select(Loja(id_usuario= obj.id)):
+                    print(f'[Banqueiro][Excluir][Usuário] - Excluindo loja {loja.id}...')
+                    result = self.excluirLoja(loja.id)
+                    if result == 'pedidos_pendentes':
+                        print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Loja {loja.id} possui pedidos em andamento!')
+                        return False
+                    elif result is False:
+                        print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Loja {loja.id} não pôde ser excluída!')
+                        return False
+
+                print('[Banqueiro][Excluir][Usuário] - Tentando excluir endereços do usuário...')
+                for endereco in self.__daoEndereco.select(Endereco(id_usuario= obj.id)):
+                    print(f'[Banqueiro][Excluir][Usuário] - Excluindo endereço {endereco.id}...')
+                    result = self.excluirEndereco(endereco.id)
+                    if result == 'pedidos_pendentes':
+                        print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Endereço {endereco.id} possui pedidos em andamento!')
+                        return False
+                    elif result is False:
+                        print(f'[Banqueiro][Excluir][Usuário] - Falha fatal: Endereço {endereco.id} não pôde ser excluído!')
+                        return False
+                
+                print('[Banqueiro][Excluir][Usuário] - Excluindo usuário...')
+                if self.__daoUsuario.delete(Usuario_Identificado(id= obj.id)):
+                    print('[Banqueiro][Excluir][Usuário] - Usuário excluído!')
+                    return True
+                else:
+                    print('[Banqueiro][Excluir][Usuário] - Falha fatal: Usuário não pôde ser excluído!')
+                    return False
+            else:
+                print('[Banqueiro][Excluir][Usuário] - Falha fatal: Usuário não encontrado!')
+                return False
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Excluir][Usuário][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False

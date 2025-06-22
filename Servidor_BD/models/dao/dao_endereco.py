@@ -28,8 +28,8 @@ class DAOEndereco(DAO):
     def update(self, obj: Endereco):
         return self._from_tuple(super().update(obj))
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Endereco):
+        return super().delete(obj)
     
     def forget(self, obj: Endereco):
         return self._from_tuple(super().forget(obj))

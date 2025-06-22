@@ -25,9 +25,8 @@ class DAOUsuario(DAO):
     def update(self, obj: Usuario_Identificado):
         return self._from_tuple(super().update(obj))
 
-    def delete(self, id_obj: int):
-        print('Operação inválida: Usuário não é capaz de se apagar')
-        return ''
+    def delete(self, obj: Usuario_Identificado):
+        return super().delete(obj)
     
     def forget(self, obj: Usuario_Identificado):
         pass

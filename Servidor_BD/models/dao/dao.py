@@ -64,12 +64,16 @@ class DAO():
             conn.commit()
             return persistivel
     
-    def delete(self, id_obj: int):
+    def delete(self, obj: Persistivel):
         with self._connect() as conn:
             cursor = conn.cursor()
-            sql = f'DELETE FROM {self.nome_tabelas[0]} WHERE id_{self.nome_tabelas[0].split("_")[0]} = ?;'
+            persistivel = obj.to_dict_bd(self.nome_colunas)
+            if obj.id:
+                persistivel[f'id_{self.nome_tabelas[0].split("_")[0]}'] = obj.id
+
+            sql = f'''DELETE FROM {self.nome_tabelas[0]} WHERE {'AND'.join([f'{column} = ?' for column in persistivel.keys()])};'''
             print(sql, end='\n\n')
-            cursor.execute(sql, (id_obj,))
+            cursor.execute(sql, tuple(persistivel.values()))
             conn.commit()
             return True
     

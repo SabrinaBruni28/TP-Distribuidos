@@ -32,31 +32,28 @@ class DAOPedido_Confirmado(DAO):
         )
         return pedido
     
-    def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', 0, 0, 0, '', False, 0, '', '', 0, '', '', '', '', '', '')):
+    def _from_tuple_completo(self, tupla = (0, 0, 0, 0, '', 0, 0, 0, '', '', 0, '', '', '', '', '', '')):
         pedido = Pedido(
             id = tupla[0],
             anuncio = Anuncio(
                 id = tupla[1],
                 produto = Produto(
                     id = tupla[5],
-                    nome = tupla[11],
-                    descricao = tupla[12],
-                    loja = Loja(id = tupla[10])
+                    nome = tupla[8],
+                    descricao = tupla[9],
+                    loja = Loja(id = tupla[7])
                 ),
                 preco = tupla[6],
-                quantidade_disponivel = tupla[7],
-                chave_pix = tupla[8],
-                pausado = tupla[9]
             ),
             endereco = Endereco(
                 id = tupla[2],
-                id_usuario= tupla[13],
-                rua= tupla[14],
-                numero= tupla[15],
-                bairro= tupla[16],
-                cidade= tupla[17],
-                estado= tupla[18],
-                complemento= tupla[19]
+                id_usuario= tupla[10],
+                rua= tupla[11],
+                numero= tupla[12],
+                bairro= tupla[13],
+                cidade= tupla[14],
+                estado= tupla[15],
+                complemento= tupla[16]
             ),
             quantidade = tupla[3],
             data = tupla[4]
@@ -104,7 +101,7 @@ class DAOPedido_Confirmado(DAO):
             obj.anuncio.quantidade_disponivel = 0
             obj.anuncio.chave_pix = ''
             obj.anuncio.pausado = None
-            if result := self.__daoAnuncio_Pedido.select(obj.anuncio):
+            if result := self.__daoAnuncio_Pedido.select(obj.anuncio, 'AND'):
                 obj.anuncio.id = result[0].id
             else:
                 obj.anuncio.id_loja = 0
@@ -122,8 +119,8 @@ class DAOPedido_Confirmado(DAO):
     def update(self, obj: Pedido):
         pass
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Pedido):
+        return super().delete(obj)
     
     def forget(self, obj: Pedido):
         pass

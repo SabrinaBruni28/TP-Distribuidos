@@ -27,8 +27,8 @@ class DAOProduto(DAO):
         produto.imagens = obj.imagens
         return produto
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Produto):
+        return super().delete(obj)
     
     def forget(self, obj: Produto):
         return self._from_tuple(super().forget(obj))
