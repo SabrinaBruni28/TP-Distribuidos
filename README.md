@@ -5,7 +5,7 @@
 
 ### ▶️ Execução Separada (um processo por máquina)
 
-1. **Acesse a pasta** correspondente ao processo: `Cliente`, `ServidorAp` ou `ServidorBD`.
+1. **Acessar a pasta** mais externa do repositório.
 
 2. **Criar ambiente virtual** (executar **uma vez**):
    ```bash
@@ -29,8 +29,12 @@
    ```bash
    make instalar_bibliotecas
    ```
+5. **Iniciar o name server**:
+   ```bash
+   make nameServer
+   ```
 
-5. **Executar o processo desejado**:
+6. **Executar o processo desejado**:
    ```bash
    make {processo}
    ```
@@ -39,17 +43,19 @@
    - `servidorAp`
    - `servidorBD`
 
-   Para executar o **cliente** com IP e Porta personalizados:
+   Para executar o qualquer processo com IP e Porta personalizados:
    ```bash
-   make cliente IP="ip" PORTA=porta
+   make {processo} IP="ip" PORTA=porta
    ```
-   > Por padrão: IP = `"localhost"` e PORTA = `5000`
+   > Por padrão: IP = `"localhost"`, PORTA = `5000`
+
+   > Com o uso do middleware o IP e a PORTA são associados ao name server.
 
 ---
 
 ### 🧪 Execução Conjunta (na mesma máquina com terminais diferentes)
 
-1. **Estar no diretório raiz**, fora das pastas dos processos.
+1. **Acessar a pasta** mais externa do repositório.
 
 2. **Criar ambiente virtual** (executar **uma vez**):
    ```bash
@@ -66,14 +72,19 @@
    make instalar_bibliotecas
    ```
 
-5. **Abrir três terminais** (um para cada processo, ainda no diretório raiz) e executar:
+5. **Abrir quatro terminais** (ainda no diretório raiz) e executar:
 
-   - **Servidor de Banco de Dados**:
+   - **Name Server**:
+     ```bash
+     make nameServer
+     ```
+
+   - **Servidor de Banco de Dados** (opcionalmente com IP e porta):
      ```bash
      make servidorBD
      ```
 
-   - **Servidor de Aplicação**:
+   - **Servidor de Aplicação** (opcionalmente com IP e porta):
      ```bash
      make servidorAp
      ```
@@ -81,8 +92,4 @@
    - **Cliente** (opcionalmente com IP e porta):
      ```bash
      make cliente
-     ```
-     ou
-     ```bash
-     make cliente IP="ip" PORTA=porta
      ```
