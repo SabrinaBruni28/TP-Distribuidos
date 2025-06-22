@@ -1,40 +1,42 @@
 import datetime
 from models.persistivel import Persistivel
-from models.produto import Produto
+from models.anuncio import Anuncio
 from models.endereco import Endereco
 
 class Pedido(Persistivel):
-    def __init__(self, id = 0, produto = None, quantidade = 0, preco = 0, endereco = None, data = None):
+    def __init__(self, id = 0, anuncio = None, quantidade = 0, endereco = None, data = None, id_produto = None, id_loja = None):
         # Atributos próprios
         self.id = id
         self.data = data
         self.quantidade = quantidade
-        self.preco = preco
 
         # Atributos estrangeiros
-        self.produto = produto
-        self.id_produto = produto.id if produto else 0
+        self.anuncio = anuncio
+        self.id_anuncio = anuncio.id if anuncio else 0
         self.endereco = endereco
-        self.id_endereco = endereco.id if endereco else 0
+        if endereco:
+            self.id_endereco = endereco.id
+            self.id_usuario = endereco.id_usuario
+        else:
+            self.id_endereco = 0
+            self.id_usuario = 0
+        if id_produto is not None:
+            self.id_produto = id_produto
+        if id_loja is not None:
+            self.id_loja = id_loja
 
-    def calcular_total(self):
-        total = self.preco * self.quantidade
-        return total
-    
     def to_dict(self):
         return {
             'id': self.id,
             'data': self.data if self.data else '',
-            'produto': self.produto.to_dict() if self.produto else None,
+            'anuncio': self.anuncio.to_dict() if self.anuncio else None,
             'quantidade': self.quantidade,
-            'preco': self.preco,
             'endereco': self.endereco.to_dict() if self.endereco else None,
         }
     
     def to_dict_personalisado(self):
         return {
-            'produto': {'id': self.produto.id, 'nome': self.produto.nome} if self.produto else None,
-            'preco': self.preco,
+            'anuncio': {'id': self.anuncio.id, 'nome': self.anuncio.nome} if self.anuncio else None,
             'quantidade': self.quantidade,
             'data': self.data if self.data else '',
             'endereco': {'id': self.endereco.id} if self.endereco else None
@@ -42,11 +44,7 @@ class Pedido(Persistivel):
     
     def to_dict_bd(self, nome_colunas):
         obj_bd = {}
-        if self.quantidade == -1 and self.preco == -3:
-            #modo especial de confirmação
-            obj_bd = {'confirmacao_pedido': True}
-            return obj_bd
-        atributos_bd = ('id_produto', 'id_endereco', 'quantidade', 'preco', 'data')
+        atributos_bd = ('id_anuncio', 'id_endereco', 'id_usuario', 'id_produto', 'id_loja', 'quantidade', 'data')
         for attr, nome_coluna in zip(atributos_bd, nome_colunas):
             valor = getattr(self, attr, None)
             if valor:
@@ -60,12 +58,11 @@ class Pedido(Persistivel):
     def from_dict(cls, dados):
         id = dados.get('id', 0)
         data = dados.get('data', None)
-        produto = Produto.from_dict(dados['produto']) if 'produto' in dados else None
+        anuncio = Anuncio.from_dict(dados['anuncio']) if 'anuncio' in dados else None
         quantidade = dados.get('quantidade', 0)
-        preco = dados.get('preco', 0)
         endereco = Endereco.from_dict(dados['endereco']) if 'endereco' in dados else None
 
-        return cls(id, produto, quantidade, preco, endereco, data)
+        return cls(id, anuncio, quantidade, endereco, data)
     
     def __str__(self):
-        return f'Pedido(id={self.id}, data={self.data}, produto={self.produto}, quantidade={self.quantidade}, preco={self.preco}, endereco={self.endereco})'
+        return f'Pedido(id={self.id}, data={self.data}, anuncio={self.anuncio}, quantidade={self.quantidade}, endereco={self.endereco})'

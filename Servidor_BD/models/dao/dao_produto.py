@@ -3,10 +3,11 @@ from models.produto import Produto
 from models.loja import Loja
 
 class DAOProduto(DAO):
-    def __init__(self):
-        super().__init__(
-            ['produto'],
-            ['id_loja', 'nome_produto', 'descricao_produto'])
+    def __init__(self,
+            nome_tabelas: list = ['produto'],
+            nome_colunas: list = ['id_loja', 'nome_produto', 'descricao_produto']):
+        
+        super().__init__(nome_tabelas, nome_colunas)
     
     def _from_tuple(self, tupla = (0, 0, '', '')):
         return Produto(
@@ -26,8 +27,8 @@ class DAOProduto(DAO):
         produto.imagens = obj.imagens
         return produto
 
-    def delete(self, id_obj: int):
-        return super().delete(id_obj)
+    def delete(self, obj: Produto):
+        return super().delete(obj)
     
-    def zerar(self, obj: Produto):
-        return self._from_tuple(super().zerar(obj, ['id_loja']))
+    def forget(self, obj: Produto):
+        return self._from_tuple(super().forget(obj))

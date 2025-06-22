@@ -10,4 +10,4 @@ instalar_bibliotecas:
 
 servidorBD:
 	@echo "Iniciando processo servidor banco de dados"
-	@python3 servidor_bd.py
+	@python3 servidor_bd.py "$(IP)" "$(PORTA)"

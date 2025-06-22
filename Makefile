@@ -17,7 +17,7 @@ servidorAp:
 	@$(MAKE) --no-print-directory -C Servidor_Aplicacao servidorAp $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
 servidorBD:
-	@$(MAKE) --no-print-directory -C Servidor_BD servidorBD
+	@$(MAKE) --no-print-directory -C Servidor_BD servidorBD $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
 
 name_server:
 	@$(MAKE) --no-print-directory -C Servidor_Aplicacao name_server $(if $(IP),IP=$(IP)) $(if $(PORTA),PORTA=$(PORTA))
