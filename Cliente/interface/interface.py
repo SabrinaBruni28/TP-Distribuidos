@@ -2601,7 +2601,7 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_loja(resposta):
                 nonlocal loja
-                if resposta == True:
+                if resposta is True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2612,7 +2612,7 @@ class InterfaceHandler:
                         self.aplicacao.apagar_anuncio(a)
                     self.aplicacao.usuario.apagar_loja(loja)
                     self.view.set_tela(self.stack, -3)
-                elif resposta:
+                elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
@@ -2647,7 +2647,7 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_produto(resposta):
                 nonlocal produto
-                if resposta == True:
+                if resposta is True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2658,7 +2658,7 @@ class InterfaceHandler:
                     loja.apagar_produto(produto)
                     self.aplicacao.apagar_anuncios(produto)
                     self.view.set_tela(self.stack, -2)
-                elif resposta:
+                elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
@@ -2693,7 +2693,7 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_anuncio(resposta):
                 nonlocal anuncio
-                if resposta == True:
+                if resposta is True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2704,7 +2704,7 @@ class InterfaceHandler:
                     loja.apagar_anuncio(anuncio)
                     self.aplicacao.apagar_anuncio(anuncio)
                     self.view.set_tela(self.stack, -2)
-                elif resposta:
+                elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
@@ -2739,30 +2739,29 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_endereco(resposta):
                 nonlocal endereco
-                if resposta:
-                    if resposta == True:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent,
-                            backcolor="#4CAF50",
-                            posicao="superior_direita",
-                            mensagem="Endereço Excluído com Sucesso!"
-                        )
-                        self.aplicacao.usuario.apagar_endereco(endereco)
-                        self.view.set_tela(self.stack, -2)
-                    elif resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent,
-                            backcolor="#FFC107", fontcolor="#000000",
-                            posicao="superior_direita",
-                            mensagem="Você não pode excluir um endereço com pedidos pendentes!"
-                        )
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="superior_direita",
-                            mensagem="Erro ao excluir endereço!"
-                        )
+                if resposta is True:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Endereço Excluído com Sucesso!"
+                    )
+                    self.aplicacao.usuario.apagar_endereco(endereco)
+                    self.view.set_tela(self.stack, -2)
+                elif resposta == "pedidos_pendentes":
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita",
+                        mensagem="Você não pode excluir um endereço com pedidos pendentes!"
+                    )
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao excluir endereço!"
+                    )
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.excluir_endereco(endereco),
@@ -2810,7 +2809,7 @@ class InterfaceHandler:
 
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_usuario(resposta):
-                if resposta == True:
+                if resposta is True:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#4CAF50",
@@ -2819,7 +2818,7 @@ class InterfaceHandler:
                     )
                     self.aplicacao.usuario = Usuario()
                     self.view.set_tela(self.stack, -2)
-                elif resposta:
+                elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#FFC107", fontcolor="#000000",
