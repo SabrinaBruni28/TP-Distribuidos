@@ -80,7 +80,7 @@ class UnixMiddlewareClient:
             print("⚙️  Função:", nome_funcao)
             
             resposta = funcao_remota(*args, **kwargs)
-            print("📬 Resposta:", resposta)
+            #print("📬 Resposta:", resposta)
             return resposta
         except Exception as e:
             print(f"❌ Erro ao chamar '{nome_funcao}':", e)
