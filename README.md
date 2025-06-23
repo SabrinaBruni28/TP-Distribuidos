@@ -5,7 +5,7 @@
 
 ### ▶️ Execução Separada (um processo por máquina)
 
-1. **Acessar a pasta** mais externa do repositório.
+1. **Acessar a pasta** correspondente ao processo desejado.
 
 2. **Criar ambiente virtual** (executar **uma vez**):
    ```bash
@@ -33,6 +33,11 @@
    ```bash
    make nameServer
    ```
+   Para executar o name server com IP e Porta personalizados:
+   ```bash
+   make nameServer IP="ip" PORTA=porta
+   ```
+   > O name server se encontra na pasta do Servidor de Aplicação, pois a ideia é que rode na mesma máquina que ele. 
 
 6. **Executar o processo desejado**:
    ```bash
@@ -51,7 +56,7 @@
    ```bash
    make {processo} IP="ip" PORTA=porta HOST=host
    ```
-   > Por padrão: IP = `"127.0.0.1"`, PORTA = `9090`
+   > Por padrão: IP = `"127.0.0.1"`, PORTA = `9090`, HOST = `"127.0.0.1"`
 
    > O IP a a PORTA são referetes ao name server e o HOST é referente ao ip da máquina que está sendo executado.
 ---
@@ -65,19 +70,14 @@
    make criar_ambiente
    ```
 
-3. **Ativar ambiente virtual** (sempre que necessário):
-   ```bash
-   source .venv/bin/activate
-   ```
-
-4. **Instalar bibliotecas** (executar **uma vez**):
+3. **Instalar bibliotecas** (executar **uma vez**):
    ```bash
    make instalar_bibliotecas
    ```
 
-5. **Abrir quatro terminais** (ainda no diretório raiz) e executar:
+4. **Abrir quatro terminais** (ainda no diretório raiz) e executar:
 
-   - **Name Server**:
+   - **Name Server** (opcionalmente com IP e porta):
      ```bash
      make nameServer
      ```

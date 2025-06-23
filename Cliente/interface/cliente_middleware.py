@@ -15,6 +15,7 @@ class UnixMiddlewareClient:
             ns = Pyro5.api.locate_ns(host=self.ip, port=self.porta)
         except Pyro5.errors.NamingError:
             print(f"❌ Erro: não foi possível localizar o Name Server em {self.ip}:{self.porta}.")
+            self.uri = None
             return
         except Exception as e:
             print("❌ Erro locate:", e)
