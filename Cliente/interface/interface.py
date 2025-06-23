@@ -2390,7 +2390,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.editar_produto(produto, valores_alterados),
-                acao=ao_editar_produto
+                acao=ao_editar_produto,
+                atualizar_tela=False
             )
             
         else:
@@ -2402,7 +2403,7 @@ class InterfaceHandler:
             )
 
     def editar_loja(self, tela, formulario: Formulario, loja: Loja, imagem):
-        erro =  formulario.validar_tipos({ "Nome": str})
+        erro = formulario.validar_tipos({ "Nome": str})
 
         if erro:
             formulario.exibir_erros()
@@ -2436,7 +2437,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.editar_loja(loja, valores_alterados),
-                acao=ao_editar_loja
+                acao=ao_editar_loja,
+                atualizar_tela=False
             )
 
         else:
@@ -2486,7 +2488,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.editar_endereco(endereco, valores_alterados),
-                acao=ao_editar_endereco
+                acao=ao_editar_endereco,
+                atualizar_tela=False
             )
 
         else:
@@ -2634,7 +2637,8 @@ class InterfaceHandler:
             # Executa:
             self.thread.executar(
                 requisicao=lambda: self.aplicacao.editar_anuncio(anuncio, valores_alterados),
-                acao=ao_editar_anuncio
+                acao=ao_editar_anuncio,
+                atualizar_tela=False
             )
 
         else:
@@ -2921,11 +2925,6 @@ class InterfaceHandler:
                     )
                     loja = self.aplicacao.usuario.get_loja(pedido.anuncio.produto.loja)
                     loja.cancelar_pedido(pedido)
-                    anuncio = loja.get_anuncio(pedido.anuncio)
-                    if anuncio.quantidade_disponivel == 0:
-                        anuncio.pausado = False
-                        anuncio.quantidade_disponivel = pedido.quantidade
-                        self.aplicacao.anuncios.append(anuncio)
                     self.view.set_tela(self.stack, -2)
                 else:
                     WidgetHelper.mostrar_alerta_temporario(
@@ -2983,11 +2982,11 @@ class InterfaceHandler:
             dialogo.close()
 
 if __name__ == "__main__":
-   if len(sys.argv) > 1:
+    if len(sys.argv) > 1:
         ip = sys.argv[1]
         porta = int(sys.argv[2])
 
-   app = QApplication(sys.argv)
-   window = MarketplaceUI()
-   window.show()
-   sys.exit(app.exec())
+    app = QApplication(sys.argv)
+    window = MarketplaceUI()
+    window.show()
+    sys.exit(app.exec())
