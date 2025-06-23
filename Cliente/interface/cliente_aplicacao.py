@@ -215,7 +215,7 @@ class ClienteAplicacao():
             anuncio.chave_pix = anuncio_dict.get("chave_pix", anuncio.chave_pix)
             anuncio.pausado = anuncio_dict.get("pausado", anuncio.pausado)
             return True, anuncio
-        return False
+        return resposta
     
     def editar_produto(self, produto: Produto, novos_dados):
         resposta = self.middleware.chamar_middleware("editarProduto", novos_dados)
@@ -225,7 +225,7 @@ class ClienteAplicacao():
             produto.nome = produto_dict.get("nome", produto.nome)
             produto.descricao = produto_dict.get("descricao", produto.descricao)
             return True, produto
-        return False
+        return resposta
     
     def editar_loja(self, loja: Loja, novos_dados):
         imagem_byte = None

@@ -2361,7 +2361,14 @@ class InterfaceHandler:
             valores_alterados["id"] = produto.id
             def ao_editar_produto(resposta):
                 nonlocal  tela, produto
-                if resposta:
+                if resposta == "pedidos_pendentes":
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita", largura=600,
+                        mensagem="Você não pode editar um produto com pedidos pendentes!"
+                    )
+                elif resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
@@ -2599,7 +2606,14 @@ class InterfaceHandler:
             valores_alterados["id"] = anuncio.id
             def ao_editar_anuncio(resposta):
                 nonlocal anuncio, tela
-                if resposta:
+                if resposta == "pedidos_pendentes":
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita", largura=600,
+                        mensagem="Você não pode editar um anúncio com pedidos pendentes!"
+                    )
+                elif resposta:
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent, 
                         backcolor="#4CAF50",
