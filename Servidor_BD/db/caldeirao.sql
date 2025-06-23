@@ -18,8 +18,8 @@ CREATE TABLE IF NOT EXISTS "endereco" (
 	"cidade_endereco"	TEXT NOT NULL,
 	"estado_endereco"	TEXT NOT NULL,
 	"complemento_endereco"	TEXT,
-	FOREIGN KEY("id_usuario") REFERENCES "usuario"("id_usuario"),
-	PRIMARY KEY("id_endereco")
+	PRIMARY KEY("id_endereco"),
+	FOREIGN KEY("id_usuario") REFERENCES "usuario"("id_usuario")
 );
 DROP TABLE IF EXISTS "endereco_pedido";
 CREATE TABLE IF NOT EXISTS "endereco_pedido" (
@@ -31,8 +31,8 @@ CREATE TABLE IF NOT EXISTS "endereco_pedido" (
 	"cidade_endereco"	TEXT NOT NULL,
 	"estado_endereco"	TEXT NOT NULL,
 	"complemento_endereco"	TEXT,
-	FOREIGN KEY("id_usuario") REFERENCES "usuario"("id_usuario"),
-	PRIMARY KEY("id_endereco")
+	PRIMARY KEY("id_endereco"),
+	FOREIGN KEY("id_usuario") REFERENCES "usuario"("id_usuario")
 );
 DROP TABLE IF EXISTS "anuncio";
 CREATE TABLE IF NOT EXISTS "anuncio" (
@@ -89,9 +89,9 @@ CREATE TABLE IF NOT EXISTS "pedido_confirmado" (
 	"id_endereco"	INTEGER NOT NULL,
 	"quantidade_pedido"	INTEGER NOT NULL,
 	"data_pedido"	INTEGER NOT NULL,
-	PRIMARY KEY("id_pedido" AUTOINCREMENT),
+	FOREIGN KEY("id_anuncio") REFERENCES "anuncio_pedido"("id_anuncio"),
 	FOREIGN KEY("id_endereco") REFERENCES "endereco_pedido"("id_endereco"),
-	FOREIGN KEY("id_anuncio") REFERENCES "anuncio_pedido"("id_anuncio")
+	PRIMARY KEY("id_pedido" AUTOINCREMENT)
 );
 DROP TABLE IF EXISTS "imagem_pedido";
 CREATE TABLE IF NOT EXISTS "imagem_pedido" (
@@ -124,18 +124,6 @@ BEGIN
     SET quantidade_produto = quantidade_produto - NEW.quantidade_pedido
     WHERE id_anuncio = NEW.id_anuncio;
 END;
-DROP TRIGGER IF EXISTS "on_update_quantidade_anuncio";
-CREATE TRIGGER on_update_quantidade_anuncio
-AFTER UPDATE OF quantidade_produto ON anuncio
-FOR EACH ROW
-BEGIN
-    UPDATE anuncio
-    SET pausado = CASE
-        WHEN NEW.quantidade_produto <= 0 THEN 1
-        ELSE 0
-    END
-    WHERE id_anuncio = NEW.id_anuncio;
-END;
 DROP TRIGGER IF EXISTS "on_apagar_loja";
 CREATE TRIGGER on_apagar_loja
 AFTER DELETE ON loja
@@ -154,37 +142,15 @@ BEGIN
     SET id_usuario = NULL
     WHERE id_usuario = OLD.id_usuario;
 END;
-DROP TRIGGER IF EXISTS "on_esquecer_produto";
-CREATE TRIGGER on_esquecer_produto
-AFTER UPDATE ON produto_pedido
+DROP TRIGGER IF EXISTS "on_update_quantidade_anuncio";
+CREATE TRIGGER on_update_quantidade_anuncio
+AFTER UPDATE OF quantidade_produto ON anuncio
+FOR EACH ROW
+WHEN NEW.quantidade_produto <= 0
 BEGIN
-    DELETE FROM pedido_confirmado
-    WHERE id_pedido IN (SELECT id_pedido FROM pedido_esquecido_view);
-
-    DELETE FROM anuncio
-    WHERE id_anuncio IN (SELECT id_anuncio FROM pedido_esquecido_view);
-
-    DELETE FROM endereco
-    WHERE id_endereco IN (SELECT id_endereco FROM pedido_esquecido_view);
-
-    DELETE FROM produto
-    WHERE id_produto IN (SELECT id_produto FROM pedido_esquecido_view);
-END;
-DROP TRIGGER IF EXISTS "on_esquecer_endereco";
-CREATE TRIGGER on_esquecer_endereco
-AFTER UPDATE ON endereco_pedido
-BEGIN
-    DELETE FROM pedido_confirmado
-    WHERE id_pedido IN (SELECT id_pedido FROM pedido_esquecido_view);
-
-    DELETE FROM anuncio
-    WHERE id_anuncio IN (SELECT id_anuncio FROM pedido_esquecido_view);
-
-    DELETE FROM endereco
-    WHERE id_endereco IN (SELECT id_endereco FROM pedido_esquecido_view);
-
-    DELETE FROM produto
-    WHERE id_produto IN (SELECT id_produto FROM pedido_esquecido_view);
+    UPDATE anuncio
+    SET pausado = 1
+    WHERE id_anuncio = NEW.id_anuncio;
 END;
 DROP VIEW IF EXISTS "pedido_esquecido_view";
 CREATE VIEW pedido_esquecido_view AS
