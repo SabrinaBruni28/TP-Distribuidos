@@ -2008,128 +2008,131 @@ class InterfaceHandler:
         erro = formulario.validar_tipos({"Código": int})
         if erro:
             formulario.exibir_erros()
-        else:
-            valores = formulario.obter_valores()
-            def ao_confirmar_codigo(resposta):
-                if resposta[0]:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#4CAF50",
-                        posicao="superior_direita",
-                        mensagem="Cadastro realizado com Sucesso!"
-                    )
-                    self.aplicacao.usuario = Usuario_Identificado.from_dict(resposta[1])
-                    self.view.set_tela(self.stack, -4)
+            return
 
-                elif resposta[1] == "codigo_invalido":
-                    formulario.definir_erros_especificos({"Código": "Código de confirmação inválido"})
-                    formulario.exibir_erros()
+        valores = formulario.obter_valores()
+        def ao_confirmar_codigo(resposta):
+            if resposta[0]:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Cadastro realizado com Sucesso!"
+                )
+                self.aplicacao.usuario = Usuario_Identificado.from_dict(resposta[1])
+                self.view.set_tela(self.stack, -4)
 
-                elif resposta[1] == "limite_excedido":
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Limite de tentativas excedido!"
-                    )
-                    self.view.set_tela(self.stack, -2)
+            elif resposta[1] == "codigo_invalido":
+                formulario.definir_erros_especificos({"Código": "Código de confirmação inválido"})
+                formulario.exibir_erros()
 
-                elif resposta[1] == "tempo_excedido":
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Limite de tempo excedido!"
-                    )
-                    self.view.set_tela(self.stack, -2)
+            elif resposta[1] == "limite_excedido":
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Limite de tentativas excedido!"
+                )
+                self.view.set_tela(self.stack, -2)
 
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao confirmar código!"
-                    )
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.email_confirmacao(id_confirmacao, valores["Código"]),
-                acao=ao_confirmar_codigo,
-                atualizar_tela=False
-            )
+            elif resposta[1] == "tempo_excedido":
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Limite de tempo excedido!"
+                )
+                self.view.set_tela(self.stack, -2)
+
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao confirmar código!"
+                )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.email_confirmacao(id_confirmacao, valores["Código"]),
+            acao=ao_confirmar_codigo,
+            atualizar_tela=False
+        )
 
     def cadastrar(self, formulario: Formulario):
         erro = formulario.validar_tipos({"Nome": str, "CPF": str, "Email": str, "Senha": str})
         if erro:
             formulario.exibir_erros()
-        else:
-            valores = formulario.obter_valores()
-            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
-            usuario = Usuario_Identificado.from_dict(valores)
-            def ao_cadastrar(resposta):
-                if not resposta:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent,
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao realizar cadastramento!"
-                    )
+            return
+        
+        valores = formulario.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+        usuario = Usuario_Identificado.from_dict(valores)
+        def ao_cadastrar(resposta):
+            if not resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao realizar cadastramento!"
+                )
 
-                elif isinstance(resposta, list):
-                    erros = {}
-                    if "cpf" in resposta:
-                        erros["CPF"] = "CPF já cadastrado!"
-                    if "email" in resposta:
-                        erros["Email"] = "Email já cadastrado!"
-                    if erros:
-                        formulario.definir_erros_especificos(erros)
-                        formulario.exibir_erros()
+            elif isinstance(resposta, list):
+                erros = {}
+                if "cpf" in resposta:
+                    erros["CPF"] = "CPF já cadastrado!"
+                if "email" in resposta:
+                    erros["Email"] = "Email já cadastrado!"
+                if erros:
+                    formulario.definir_erros_especificos(erros)
+                    formulario.exibir_erros()
 
-                elif resposta:
-                    self.view.abrir_tela(self.stack, lambda: self.parent.tela_codigo_confirmacao(resposta))
+            elif resposta:
+                self.view.abrir_tela(self.stack, lambda: self.parent.tela_codigo_confirmacao(resposta))
 
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.cadastrar(usuario),
-                acao=ao_cadastrar,
-                atualizar_tela=False
-            )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.cadastrar(usuario),
+            acao=ao_cadastrar,
+            atualizar_tela=False
+        )
 
     def login(self, formulario: Formulario):
         erro = formulario.validar_tipos({"Email": str, "Senha": str})
         if erro:
             formulario.exibir_erros()
-        else:
-            valores = formulario.obter_valores()
-            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
-            usuario = Usuario_Identificado.from_dict(valores)
-            def ao_login(resposta):
-                if resposta[0]:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent,
-                        backcolor="#4CAF50",
-                        posicao="superior_direita",
-                        mensagem="Login realizado com Sucesso!"
-                    )
-                    self.aplicacao.usuario = Usuario_Identificado.from_dict(resposta[1])
-                    self.view.set_tela(self.stack, -2)
-                
-                elif resposta[1] == "dados_incorretos":
-                    formulario.definir_erros_especificos({"Email": "Credenciais inválidas", "Senha": "Credenciais inválidas"})
-                    formulario.exibir_erros()
+            return
+        
+        valores = formulario.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+        usuario = Usuario_Identificado.from_dict(valores)
+        def ao_login(resposta):
+            if resposta[0]:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Login realizado com Sucesso!"
+                )
+                self.aplicacao.usuario = Usuario_Identificado.from_dict(resposta[1])
+                self.view.set_tela(self.stack, -2)
+            
+            elif resposta[1] == "dados_incorretos":
+                formulario.definir_erros_especificos({"Email": "Credenciais inválidas", "Senha": "Credenciais inválidas"})
+                formulario.exibir_erros()
 
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent,
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao realizar login!"
-                    )
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.login(usuario),
-                acao=ao_login,
-                atualizar_tela=False
-            )
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent,
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao realizar login!"
+                )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.login(usuario),
+            acao=ao_login,
+            atualizar_tela=False
+        )
 
     def criar_pedido(self, pedido: Pedido, anuncio: Anuncio):   
         def ao_criar_pedido(resposta):
@@ -2163,36 +2166,37 @@ class InterfaceHandler:
         erro = formulario.validar_tipos({"Nome": str})
         if erro:
             formulario.exibir_erros()
-        else:
-            valores = formulario.obter_valores()
-            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
-            loja = Loja.from_dict(valores)  
-            if imagem:
-                loja.imagem = imagem
+            return
+        
+        valores = formulario.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+        loja = Loja.from_dict(valores)  
+        if imagem:
+            loja.imagem = imagem
 
-            def ao_criar_loja(resposta):
-                if resposta:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#4CAF50",
-                        posicao="superior_direita",
-                        mensagem="Loja Criada com Sucesso!"
-                    )
-                    self.aplicacao.usuario.criar_loja(resposta[1])
-                    self.view.set_tela(self.stack,-2)
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao criar loja!"
-                    )
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.criar_loja(loja),
-                acao=ao_criar_loja,
-                atualizar_tela=False
-            )          
+        def ao_criar_loja(resposta):
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Loja Criada com Sucesso!"
+                )
+                self.aplicacao.usuario.criar_loja(resposta[1])
+                self.view.set_tela(self.stack,-2)
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao criar loja!"
+                )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.criar_loja(loja),
+            acao=ao_criar_loja,
+            atualizar_tela=False
+        )          
 
     def criar_endereco(self, formulario: Formulario):
         erro = formulario.validar_tipos(
@@ -2200,38 +2204,40 @@ class InterfaceHandler:
         )
         if erro:
             formulario.exibir_erros()
-        else:
-            valores = formulario.obter_valores()
-            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
-            endereco = Endereco.from_dict(valores)
-            def ao_criar_endereco(resposta):
-                if resposta:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#4CAF50",
-                        posicao="superior_direita",
-                        mensagem="Endereço Criado com Sucesso!"
-                    )
-                    self.aplicacao.usuario.criar_endereco(Endereco.from_dict(resposta[1]))
-                    self.view.set_tela(self.stack, -2)
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao criar endereço!"
-                    )
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.criar_endereco(endereco),
-                acao=ao_criar_endereco,
-                atualizar_tela=False
-            )
+            return
+        
+        valores = formulario.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+        endereco = Endereco.from_dict(valores)
+        def ao_criar_endereco(resposta):
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Endereço Criado com Sucesso!"
+                )
+                self.aplicacao.usuario.criar_endereco(Endereco.from_dict(resposta[1]))
+                self.view.set_tela(self.stack, -2)
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao criar endereço!"
+                )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.criar_endereco(endereco),
+            acao=ao_criar_endereco,
+            atualizar_tela=False
+        )
 
     def criar_produto(self, formulario: Formulario, imagens: list, loja: Loja):
         erro = formulario.validar_tipos({"Nome": str, "Descrição": str})
         if erro:
             formulario.exibir_erros()
+            return
         elif not imagens:
             WidgetHelper.mostrar_alerta_temporario(
                 parent_widget=self.parent,
@@ -2239,38 +2245,39 @@ class InterfaceHandler:
                 posicao="superior_direita",
                 mensagem="O produto não pode ficar sem imagem"
             )
-        else:
-            valores = formulario.obter_valores()
-            valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
-            produto = Produto.from_dict(valores)
-            produto.loja = loja  
-            produto.imagens = imagens
-            def ao_criar_produto(resposta):
-                nonlocal loja
-                if resposta:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#4CAF50",
-                        posicao="superior_direita",
-                        mensagem="Produto Criado com Sucesso!"
-                    )
-                    produto = resposta[1]
-                    loja.criar_produto(produto)
-                    self.view.set_tela(self.stack, -2)
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao criar produto!"
-                    )
+            return
+        
+        valores = formulario.obter_valores()
+        valores = {Utils.normalizar_chave(k): v for k, v in valores.items()}
+        produto = Produto.from_dict(valores)
+        produto.loja = loja  
+        produto.imagens = imagens
+        def ao_criar_produto(resposta):
+            nonlocal loja
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Produto Criado com Sucesso!"
+                )
+                produto = resposta[1]
+                loja.criar_produto(produto)
+                self.view.set_tela(self.stack, -2)
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao criar produto!"
+                )
 
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.criar_produto(produto),
-                acao=ao_criar_produto,
-                atualizar_tela=False
-            )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.criar_produto(produto),
+            acao=ao_criar_produto,
+            atualizar_tela=False
+        )
 
     def criar_anuncio(self, formulario: Formulario, formularioOp: FormularioOpcoes, produto: Produto):
         erro = formulario.validar_tipos(
@@ -2287,41 +2294,42 @@ class InterfaceHandler:
 
         if erro:
             formulario.exibir_erros()
+            return
 
         elif not Utils.validar_chave_pix(valores["chave_pix"]):
             formulario.definir_erros_especificos({"Chave Pix": "Chave pix inválida!\nExemplo: (xx) xxxxx-xxxx, xxx.xxx.xxx-xx, xx.xxx.xxx/xxxx-xx, \nusuario@exemplo.com, ou chave aleatória"})
             formulario.exibir_erros()
+            return
 
-        else:
-            anuncio = Anuncio.from_dict(valores)
-            anuncio.produto = produto
-            def ao_criar_anuncio(resposta):
-                nonlocal anuncio
-                if resposta:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#4CAF50",
-                        posicao="superior_direita",
-                        mensagem="Anúncio Criado com Sucesso!"
-                    )
-                    anuncio = resposta[1]
-                    loja = self.aplicacao.usuario.get_loja(anuncio.produto.loja)
-                    loja.criar_anuncio(anuncio)
-                    self.view.set_tela(self.stack, -3)
-                    self.aplicacao.anuncios.append(anuncio)
-                else:
-                    WidgetHelper.mostrar_alerta_temporario(
-                        parent_widget=self.parent, 
-                        backcolor="#f44336",
-                        posicao="superior_direita",
-                        mensagem="Erro ao criar anúncio!"
-                    )
-            # Executa:
-            self.thread.executar(
-                requisicao=lambda: self.aplicacao.criar_anuncio(anuncio),
-                acao=ao_criar_anuncio,
-                atualizar_tela=False
-            )
+        anuncio = Anuncio.from_dict(valores)
+        anuncio.produto = produto
+        def ao_criar_anuncio(resposta):
+            nonlocal anuncio
+            if resposta:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#4CAF50",
+                    posicao="superior_direita",
+                    mensagem="Anúncio Criado com Sucesso!"
+                )
+                anuncio = resposta[1]
+                loja = self.aplicacao.usuario.get_loja(anuncio.produto.loja)
+                loja.criar_anuncio(anuncio)
+                self.view.set_tela(self.stack, -3)
+                self.aplicacao.anuncios.append(anuncio)
+            else:
+                WidgetHelper.mostrar_alerta_temporario(
+                    parent_widget=self.parent, 
+                    backcolor="#f44336",
+                    posicao="superior_direita",
+                    mensagem="Erro ao criar anúncio!"
+                )
+        # Executa:
+        self.thread.executar(
+            requisicao=lambda: self.aplicacao.criar_anuncio(anuncio),
+            acao=ao_criar_anuncio,
+            atualizar_tela=False
+        )
 
     def criar_imagem(self, produto: Produto, imagem):
         def ao_criar_imagem(resposta):
@@ -2345,90 +2353,92 @@ class InterfaceHandler:
         erro = formulario.validar_tipos({"Nome": str, "Descrição": str})
         if erro:
             formulario.exibir_erros()
+            return
+        
+        valores_alterados = formulario.obter_valores_alterados({"Nome": produto.nome, "Descrição": produto.descricao})
+        valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
+        if valores_alterados:
+            valores_alterados["id"] = produto.id
+            def ao_editar_produto(resposta):
+                nonlocal  tela, produto
+                if resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Produto Editado com Sucesso!"
+                    )
+                    loja = self.aplicacao.usuario.get_loja(produto.loja)
+                    produto = loja.editar_produto(produto, resposta[1])
+                    loja.atualiza_anuncio(produto)
+                    self.aplicacao.atualiza_anuncio_produto(produto)
+                    self.view.abrir_tela(self.stack, lambda: tela(produto), excluir_anterior=True)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao editar produto!"
+                    )
+            # Executa:
+            self.thread.executar(
+                requisicao=lambda: self.aplicacao.editar_produto(produto, valores_alterados),
+                acao=ao_editar_produto
+            )
+            
         else:
-            valores_alterados = formulario.obter_valores_alterados({"Nome": produto.nome, "Descrição": produto.descricao})
-            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
-            if valores_alterados:
-                valores_alterados["id"] = produto.id
-                def ao_editar_produto(resposta):
-                    nonlocal  tela, produto
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="superior_direita",
-                            mensagem="Produto Editado com Sucesso!"
-                        )
-                        loja = self.aplicacao.usuario.get_loja(produto.loja)
-                        produto = loja.editar_produto(produto, resposta[1])
-                        loja.atualiza_anuncio(produto)
-                        self.aplicacao.atualiza_anuncio_produto(produto)
-                        self.view.abrir_tela(self.stack, lambda: tela(produto), excluir_anterior=True)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="superior_direita",
-                            mensagem="Erro ao editar produto!"
-                        )
-                # Executa:
-                self.thread.executar(
-                    requisicao=lambda: self.aplicacao.editar_produto(produto, valores_alterados),
-                    acao=ao_editar_produto
-                )
-                
-            else:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent,
-                    backcolor="#FFC107", fontcolor="#000000",
-                    posicao="superior_direita",
-                    mensagem="Nenhuma alteração realizada"
-                )
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent,
+                backcolor="#FFC107", fontcolor="#000000",
+                posicao="superior_direita",
+                mensagem="Nenhuma alteração realizada"
+            )
 
     def editar_loja(self, tela, formulario: Formulario, loja: Loja, imagem):
         erro =  formulario.validar_tipos({ "Nome": str})
 
         if erro:
             formulario.exibir_erros()
+            return
+        
+        valores_alterados = formulario.obter_valores_alterados({"Nome": loja.nome})
+        if imagem != loja.imagem:
+            valores_alterados['imagem'] = imagem
+
+        if valores_alterados:
+            valores_alterados["id"] = loja.id
+            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
+            def ao_editar_loja(resposta):
+                nonlocal loja, tela
+                if resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Loja Editada com Sucesso!"
+                    )
+                    loja = self.aplicacao.usuario.editar_loja(loja, resposta[1])
+                    self.view.abrir_tela(self.stack, lambda: tela(loja), excluir_anterior=True)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao editar loja!"
+                    )
+            # Executa:
+            self.thread.executar(
+                requisicao=lambda: self.aplicacao.editar_loja(loja, valores_alterados),
+                acao=ao_editar_loja
+            )
+
         else:
-            valores_alterados = formulario.obter_valores_alterados({"Nome": loja.nome})
-            if imagem != loja.imagem:
-                valores_alterados['imagem'] = imagem
-
-            if valores_alterados:
-                valores_alterados["id"] = loja.id
-                valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
-                def ao_editar_loja(resposta):
-                    nonlocal loja, tela
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="superior_direita",
-                            mensagem="Loja Editada com Sucesso!"
-                        )
-                        loja = self.aplicacao.usuario.editar_loja(loja, resposta[1])
-                        self.view.abrir_tela(self.stack, lambda: tela(loja), excluir_anterior=True)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="superior_direita",
-                            mensagem="Erro ao editar loja!"
-                        )
-                # Executa:
-                self.thread.executar(
-                    requisicao=lambda: self.aplicacao.editar_loja(loja, valores_alterados),
-                    acao=ao_editar_loja
-                )
-
-            else:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent,
-                    backcolor="#FFC107", fontcolor="#000000",
-                    posicao="superior_direita",
-                    mensagem="Nenhuma alteração realizada"
-                )
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent,
+                backcolor="#FFC107", fontcolor="#000000",
+                posicao="superior_direita",
+                mensagem="Nenhuma alteração realizada"
+            )
 
     def editar_endereco(self, formulario: Formulario, endereco: Endereco):
         erro = formulario.validar_tipos(
@@ -2436,48 +2446,49 @@ class InterfaceHandler:
         )
         if erro:
             formulario.exibir_erros()
-        else:
-            valores_alterados = formulario.obter_valores_alterados(
-                {
-                    "Rua": endereco.rua, "Número": endereco.numero,
-                    "Bairro": endereco.bairro, "Cidade": endereco.cidade, 
-                    "Estado": endereco.estado, "Complemento": endereco.complemento
-                }
+            return
+        
+        valores_alterados = formulario.obter_valores_alterados(
+            {
+                "Rua": endereco.rua, "Número": endereco.numero,
+                "Bairro": endereco.bairro, "Cidade": endereco.cidade, 
+                "Estado": endereco.estado, "Complemento": endereco.complemento
+            }
+        )
+        valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
+        if valores_alterados:
+            valores_alterados["id"] = endereco.id
+            def ao_editar_endereco(resposta):
+                nonlocal endereco
+                if resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Endereço Editado com Sucesso!"
+                    )
+                    self.aplicacao.usuario.editar_endereco(endereco, resposta[1])
+                    self.view.atualiza_tela(self.stack)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao editar endereço!"
+                    )
+            # Executa:
+            self.thread.executar(
+                requisicao=lambda: self.aplicacao.editar_endereco(endereco, valores_alterados),
+                acao=ao_editar_endereco
             )
-            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
-            if valores_alterados:
-                valores_alterados["id"] = endereco.id
-                def ao_editar_endereco(resposta):
-                    nonlocal endereco
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="superior_direita",
-                            mensagem="Endereço Editado com Sucesso!"
-                        )
-                        self.aplicacao.usuario.editar_endereco(endereco, resposta[1])
-                        self.view.atualiza_tela(self.stack)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="superior_direita",
-                            mensagem="Erro ao editar endereço!"
-                        )
-                # Executa:
-                self.thread.executar(
-                    requisicao=lambda: self.aplicacao.editar_endereco(endereco, valores_alterados),
-                    acao=ao_editar_endereco
-                )
 
-            else:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent,
-                    backcolor="#FFC107", fontcolor="#000000",
-                    posicao="superior_direita",
-                    mensagem="Nenhuma alteração realizada"
-                )
+        else:
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent,
+                backcolor="#FFC107", fontcolor="#000000",
+                posicao="superior_direita",
+                mensagem="Nenhuma alteração realizada"
+            )
     
     def editar_perfil(self, formulario: Formulario):
         erro = formulario.validar_tipos(
@@ -2485,111 +2496,140 @@ class InterfaceHandler:
         )
         if erro:
             formulario.exibir_erros()
-        else:
-            usuario = self.aplicacao.usuario
-            valores_alterados = formulario.obter_valores_alterados(
-                {"Nome": usuario.nome, "CPF": usuario.cpf, "Email": usuario.email, "Senha": "*"*len(usuario.senha)}
+            return
+        
+        usuario = self.aplicacao.usuario
+        valores_alterados = formulario.obter_valores_alterados(
+            {"Nome": usuario.nome, "CPF": usuario.cpf, "Email": usuario.email, "Senha": "*"*len(usuario.senha)}
+        )
+        valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
+        if valores_alterados:
+            valores_alterados["id"] = usuario.id
+            def ao_editar_perfil(resposta):
+                if resposta[0]:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Perfil Editado com Sucesso!"
+                    )
+                    self.aplicacao.usuario = Usuario_Identificado.from_dict(resposta[1])
+                    self.view.atualiza_tela(self.stack)
+
+                elif resposta[1]:
+                    erros = {}
+                    if "cpf" in resposta[1]:
+                        erros["CPF"] = "CPF já cadastrado!"
+                    if "email" in resposta[1]:
+                        erros["Email"] = "Email já cadastrado!"
+                    if erros:
+                        formulario.definir_erros_especificos(erros)
+                        formulario.exibir_erros()
+
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao editar perfil!"
+                    )
+                    self.view.atualiza_tela(self.stack)
+            # Executa:
+            self.thread.executar(
+                requisicao=lambda: self.aplicacao.editar_usuario(valores_alterados),
+                acao=ao_editar_perfil,
+                atualizar_tela=False
             )
-            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
-            if valores_alterados:
-                valores_alterados["id"] = usuario.id
-                def ao_editar_perfil(resposta):
-                    if resposta[0]:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="superior_direita",
-                            mensagem="Perfil Editado com Sucesso!"
-                        )
-                        self.aplicacao.usuario = Usuario_Identificado.from_dict(resposta[1])
-                        self.view.atualiza_tela(self.stack)
 
-                    elif resposta[1]:
-                        erros = {}
-                        if "cpf" in resposta[1]:
-                            erros["CPF"] = "CPF já cadastrado!"
-                        if "email" in resposta[1]:
-                            erros["Email"] = "Email já cadastrado!"
-                        if erros:
-                            formulario.definir_erros_especificos(erros)
-                            formulario.exibir_erros()
-
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="superior_direita",
-                            mensagem="Erro ao editar perfil!"
-                        )
-                        self.view.atualiza_tela(self.stack)
-                # Executa:
-                self.thread.executar(
-                    requisicao=lambda: self.aplicacao.editar_usuario(valores_alterados),
-                    acao=ao_editar_perfil,
-                    atualizar_tela=False
-                )
-
-            else:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent,
-                    backcolor="#FFC107", fontcolor="#000000",
-                    posicao="superior_direita",
-                    mensagem="Nenhuma alteração realizada"
-                )
+        else:
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent,
+                backcolor="#FFC107", fontcolor="#000000",
+                posicao="superior_direita",
+                mensagem="Nenhuma alteração realizada"
+            )
     
     def editar_anuncio(self, tela, formulario: Formulario, formularioOp: FormularioOpcoes, anuncio: Anuncio):
-        erro =  formulario.validar_tipos({"Preço": float, "Quantidade Disponível": int, "Chave Pix": str})
+        erro = formulario.validar_tipos({
+            "Preço": float,
+            "Quantidade Disponível": int,
+            "Chave Pix": str
+        })
+
         if erro:
             formulario.exibir_erros()
-        else:
-            valores_alterados = formulario.obter_valores_alterados(
-                {"Preço": anuncio.preco, "Quantidade Disponível": anuncio.quantidade_disponivel, "Chave Pix": anuncio.chave_pix}
-            )
-            valores_alterados = valores_alterados | formularioOp.obter_valores_alterados({"Pausado": "Sim" if anuncio.pausado else "Não"})
-            pausado = valores_alterados.get("Pausado", None)
-            if pausado:
-                if valores_alterados["Pausado"] == "Sim":
-                    valores_alterados["Pausado"] = True
-                else:
-                    valores_alterados["Pausado"] = False
-                    
-            valores_alterados = {Utils.normalizar_chave(k): v for k, v in valores_alterados.items()}
+            return
 
-            if valores_alterados:
-                valores_alterados["id"] = anuncio.id
-                def ao_editar_anuncio(resposta):
-                    nonlocal anuncio, tela
-                    if resposta:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#4CAF50",
-                            posicao="superior_direita",
-                            mensagem="Anúncio Editado com Sucesso!"
-                        )
-                        loja = self.aplicacao.usuario.get_loja(anuncio.produto.loja)
-                        anuncio = loja.editar_anuncio(anuncio, resposta[1])
-                        self.view.abrir_tela(self.stack, lambda: tela(anuncio), excluir_anterior=True)
-                        self.aplicacao.atualiza_anuncio(anuncio)
-                    else:
-                        WidgetHelper.mostrar_alerta_temporario(
-                            parent_widget=self.parent, 
-                            backcolor="#f44336",
-                            posicao="superior_direita",
-                            mensagem="Erro ao editar anúncio!"
-                        )
-                # Executa:
-                self.thread.executar(
-                    requisicao=lambda: self.aplicacao.editar_anuncio(anuncio, valores_alterados),
-                    acao=ao_editar_anuncio
-                )
+        valores_alterados = formulario.obter_valores_alterados({
+            "Preço": anuncio.preco,
+            "Quantidade Disponível": anuncio.quantidade_disponivel,
+            "Chave Pix": anuncio.chave_pix
+        })
 
+        valores_alterados |= formularioOp.obter_valores_alterados({
+            "Pausado": "Sim" if anuncio.pausado else "Não"
+        })
+
+        novo_pausado = valores_alterados.get("Pausado")
+        nova_quantidade = int(valores_alterados.get("Quantidade Disponível", anuncio.quantidade_disponivel))
+
+        if novo_pausado is not None:
+            if novo_pausado == "Sim":
+                valores_alterados["Pausado"] = True
             else:
-                WidgetHelper.mostrar_alerta_temporario(
-                    parent_widget=self.parent,
-                    backcolor="#FFC107", fontcolor="#000000",
-                    posicao="superior_direita",
-                    mensagem="Nenhuma alteração realizada"
-                )
+                if nova_quantidade <= 0:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent,
+                        backcolor="#FFC107", fontcolor="#000000",
+                        posicao="superior_direita", largura=680,
+                        mensagem="Não é possível despausar um anúncio com quantidade indisponível!"
+                    )
+                    return
+                valores_alterados["Pausado"] = False
+
+        if nova_quantidade <= 0:
+            valores_alterados["Pausado"] = True
+
+        valores_alterados = {
+            Utils.normalizar_chave(k): v
+            for k, v in valores_alterados.items()
+        }
+
+        if valores_alterados:
+            valores_alterados["id"] = anuncio.id
+            def ao_editar_anuncio(resposta):
+                nonlocal anuncio, tela
+                if resposta:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#4CAF50",
+                        posicao="superior_direita",
+                        mensagem="Anúncio Editado com Sucesso!"
+                    )
+                    loja = self.aplicacao.usuario.get_loja(anuncio.produto.loja)
+                    anuncio = loja.editar_anuncio(anuncio, resposta[1])
+                    self.view.abrir_tela(self.stack, lambda: tela(anuncio), excluir_anterior=True)
+                    self.aplicacao.atualiza_anuncio(anuncio)
+                else:
+                    WidgetHelper.mostrar_alerta_temporario(
+                        parent_widget=self.parent, 
+                        backcolor="#f44336",
+                        posicao="superior_direita",
+                        mensagem="Erro ao editar anúncio!"
+                    )
+            # Executa:
+            self.thread.executar(
+                requisicao=lambda: self.aplicacao.editar_anuncio(anuncio, valores_alterados),
+                acao=ao_editar_anuncio
+            )
+
+        else:
+            WidgetHelper.mostrar_alerta_temporario(
+                parent_widget=self.parent,
+                backcolor="#FFC107", fontcolor="#000000",
+                posicao="superior_direita",
+                mensagem="Nenhuma alteração realizada"
+            )
 
     def excluir_loja(self, loja: Loja):
         dialogo = CaixaConfirmacao(

@@ -1,3 +1,6 @@
+IP ?= "127.0.0.1"
+PORTA ?= 9090
+HOST ?= "127.0.0.1"
 
 criar_ambiente:
 	python3 -m venv .venv
@@ -15,4 +18,4 @@ nameServer:
 
 servidorAP:
 	@echo "Iniciando processo servidor"
-	@python3 servidor.py $(IP) $(PORTA) $(HOST)
+	@python3 servidor.py "$(IP)" "$(PORTA)" "$(HOST)"
