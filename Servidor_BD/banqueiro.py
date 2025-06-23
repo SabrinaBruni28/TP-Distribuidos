@@ -772,12 +772,18 @@ class Banqueiro():
             print(f'[Banqueiro][Editar][Produto] - Iniciando tentativa de editar produto...')
             obj = Produto.from_dict(produto)
             print('[Banqueiro][Editar][Produto] - Produto a editar:', obj)
-            if obj := self.__daoProduto.update(obj):
-                print('[Banqueiro][Editar][Produto] - Retornando produto modificado...')
-                return obj.to_dict()
+
+            print('[Banqueiro][Editar][Produto] - Verificando se há anúncios sobre o produto com pedidos ainda em andamento...')
+            if pedidos := self.__daoPedido_Andamento.select(Pedido(id_produto= obj.id)):
+                print(f'[Banqueiro][Editar][Produto] - Produto não pode ser editado: {len(pedidos)} pedidos em andamneto!')
+                return 'pedidos_pendentes'
             else:
-                print('[Banqueiro][Editar][Produto] - Algo saiu mal.')
-                return False
+                if obj := self.__daoProduto.update(obj):
+                    print('[Banqueiro][Editar][Produto] - Retornando produto modificado...')
+                    return obj.to_dict()
+                else:
+                    print('[Banqueiro][Editar][Produto] - Algo saiu mal.')
+                    return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
@@ -791,12 +797,18 @@ class Banqueiro():
             print(f'[Banqueiro][Editar][Anúncio] - Iniciando tentativa de editar anúncio...')
             obj = Anuncio.from_dict(anuncio)
             print('[Banqueiro][Editar][Anúncio] - Anúncio a editar:', obj)
-            if obj := self.__daoAnuncio.update(obj):
-                print('[Banqueiro][Editar][Anúncio] - Retornando anúncio modificado...')
-                return obj.to_dict()
+
+            print('[Banqueiro][Editar][Anúncio] - Verificando se o anúncio ainda possui pedidos em andamento...')
+            if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(id= obj.id))):
+                print(f'[Banqueiro][Editar][Anúncio] - Anúncio não pode ser editado: {len(pedidos)} pedidos em andamneto!')
+                return 'pedidos_pendentes'
             else:
-                print('[Banqueiro][Editar][Anúncio] - Algo saiu mal.')
-                return False
+                if obj := self.__daoAnuncio.update(obj):
+                    print('[Banqueiro][Editar][Anúncio] - Retornando anúncio modificado...')
+                    return obj.to_dict()
+                else:
+                    print('[Banqueiro][Editar][Anúncio] - Algo saiu mal.')
+                    return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
