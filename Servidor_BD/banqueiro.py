@@ -798,17 +798,19 @@ class Banqueiro():
             obj = Anuncio.from_dict(anuncio)
             print('[Banqueiro][Editar][Anúncio] - Anúncio a editar:', obj)
 
-            print('[Banqueiro][Editar][Anúncio] - Verificando se o anúncio ainda possui pedidos em andamento...')
-            if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(id= obj.id))):
-                print(f'[Banqueiro][Editar][Anúncio] - Anúncio não pode ser editado: {len(pedidos)} pedidos em andamneto!')
-                return 'pedidos_pendentes'
+            if 'preco' in anuncio:
+                print('[Banqueiro][Editar][Anúncio] - Edição de preço detectada.')
+                print('[Banqueiro][Editar][Anúncio] - Verificando se o anúncio ainda possui pedidos em andamento...')
+                if pedidos := self.__daoPedido_Andamento.select(Pedido(anuncio= Anuncio(id= obj.id))):
+                    print(f'[Banqueiro][Editar][Anúncio] - Preço do anúncio não pode ser editado: {len(pedidos)} pedidos em andamneto!')
+                    return 'pedidos_pendentes'
+                
+            if obj := self.__daoAnuncio.update(obj):
+                print('[Banqueiro][Editar][Anúncio] - Retornando anúncio modificado...')
+                return obj.to_dict()
             else:
-                if obj := self.__daoAnuncio.update(obj):
-                    print('[Banqueiro][Editar][Anúncio] - Retornando anúncio modificado...')
-                    return obj.to_dict()
-                else:
-                    print('[Banqueiro][Editar][Anúncio] - Algo saiu mal.')
-                    return False
+                print('[Banqueiro][Editar][Anúncio] - Algo saiu mal.')
+                return False
         except Exception as e:
             tb = traceback.extract_tb(e.__traceback__)
             linha = tb[-1].lineno if tb else '[linha desconhecida]'
@@ -1045,6 +1047,7 @@ class Banqueiro():
                     print('[Banqueiro][Excluir][Loja] - Excluindo loja...')
                     if self.__daoLoja.delete(Loja(id= obj.id)):
                         print('[Banqueiro][Excluir][Loja] - Loja excluída!')
+                        self.__daoPedido_Confirmado.forget(Pedido(id_loja = obj.id))
                         return True
                     else:
                         print('[Banqueiro][Excluir][Loja] - Falha fatal: Loja não pôde ser excluída!')
@@ -1092,6 +1095,7 @@ class Banqueiro():
                 print('[Banqueiro][Excluir][Usuário] - Excluindo usuário...')
                 if self.__daoUsuario.delete(Usuario_Identificado(id= obj.id)):
                     print('[Banqueiro][Excluir][Usuário] - Usuário excluído!')
+                    self.__daoPedido_Confirmado.forget(Pedido(endereco = Endereco(id_usuario = obj.id)))
                     return True
                 else:
                     print('[Banqueiro][Excluir][Usuário] - Falha fatal: Usuário não pôde ser excluído!')
@@ -1105,4 +1109,18 @@ class Banqueiro():
             tipo = type(e).__name__
             mensagem = str(e)
             print(f'[Banqueiro][Excluir][Usuário][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
+            return False
+
+    def _excluirPedidosEsquecidos(self):
+        try:
+            print('[Banqueiro][Esquecer][Pedido] - Iniciando limpeza de pedidos esquecidos...')
+            for imagem_a_apagar in self.__daoPedido_Confirmado.cleanForgotten():
+                if not imageu.apagarImagem('pedido', imagem_a_apagar):
+                    print('[Banqueiro][Esquecer][Pedido] - Falha fatal: Não foi possível excluir', imagem_a_apagar)
+        except Exception as e:
+            tb = traceback.extract_tb(e.__traceback__)
+            linha = tb[-1].lineno if tb else '[linha desconhecida]'
+            tipo = type(e).__name__
+            mensagem = str(e)
+            print(f'[Banqueiro][Esquecer][Pedido][ERRO] - Exceção na linha {linha}: {tipo} - {mensagem}')
             return False
