@@ -124,3 +124,44 @@ class DAOPedido_Confirmado(DAO):
     
     def forget(self, obj: Pedido):
         pass
+
+    def __from_tuple_view(self, tupla = (0, 0, 0, 0)):
+        return Pedido(
+            id = tupla[0],
+            anuncio = Anuncio(
+                id = tupla[1],
+                produto= Produto(id= tupla[2])
+            ),
+            endereco = Endereco(id = tupla[3])
+        )
+    
+    def cleanForgotten(self):
+        pedidos, anuncios, produtos, enderecos = super().__cleaningView()
+
+        # Apagando pedidos...
+        for pedido in pedidos:
+            self.delete(Pedido(id= pedido[0]))
+        
+        # Verificando e apagando anúncios...
+        for anuncio in anuncios:
+            anuncio = Anuncio(id= anuncio[0])
+            if not self.select(Pedido(anuncio= anuncio)):
+                self.__daoAnuncio_Pedido.delete(anuncio)
+        
+        # Verificando e apagando produtos...
+        for endereco in enderecos:
+            if not self.select(Pedido(endereco= Endereco(id= endereco[0]))):
+                self.__daoEndereco_Pedido.delete(endereco)
+        
+        # Verificando e apagando produtos...
+        imagens_a_apagar = []
+        for produto in produtos:
+            if not self.select(Pedido(id_produto= produto[0])):
+                # Recuperando e apagando imagens do produto
+                imagens_a_apagar += [imagens.caminho() for imagens in self.__daoImagem_Pedido.select(Imagem_Produto(id_produto= produto[0]))]
+                self.__daoImagem_Pedido.delete(Imagem_Produto(id_produto= produto[0]))
+
+                # Apagando produtos...
+                self.__daoProduto_Pedido.delete(Produto(id= produto[0]))
+        
+        return imagens_a_apagar

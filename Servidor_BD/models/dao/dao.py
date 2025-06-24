@@ -91,3 +91,29 @@ class DAO():
             persistivel = cursor.fetchone()
             conn.commit()
             return persistivel
+    
+    def __cleaningView(self):
+        with self._connect() as conn:
+            cursor = conn.cursor()
+
+            sql = 'SELECT id_pedido FROM pedido_esquecido_view;'
+            print(sql, end='\n\n')
+            cursor.execute(sql)
+            pedidos = cursor.fetchall()
+
+            sql = 'SELECT id_anuncio FROM pedido_esquecido_view GROUP BY id_anuncio;'
+            print(sql, end='\n\n')
+            cursor.execute(sql)
+            anuncios = cursor.fetchall()
+
+            sql = 'SELECT id_produto FROM pedido_esquecido_view GROUP BY id_produto;'
+            print(sql, end='\n\n')
+            cursor.execute(sql)
+            produtos = cursor.fetchall()
+
+            sql = 'SELECT id_endereco FROM pedido_esquecido_view GROUP BY id_endereco;'
+            print(sql, end='\n\n')
+            cursor.execute(sql)
+            enderecos = cursor.fetchall()
+
+            return pedidos, anuncios, produtos, enderecos
