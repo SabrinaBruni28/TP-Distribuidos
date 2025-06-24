@@ -2879,6 +2879,7 @@ class InterfaceHandler:
                     for loja in lojas:
                         for anuncio in loja.anuncios:
                             self.aplicacao.apagar_anuncio(anuncio)
+                    self.aplicacao.atualiza_anuncios()
                     self.aplicacao.usuario = Usuario()
                     self.view.set_tela(self.stack, -2)
                 elif resposta == "pedidos_pendentes":

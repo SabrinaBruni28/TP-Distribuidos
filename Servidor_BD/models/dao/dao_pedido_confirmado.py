@@ -136,7 +136,7 @@ class DAOPedido_Confirmado(DAO):
         )
     
     def cleanForgotten(self):
-        pedidos, anuncios, produtos, enderecos = super().__cleaningView()
+        pedidos, anuncios, produtos, enderecos = super()._cleaningView()
 
         # Apagando pedidos...
         for pedido in pedidos:

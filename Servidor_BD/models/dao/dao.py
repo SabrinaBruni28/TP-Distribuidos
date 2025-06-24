@@ -92,7 +92,7 @@ class DAO():
             conn.commit()
             return persistivel
     
-    def __cleaningView(self):
+    def _cleaningView(self):
         with self._connect() as conn:
             cursor = conn.cursor()
 
