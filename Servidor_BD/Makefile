@@ -18,4 +18,4 @@ servidorBD:
 	@echo "IP: $(IP)"
 	@echo "PORTA: $(PORTA)"
 	@echo "HOST: $(HOST)"
-	@python3 servidor_bd.py "$(IP)" "$(PORTA)" "$(HOST)"
+	@PYTHONDONTWRITEBYTECODE=1 python3 servidor_bd.py "$(IP)" "$(PORTA)" "$(HOST)"

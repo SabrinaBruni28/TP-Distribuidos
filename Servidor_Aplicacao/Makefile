@@ -17,11 +17,11 @@ nameServer:
 	@echo "Iniciando Name Server"
 	@echo "IP: $(IP)"
 	@echo "PORTA: $(PORTA)"
-	@python3 name_server.py "$(IP)" "$(PORTA)"
+	@PYTHONDONTWRITEBYTECODE=1 python3 name_server.py "$(IP)" "$(PORTA)"
 
 servidorAP:
 	@echo "Iniciando processo servidor"
 	@echo "IP: $(IP)"
 	@echo "PORTA: $(PORTA)"
 	@echo "HOST: $(HOST)"
-	@python3 servidor.py "$(IP)" "$(PORTA)" "$(HOST)"
+	@PYTHONDONTWRITEBYTECODE=1 python3 servidor.py "$(IP)" "$(PORTA)" "$(HOST)"

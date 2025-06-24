@@ -16,4 +16,4 @@ cliente:
 	@echo "Iniciando processo Cliente"
 	@echo "IP: $(IP)"
 	@echo "PORTA: $(PORTA)"
-	@python3 interface/interface.py "$(IP)" "$(PORTA)"
+	@PYTHONDONTWRITEBYTECODE=1 python3 interface/interface.py "$(IP)" "$(PORTA)"
