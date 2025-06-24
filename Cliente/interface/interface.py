@@ -2869,19 +2869,16 @@ class InterfaceHandler:
         if escolha == QDialog.DialogCode.Accepted:
             def ao_excluir_usuario(resposta):
                 if resposta is True:
+                    self.aplicacao.usuario = Usuario()
+                    self.view.set_tela(self.stack, -2)
+                    self.visualizar_anuncios(self.parent.tela_inicial)
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
                         backcolor="#4CAF50",
                         posicao="superior_direita",
                         mensagem="Perfil Excluído com Sucesso!"
                     )
-                    lojas = self.aplicacao.usuario.lojas
-                    for loja in lojas:
-                        for anuncio in loja.anuncios:
-                            self.aplicacao.apagar_anuncio(anuncio)
-                    self.aplicacao.atualiza_anuncios()
-                    self.aplicacao.usuario = Usuario()
-                    self.view.set_tela(self.stack, -2)
+
                 elif resposta == "pedidos_pendentes":
                     WidgetHelper.mostrar_alerta_temporario(
                         parent_widget=self.parent,
@@ -2898,7 +2895,7 @@ class InterfaceHandler:
                     )
             # Executa:
             self.thread.executar(
-                requisicao= self.aplicacao.excluir_usuario,
+                requisicao=self.aplicacao.excluir_usuario,
                 acao=ao_excluir_usuario,
                 atualizar_tela=False
             )

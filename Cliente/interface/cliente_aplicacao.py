@@ -36,6 +36,8 @@ class ClienteAplicacao():
         for i, a in reversed(range(len(self.anuncios))):
             if a.produto.id == produto.id:
                 del self.anuncios[i]
+                return True
+        return False
 
     def apagar_anuncio(self, anuncio: Anuncio):
         for i, a in enumerate(self.anuncios):
