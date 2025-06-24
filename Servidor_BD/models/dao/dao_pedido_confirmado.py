@@ -151,7 +151,7 @@ class DAOPedido_Confirmado(DAO):
         # Verificando e apagando produtos...
         for endereco in enderecos:
             if not self.select(Pedido(endereco= Endereco(id= endereco[0]))):
-                self.__daoEndereco_Pedido.delete(endereco)
+                self.__daoEndereco_Pedido.delete(Endereco(id= endereco[0]))
         
         # Verificando e apagando produtos...
         imagens_a_apagar = []
