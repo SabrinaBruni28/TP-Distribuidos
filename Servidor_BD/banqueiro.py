@@ -1047,7 +1047,7 @@ class Banqueiro():
                     print('[Banqueiro][Excluir][Loja] - Excluindo loja...')
                     if self.__daoLoja.delete(Loja(id= obj.id)):
                         print('[Banqueiro][Excluir][Loja] - Loja excluída!')
-                        self.__daoPedido_Confirmado.forget(Pedido(id_loja = obj.id))
+                        self._excluirPedidosEsquecidos()
                         return True
                     else:
                         print('[Banqueiro][Excluir][Loja] - Falha fatal: Loja não pôde ser excluída!')
@@ -1095,7 +1095,7 @@ class Banqueiro():
                 print('[Banqueiro][Excluir][Usuário] - Excluindo usuário...')
                 if self.__daoUsuario.delete(Usuario_Identificado(id= obj.id)):
                     print('[Banqueiro][Excluir][Usuário] - Usuário excluído!')
-                    self.__daoPedido_Confirmado.forget(Pedido(endereco = Endereco(id_usuario = obj.id)))
+                    self._excluirPedidosEsquecidos()
                     return True
                 else:
                     print('[Banqueiro][Excluir][Usuário] - Falha fatal: Usuário não pôde ser excluído!')
