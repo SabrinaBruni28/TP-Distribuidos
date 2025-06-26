@@ -250,7 +250,11 @@ class ClienteAplicacao():
     
     def editar_usuario(self, novos_dados):
         resposta = self.middleware.chamar_middleware("editarUsuario", novos_dados)
-        return bool(resposta), resposta
+        if isinstance(resposta, list):
+            return False, resposta
+        if isinstance(resposta, dict):
+            return True, resposta
+        return False, resposta
     
     def editar_endereco(self, endereco: Endereco, novos_dados):
         resposta = self.middleware.chamar_middleware("editarEndereco", novos_dados)
