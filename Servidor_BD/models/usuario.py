@@ -18,6 +18,7 @@ class Usuario_Identificado(Persistivel, Usuario):
         self.lojas = lojas
         self.enderecos = enderecos
         self.pedidos = pedidos
+        self.pedidos = pedidos
 
     def criar_loja(self, loja):
         self.lojas.append(loja)
