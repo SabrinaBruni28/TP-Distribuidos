@@ -86,21 +86,20 @@ class WidgetHelper(QWidget):
 
     @staticmethod
     def label_preco(preco_label, aligment=Qt.AlignmentFlag.AlignCenter, tamanho=30):
-        preco_label = QLabel(f"<span style='font-size: {tamanho}px; color: green'>R$ {'{:.2f}'.format(float(preco_label))}</span>")
+        preco_label = QLabel(f"<span style='font-size: {tamanho}px; color: green'>R$ {preco_label}</span>")
         preco_label.setAlignment(aligment)
         return preco_label
 
     @staticmethod
-    def label_b(label, font_size=20, alignment=Qt.AlignmentFlag.AlignCenter):
+    def label_b(label, aligment=Qt.AlignmentFlag.AlignCenter):
         label_b = QLabel(f"<b>{label}</b>")
-        label_b.setAlignment(alignment)
-        label_b.setStyleSheet(f"font-size: {font_size}px;")
+        label_b.setAlignment(aligment)
         return label_b
     
     @staticmethod
-    def label_span(label, tamanho, alignment=Qt.AlignmentFlag.AlignCenter):
+    def label_span(label, tamanho, aligment=Qt.AlignmentFlag.AlignCenter):
         label_span = QLabel(f"<span style='font-size: {tamanho}px; font-weight: bold'>{label}</span>")
-        label_span.setAlignment(alignment)
+        label_span.setAlignment(aligment)
         return label_span
 
     @staticmethod

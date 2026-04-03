@@ -257,7 +257,7 @@ class Formulario(QWidget):
 
             if nome.lower() == "email":
                 if not Utils.check_email(texto):
-                    erro = "Email inválido. Exemplo: usuario@exemplo.com"
+                    erro = "Email inválido."
                     self.erros[nome].setText(str(erro))
                     has_error = True
                     continue
@@ -266,7 +266,7 @@ class Formulario(QWidget):
 
             elif nome.lower() == "cpf":
                 if not Utils.check_cpf(texto):
-                    erro = "CPF inválido. Exemplo: xxx.xxx.xxx-xx"
+                    erro = "CPF inválido."
                     self.erros[nome].setText(str(erro))
                     has_error = True
                     continue

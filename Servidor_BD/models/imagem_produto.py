@@ -37,14 +37,9 @@ class Imagem_Produto(Persistivel):
         return f'{self.id}_{self.id_produto}.jpg'
     
     @classmethod
-    def from_name(cls, nome_imagem):
-        id, id_produto = nome_imagem[:-4].split('_')
-        return cls(id, id_produto)
-    
-    @classmethod
     def from_dict(cls, dados):
         id = dados.get('id', 0)
-        id_produto = int(dados.get('imagem', '').split('_')[1][:-4])
+        id_produto = int(dados.get('imagem', '').split('_')[2][:-4])
         
         return cls(id, id_produto)
     

@@ -1,38 +1,68 @@
-from Estruturas.requisicao import Requisicao
+import threading
+import json
+from Estruturas.mensagem import Mensagem
+from Operacoes import server_operation as op
 
 class Imagem():
-    def __init__(self, fila_requisicoes):
-        self.fila = fila_requisicoes
+    def __init__(self, dados, socket_cliente, tipo: str, campo: str = ""):
+        self.dados_cliente = dados
+        self.cliente = socket_cliente
+        self.tipo = tipo
+        self.campo = campo
+        self.quantidade = 0
+    
+    def run(self):
+        return self.decisor(self.tipo)
 
-    def produto(self, nome_imagem):
-        print(f"[Servidor][Imagem][Produto] Requisição para receber a imagem de um produto recebida.")
-        requisicao = Requisicao.produzRequisicao("imagens_produto", dados= nome_imagem)
 
-        self.fila.registraRequisicao(requisicao)
-        print(f"[Servidor][Imagem][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Pedindo imagem de um produto: {nome_imagem[-10:]}.")
+    def decisor(self, tipo: str):
+        match tipo:
+            case "loja":
+                return self.loja()
 
-        self.fila.enfileira(requisicao)
+            case "produto":
+                return self.produto()
+            
+            case "imagem":
+                return self.imagem()
+            
+            case _:
+                return None
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
 
-    def loja(self, nome_imagem):
-        print(f"[Servidor][Imagem][Loja] Requisição para receber a imagem de uma loja recebida.")
-        requisicao = Requisicao.produzRequisicao("imagens_loja", dados= nome_imagem)
+    def loja(self):
+        dadosJson = json.loads(self.dados_cliente)
+        if dadosJson.get(self.campo) == "" or dadosJson.get(self.campo) == None:
+            return None
+        
+        mensagemImagemLoja = Mensagem.receptorImagem(self.cliente)
 
-        self.fila.registraRequisicao(requisicao)
-        print(f"[Servidor][Imagem][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Pedindo imagem de uma loja: {nome_imagem[-10:]}.")
+        imagens = []
+        imagens.append(mensagemImagemLoja)
 
-        self.fila.enfileira(requisicao)
+        print("[Servidor][Imagem] Imagem da loja recebida.")
+        return imagens
+    
+    
+    def produto(self):
+        quantidade = op.recebeQuantidade(self.dados_cliente, 'imagens')
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        imagensProduto = []
+        for i in range(quantidade):
+            imagemProduto = Mensagem.receptorImagem(self.cliente)
+            imagensProduto.append(imagemProduto)
 
-    def pedido(self, nome_imagem):
-        print(f"[Servidor][Imagem][Pedido] Requisição para receber a imagem de um pedido recebida.")
-        requisicao = Requisicao.produzRequisicao("imagens_pedido", dados= nome_imagem)
+        if quantidade > 0:
+            print("[Servidor][Imagem] Imagem(s) do produto recebida.")
+        return imagensProduto
+    
 
-        self.fila.registraRequisicao(requisicao)
-        print(f"[Servidor][Imagem][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Pedindo imagem de um pedido: {nome_imagem[-10:]}.")
+    def imagem(self):
+        mensagemImagemLoja = Mensagem.receptorImagem(self.cliente)
 
-        self.fila.enfileira(requisicao)
+        imagens = []
+        imagens.append(mensagemImagemLoja)
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        print("[Servidor][Imagem] Imagem recebida.")
+        return imagens
+    

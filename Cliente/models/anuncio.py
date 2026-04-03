@@ -35,23 +35,23 @@ class Anuncio:
         self.pausado = False
 
     def to_dict(self):
-        return {
+        return json.dumps({
             "id": self.id,
             "produto": self.produto.to_dict() if self.produto else None,
             "preco": self.preco,
             "quantidade_disponivel": self.quantidade_disponivel,
             "chave_pix": self.chave_pix,
             "pausado": self.pausado
-        }
+        })
     
     def to_dict_personalizado(self):
-        return {
+        return json.dumps({
             "produto": {"id": f"{self.produto.id if self.produto else None}"},
             "preco": self.preco,
             "quantidade_disponivel": self.quantidade_disponivel,
             "chave_pix": self.chave_pix,
             "pausado": self.pausado
-        }
+        })
     
     @classmethod
     def from_dict(cls, data):

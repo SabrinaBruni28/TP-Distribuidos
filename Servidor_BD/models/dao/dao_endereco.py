@@ -2,13 +2,13 @@ from models.dao.dao import DAO
 from models.endereco import Endereco
 
 class DAOEndereco(DAO):
-    def __init__(self,
-            nome_tabelas: list = ['endereco'],
-            nome_colunas: list = ['id_usuario', 'rua_endereco', 'numero_endereco', 'bairro_endereco', 'cidade_endereco', 'estado_endereco', 'complemento_endereco']):
-        
-        super().__init__(nome_tabelas, nome_colunas)
+    def __init__(self):
+        super().__init__(
+            ['endereco'],
+            ["id_usuario", "rua_endereco", "numero_endereco", "bairro_endereco", "cidade_endereco", "estado_endereco", "complemento_endereco"]
+            )
     
-    def _from_tuple(self, tupla = (0, 0, '', '', '', '', '', '')):
+    def _from_tuple(self, tupla = (0, 0, "", "", "", "", "", "")):
         return Endereco(
             id = tupla[0],
             id_usuario = tupla[1],
@@ -28,8 +28,8 @@ class DAOEndereco(DAO):
     def update(self, obj: Endereco):
         return self._from_tuple(super().update(obj))
 
-    def delete(self, obj: Endereco):
-        return super().delete(obj)
+    def delete(self, id_obj: int):
+        return super().delete(id_obj)
     
-    def forget(self, obj: Endereco):
-        return self._from_tuple(super().forget(obj))
+    def zerar(self, obj: Endereco):
+        return self._from_tuple(super().zerar(obj, ['id_usuario']))

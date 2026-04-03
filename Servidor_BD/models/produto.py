@@ -42,7 +42,7 @@ class Produto(Persistivel):
         return Produto()
 
     @classmethod
-    def from_dict(cls, dados) -> 'Produto':
+    def from_dict(cls, dados):
         from models.loja import Loja
         print(type(dados), dados)
         id = dados.get('id', 0)
