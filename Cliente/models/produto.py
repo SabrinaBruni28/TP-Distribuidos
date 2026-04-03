@@ -19,21 +19,21 @@ class Produto:
         return False
 
     def to_dict(self):
-        return {
+        return json.dumps({
             "id": self.id,
             "nome": self.nome,
             "descricao": self.descricao,
             "imagens": self.imagens,
             "loja": self.loja.to_dict() if self.loja else None,
-        }
+        })
     
     def to_dict_personalizado(self):
-        return {
+        return json.dumps({
             "nome": self.nome,
             "descricao": self.descricao,
             "imagens": self.imagens,
             "loja": {"id": f"{self.loja.id if self.loja else None}"}
-        }
+        })
     
     @classmethod
     def from_dict(cls, data):

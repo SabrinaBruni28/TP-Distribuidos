@@ -1,3 +1,4 @@
+import socket
 import time
 
 class DadosTemporariosConfirmacao:
@@ -34,29 +35,12 @@ class DadosTemporariosConfirmacao:
         self._dados.pop(socket_cliente, None)
 
     def limpar_expirados(self):
-        print(f"[Fila de Mensagens][Dados de Confirmação] Conferindo dados expirados.")
-        import time
-
         agora = time.time()
+        
+        expirados = [
+            sock for sock, info in self._dados.items()
+            if agora - info["timestamp"] > 180
+        ]
 
-        expirados = []
-
-        for sock, info in self._dados.items():
-            timestamp = info.get("timestamp")
-
-            if timestamp is None:
-                # Se timestamp não existe, considera como expirado (ou pule, se preferir)
-                expirados.append(sock)
-                continue
-
-            # Verifica se passou do tempo limite (180s - 3m)
-            if agora - timestamp > 180:
-                expirados.append(sock)
-                print(f"[Fila de Mensagens][Dados de Confirmação] Dados expirados aqui: {sock}")
-
-        # Remove depois de iterar
         for sock in expirados:
-            try:
-                del self._dados[sock]
-            except KeyError:
-                print("[Fila de Mensagens][Dados de Confirmação] Não conseguiu deletar dados expirados.")
+            del self._dados[sock]

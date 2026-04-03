@@ -1,28 +1,45 @@
-from Estruturas.requisicao import Requisicao
+import socket
+import threading
+from Operacoes import server_operation as op
+from Operacoes import callback as cb
+from Operacoes import operacao
+from Estruturas import Mensagem
 
-class Pedido():
-    def __init__(self, fila_requisicoes):
-        self.fila = fila_requisicoes
+class Pedido(operacao.Operacao):
+    def __init__(self, mensagem, socket_cliente, fila_mensagens):
+        super().__init__(mensagem, socket_cliente, fila_mensagens)
 
-    def confirmar(self, id_pedido):
-        print("[Servidor][Pedido][Confirmar] Operação de confirmar pedido recebida.")
-        requisicao = Requisicao.produzRequisicao("confirmar_pedido", id_pedido)
+    def run(self):
+        self.getOperacao()
 
-        self.fila.registraRequisicao(requisicao)
+    def getOperacao(self):
+        self.decisor()
 
-        print(f"[Servidor][Pedido][Confirmar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+    def decisor(self):
+        operacao = self.mensagemCliente.camposMensagem[1]
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        match operacao:
+            case "confirmar":
+                self.confirmar()
 
+            case "cancelar":
+                self.cancelar()
 
-    def cancelar(self, id_pedido):
-        print("[Servidor][Pedido][Cancelar] Operação de cancelar pedido recebida.")
-        requisicao = Requisicao.produzRequisicao("cancelar_pedido", id_pedido)
+            case _:
+                print("[Servidor] Mensagem inválida.")
 
-        self.fila.registraRequisicao(requisicao)
+    def confirmar(self):
+        print("[Servidor][Pedido] Operação de confirmar pedido recebida.")
+        idPedido = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"pedido | confirmar | {idPedido}")
 
-        print(f"[Servidor][Pedido][Cancelar][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.pedidoConfirmadoCallback, self.conexaoCliente, "pedido")
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+    def cancelar(self):
+        print("[Servidor][Pedido] Operação de cancelar pedido recebida.")
+        idPedido = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"excluir | pedido | {idPedido}")
+
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.pedidoCanceladoCallback, self.conexaoCliente, "pedido")

@@ -71,6 +71,8 @@ class Loja(Persistivel):
         return False
     
     def to_dict(self):
+        print([produto.to_dict() for produto in self.produtos])
+        print([anuncio for anuncio in self.anuncios])
         return {
             "id": self.id,
             "nome": self.nome,

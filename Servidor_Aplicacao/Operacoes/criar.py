@@ -1,71 +1,94 @@
-from Estruturas.requisicao import Requisicao
+import socket
+import threading
+from Operacoes import server_operation as op
+from Operacoes import callback as cb
+from Operacoes import operacao
+from Estruturas import Mensagem
 
-class Criar():
-    def __init__(self, fila_requisicoes):
-        self.fila = fila_requisicoes
+class Criar(operacao.Operacao):
+    def __init__(self, mensagem, socket_cliente, fila_mensagens, imagens: list = None):
+        super().__init__(mensagem, socket_cliente, fila_mensagens)
+        self.imagens = imagens
 
-    def anuncio(self, dados):
-        print("[Servidor][Criar][Anúncio] Operação de criar anúncio recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_anuncio", dados)
+    def run(self):
+        print("[Servidor][Criar] Operação de criar recebida.")
+        self.getOperacao()
 
-        self.fila.registraRequisicao(requisicao)
+    def getOperacao(self):
+        self.decisor()
 
-        print(f"[Servidor][Criar][Anúncio][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+    def decisor(self):
+        operacao = self.mensagemCliente.camposMensagem[1]
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        match operacao:
+            case "anuncio":
+                self.anuncio()
 
-    def produto(self, dados, imagens):
-        print("[Servidor][Criar][Produto] Operação de criar produto recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_produto", dados, imagens=imagens)
+            case "produto":
+                self.produto()
 
-        self.fila.registraRequisicao(requisicao)
+            case "loja":
+                self.loja()
 
-        print(f"[Servidor][Criar][Produto][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+            case "pedido":
+                self.pedido()
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+            case "endereco":
+                self.endereco()
 
-    def loja(self, id_usuario, dados, imagem_loja):
-        print("[Servidor][Criar][Loja] Operação de criar loja recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_loja", dados, imagens=imagem_loja, id_associado=id_usuario)
+            case "imagem":
+                self.imagem()
 
-        self.fila.registraRequisicao(requisicao)
+            case _:
+                print("[Servidor] Mensagem inválida.")
 
-        print(f"[Servidor][Criar][Loja][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+    def anuncio(self):
+        print("[Servidor][Criar] Operação de criar anúncio recebida.")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | anuncio | {dados}")
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.criarAnuncioCallback, self.conexaoCliente, "criar")
 
-    def pedido(self, dados):
-        print("[Servidor][Criar][Pedido] Operação de criar pedido recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_pedido", dados)
+    def produto(self):
+        print("[Servidor][Criar] Operação de criar anúncio recebida.")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | produto | {dados}")
 
-        self.fila.registraRequisicao(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.criarProdutoCallback, self.conexaoCliente,"criar", imagem=self.imagens)
 
-        print(f"[Servidor][Criar][Pedido][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+    def loja(self):
+        print("[Servidor][Criar] Operação de criar anúncio recebida.")
+        idLoja = self.mensagemCliente.camposMensagem[2]
+        dados = self.mensagemCliente.camposMensagem[3]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | loja | {idLoja} | {dados}")
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.criarLojaCallback, self.conexaoCliente, "criar", imagem=self.imagens)
 
-    def endereco(self, id_usuario, dados):
-        print("[Servidor][Criar][Endereço] Operação de criar endereço recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_endereco", dados, id_associado=id_usuario)
+    def pedido(self):
+        print("[Servidor][Criar] Operação de criar anúncio recebida.")
+        idUsuario = self.mensagemCliente.camposMensagem[2]
+        dados = self.mensagemCliente.camposMensagem[3]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | pedido | {idUsuario} | {dados}")
 
-        self.fila.registraRequisicao(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.criarPedidoCallback, self.conexaoCliente, "criar")
 
-        print(f"[Servidor][Criar][Endereço][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
+    def endereco(self):
+        print("[Servidor][Criar] Operação de criar anúncio recebida.")
+        dados = self.mensagemCliente.camposMensagem[3]
+        idUsusario = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | endereco | {idUsusario} | {dados}")
 
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.criarEnderecoCallback, self.conexaoCliente, "criar")
 
-    def imagem(self, id_produto, imagem):
-        print("[Servidor][Criar][Imagem] Operação de criar imagem recebida.")
-        requisicao = Requisicao.produzRequisicao("criar_imagem", id_produto, imagens=imagem)
+    def imagem(self):
+        print("[Servidor][Criar] Operação de criar anúncio recebida.")
+        dados = self.mensagemCliente.camposMensagem[2]
+        mensagemServidor = Mensagem.produtorMensagem(f"criar | imagem | " + str(dados))
 
-        self.fila.registraRequisicao(requisicao)
-
-        print(f"[Servidor][Criar][Imagem][ID: {requisicao.idRequisicao[:3]}...{requisicao.idRequisicao[-3:]}] Enviando requisição para a fila...")
-        self.fila.enfileira(requisicao)
-
-        return self.fila.esperarRespostaDoBancoDeRespostas(requisicao)
+        print("[Servidor] Enviando requisição para fila...")
+        self.fila.enfileira(mensagemServidor, cb.criarImagemCallback, self.conexaoCliente, "criar", imagem=self.imagens)

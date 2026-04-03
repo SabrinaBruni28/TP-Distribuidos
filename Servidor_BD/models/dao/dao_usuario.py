@@ -2,13 +2,12 @@ from models.dao.dao import DAO
 from models.usuario import Usuario_Identificado
 
 class DAOUsuario(DAO):
-    def __init__(self,
-            nome_tabelas: list = ['usuario'],
-            nome_colunas: list = ['cpf_usuario', 'nome_usuario', 'email_usuario', 'senha_usuario']):
-        
-        super().__init__(nome_tabelas, nome_colunas)
+    def __init__(self):
+        super().__init__(
+            ['usuario'],
+            ["cpf_usuario", "nome_usuario", "email_usuario", "senha_usuario"])
     
-    def _from_tuple(self, tupla = (0, '', '', '', '')):
+    def _from_tuple(self, tupla = (0, "", "", "", "")):
         return Usuario_Identificado(
             id = tupla[0],
             cpf = tupla[1],
@@ -25,9 +24,10 @@ class DAOUsuario(DAO):
     def update(self, obj: Usuario_Identificado):
         return self._from_tuple(super().update(obj))
 
-    def delete(self, obj: Usuario_Identificado):
-        return super().delete(obj)
+    def delete(self, id_obj: int):
+        print('Operação inválida: Usuário não é capaz de se apagar')
+        return ''
     
-    def forget(self, obj: Usuario_Identificado):
+    def zerar(self, obj: Usuario_Identificado):
         pass
 

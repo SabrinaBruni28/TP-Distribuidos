@@ -14,7 +14,7 @@ class Endereco:
         self.complemento = complemento
 
     def to_dict(self):
-        return {
+        return json.dumps({
             "id": self.id,
             "rua": self.rua,
             "numero": self.numero,
@@ -22,17 +22,17 @@ class Endereco:
             "bairro": self.bairro,
             "cidade": self.cidade,
             "estado": self.estado
-        }
+        })
     
     def to_dict_personalizado(self):
-        return {
+        return json.dumps({
             "rua": self.rua,
             "numero": self.numero,
             "complemento": self.complemento,
             "bairro": self.bairro,
             "cidade": self.cidade,
             "estado": self.estado
-        }
+        })
     
     @classmethod
     def from_dict(cls, data):
